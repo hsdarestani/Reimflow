@@ -1,0 +1,376 @@
+
+/* =========================================================
+   REIMFLOW / SONIC ATELIER
+   A custom visual identity built from phonetics, rhythm & type.
+   ========================================================= */
+html[data-theme="sonic-art"]{
+  color-scheme:dark;
+  --sa-bg:#090909;
+  --sa-paper:#f0ece2;
+  --sa-muted:#9e9a91;
+  --sa-red:#ff4d2e;
+  --sa-acid:#c8ff45;
+  --sa-blue:#6d63ff;
+  --sa-pink:#ff7ac8;
+  --sa-line:rgba(240,236,226,.16);
+  --sa-panel:#11110f;
+  --theme-accent:#ff4d2e;
+  --theme-bg:#090909;
+  --theme-fg:#f0ece2;
+  --theme-muted:#9e9a91;
+  --theme-card:#11110f;
+  --theme-border:rgba(240,236,226,.16);
+  --theme-radius:0px;
+  --theme-font-display:"Italiana",serif;
+  --theme-font-body:"Space Grotesk",system-ui,sans-serif
+}
+html[data-theme="sonic-art"] body{
+  background:
+    radial-gradient(1200px 700px at 86% -10%,rgba(109,99,255,.12),transparent 60%),
+    radial-gradient(900px 640px at -10% 28%,rgba(255,77,46,.08),transparent 64%),
+    var(--sa-bg);
+  color:var(--sa-paper);
+  font-family:"Space Grotesk",system-ui,sans-serif;
+  overflow-x:hidden
+}
+html[data-theme="sonic-art"] body:before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:-5;opacity:.4;
+  background-image:linear-gradient(rgba(240,236,226,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(240,236,226,.022) 1px,transparent 1px);
+  background-size:72px 72px
+}
+html[data-theme="sonic-art"] body:after{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:120;mix-blend-mode:soft-light;opacity:.12;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E")
+}
+html[data-theme="sonic-art"] .shape{display:none!important}
+html[data-theme="sonic-art"] .theme-atmosphere{display:none!important}
+html[data-theme="sonic-art"] .container{max-width:1380px;padding-inline:clamp(22px,4vw,64px)}
+html[data-theme="sonic-art"] h1,
+html[data-theme="sonic-art"] h2,
+html[data-theme="sonic-art"] h3{color:var(--sa-paper);font-family:"Space Grotesk",sans-serif}
+html[data-theme="sonic-art"] p{color:var(--sa-muted)}
+html[data-theme="sonic-art"] ::selection{background:var(--sa-acid);color:#090909}
+
+/* Header behaves like album artwork chrome */
+html[data-theme="sonic-art"] .topbar{
+  width:min(1420px,calc(100% - 28px));top:14px;padding:10px 14px 10px 16px;border:1px solid var(--sa-line);
+  border-radius:0;background:rgba(9,9,9,.72);backdrop-filter:blur(22px) saturate(140%);
+  box-shadow:none
+}
+html[data-theme="sonic-art"] .topbar:before{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:linear-gradient(90deg,var(--sa-red),transparent 26%,transparent 72%,var(--sa-blue))}
+html[data-theme="sonic-art"] .brand{gap:11px}
+html[data-theme="sonic-art"] .brand-mark{
+  width:34px;height:34px;border-radius:50%;border:1px solid var(--sa-paper);background:var(--sa-red);box-shadow:none;position:relative;overflow:hidden
+}
+html[data-theme="sonic-art"] .brand-mark:after{content:"";position:absolute;width:44px;height:1px;background:#090909;rotate:-35deg}
+html[data-theme="sonic-art"] .brand-mark span{font:700 .78rem "Space Grotesk";color:#090909}
+html[data-theme="sonic-art"] .brand-name{font:600 .88rem "Space Grotesk";letter-spacing:.18em;text-transform:uppercase;color:var(--sa-paper)}
+html[data-theme="sonic-art"] .brand-name span{color:var(--sa-red)}
+html[data-theme="sonic-art"] .desktop-nav{gap:2px}
+html[data-theme="sonic-art"] .nav-link{
+  color:#a8a49b;border:0;border-radius:0;background:none;font-size:.67rem;font-weight:600;text-transform:uppercase;letter-spacing:.16em;padding:10px 12px;position:relative
+}
+html[data-theme="sonic-art"] .nav-link:after{content:"";position:absolute;left:12px;right:12px;bottom:4px;height:1px;background:var(--sa-acid);transform:scaleX(0);transform-origin:right;transition:transform .25s cubic-bezier(.16,1,.3,1)}
+html[data-theme="sonic-art"] .nav-link:hover,
+html[data-theme="sonic-art"] .nav-link.active{background:none;color:var(--sa-paper)}
+html[data-theme="sonic-art"] .nav-link:hover:after,
+html[data-theme="sonic-art"] .nav-link.active:after{transform:scaleX(1);transform-origin:left}
+html[data-theme="sonic-art"] .pill-btn.small{background:var(--sa-paper);color:#090909;border:0;border-radius:0;box-shadow:none;text-transform:uppercase;letter-spacing:.12em;font-size:.64rem}
+html[data-theme="sonic-art"] .pill-btn.small:hover{background:var(--sa-acid);color:#090909;transform:none}
+html[data-theme="sonic-art"] .theme-toggle{background:transparent;color:var(--sa-paper);border:1px solid var(--sa-line);border-radius:0;box-shadow:none}
+html[data-theme="sonic-art"] .theme-swatch{border-radius:50%;background:conic-gradient(var(--sa-red),var(--sa-acid),var(--sa-blue),var(--sa-red));border:0}
+html[data-theme="sonic-art"] .theme-menu{background:rgba(12,12,11,.96);color:var(--sa-paper);border:1px solid var(--sa-line);border-radius:0;box-shadow:0 24px 80px rgba(0,0,0,.5)}
+html[data-theme="sonic-art"] .theme-option,
+html[data-theme="sonic-art"] .theme-preview{border-radius:0}
+html[data-theme="sonic-art"] .theme-option:hover,
+html[data-theme="sonic-art"] .theme-option.active{background:rgba(255,255,255,.055)}
+.theme-preview.sonic{background:linear-gradient(135deg,#090909 0 44%,#ff4d2e 44% 52%,#c8ff45 52% 60%,#6d63ff 60%);color:#f0ece2}
+
+/* Cursor, progress, page choreography */
+.sonic-progress{position:fixed;right:13px;top:90px;bottom:24px;width:1px;background:rgba(240,236,226,.08);z-index:80;pointer-events:none}
+.sonic-progress i{display:block;width:1px;height:var(--progress,0%);background:linear-gradient(var(--sa-red),var(--sa-acid),var(--sa-blue))}
+.sonic-cursor{position:fixed;left:0;top:0;width:26px;height:26px;border:1px solid rgba(200,255,69,.65);border-radius:50%;pointer-events:none;z-index:200;transform:translate(-50%,-50%);mix-blend-mode:difference;transition:width .18s,height .18s,opacity .18s}
+.sonic-cursor:after{content:"";position:absolute;inset:8px;border-radius:50%;background:var(--sa-paper)}
+.sonic-cursor.hot{width:50px;height:50px}
+html[data-theme="sonic-art"] .page{animation:none}
+html[data-theme="sonic-art"] .page.art-enter{animation:artPageIn .72s cubic-bezier(.16,1,.3,1)}
+@keyframes artPageIn{from{opacity:0;transform:translateY(18px) scale(.992);filter:blur(8px)}to{opacity:1;transform:none;filter:none}}
+
+/* Home: digital artwork composition */
+html[data-theme="sonic-art"] .page[data-page="home"]{position:relative}
+html[data-theme="sonic-art"] .sonic-hero{
+  min-height:100svh;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(380px,.95fr);
+  align-items:center;gap:clamp(30px,5vw,90px);padding-top:120px;padding-bottom:70px;position:relative
+}
+html[data-theme="sonic-art"] .sonic-hero:before{
+  content:"REIM / FLOW";position:absolute;left:clamp(22px,4vw,64px);bottom:26px;
+  font:500 .62rem "JetBrains Mono";letter-spacing:.32em;color:#77736b
+}
+html[data-theme="sonic-art"] .sonic-hero:after{
+  content:"001";position:absolute;right:clamp(24px,4vw,66px);top:128px;
+  font:500 .62rem "JetBrains Mono";letter-spacing:.3em;color:var(--sa-red)
+}
+html[data-theme="sonic-art"] .hero-copy{position:relative;z-index:2;max-width:790px}
+html[data-theme="sonic-art"] .hero-copy:before{display:none}
+html[data-theme="sonic-art"] .eyebrow{
+  display:inline-flex;gap:10px;align-items:center;background:none;border:0;border-radius:0;box-shadow:none;color:var(--sa-acid);
+  padding:0;font:600 .68rem "JetBrains Mono";letter-spacing:.13em;text-transform:uppercase
+}
+html[data-theme="sonic-art"] .mini-star{color:var(--sa-red);animation:saBlink 1.2s steps(1,end) infinite}
+@keyframes saBlink{50%{opacity:.22}}
+html[data-theme="sonic-art"] .sonic-title{
+  margin:26px 0 18px;font-size:clamp(4.5rem,9.2vw,10.3rem);line-height:.78;letter-spacing:-.078em;text-transform:uppercase;font-weight:700
+}
+html[data-theme="sonic-art"] .sonic-title .line{display:block;position:relative}
+html[data-theme="sonic-art"] .sonic-title .line:nth-child(1){color:var(--sa-paper);margin-left:-.04em}
+html[data-theme="sonic-art"] .sonic-title .line:nth-child(2){font-family:"Italiana",serif;font-weight:400;font-style:italic;color:var(--sa-red);letter-spacing:-.045em;margin-left:.44em}
+html[data-theme="sonic-art"] .sonic-title .line:nth-child(3){color:transparent;-webkit-text-stroke:1px var(--sa-paper);font-size:.69em;letter-spacing:-.035em;margin-left:.08em}
+html[data-theme="sonic-art"] .sonic-title .line:nth-child(3):after{
+  content:"";display:inline-block;width:.58em;height:.58em;background:var(--sa-acid);border-radius:50%;margin-left:.16em;vertical-align:.04em
+}
+html[data-theme="sonic-art"] .hero-copy>p{
+  max-width:620px;font-size:clamp(1rem,1.4vw,1.18rem);line-height:1.7;color:#b4afa4;margin:26px 0 32px
+}
+html[data-theme="sonic-art"] .hero-search{
+  max-width:700px;border:0;border-bottom:1px solid rgba(240,236,226,.5);border-radius:0;background:transparent;box-shadow:none;padding:0 0 8px;display:grid;grid-template-columns:1fr auto;gap:12px;position:relative
+}
+html[data-theme="sonic-art"] .hero-search:before{content:"⌕";font:400 1.5rem "Space Grotesk";color:var(--sa-red);align-self:center}
+html[data-theme="sonic-art"] .hero-search input{grid-column:2/3;grid-row:1;width:100%;font:500 clamp(1.15rem,2vw,1.65rem) "Space Grotesk";background:none;color:var(--sa-paper);padding:14px 0;border:0;outline:0}
+html[data-theme="sonic-art"] .hero-search input::placeholder{color:#5f5b55}
+html[data-theme="sonic-art"] .hero-search .candy-btn{grid-column:3;grid-row:1}
+html[data-theme="sonic-art"] .candy-btn{
+  background:var(--sa-red);color:#090909;border:0;border-radius:0;box-shadow:none;font:700 .68rem "Space Grotesk";letter-spacing:.12em;text-transform:uppercase;min-height:48px
+}
+html[data-theme="sonic-art"] .candy-btn:hover{transform:translate(-3px,-3px);background:var(--sa-acid);color:#090909;box-shadow:6px 6px 0 var(--sa-blue)}
+html[data-theme="sonic-art"] .candy-btn:active{transform:translate(0);box-shadow:none}
+html[data-theme="sonic-art"] .quick-tags{margin-top:16px;gap:9px;color:#6f6b64;font:500 .62rem "JetBrains Mono";letter-spacing:.08em;text-transform:uppercase}
+html[data-theme="sonic-art"] .quick-tags button{background:none;border:0;border-bottom:1px solid rgba(240,236,226,.22);border-radius:0;color:#a9a59c;padding:5px 0;font:500 .62rem "JetBrains Mono";text-transform:uppercase;letter-spacing:.06em}
+html[data-theme="sonic-art"] .quick-tags button:hover{color:var(--sa-acid);border-color:var(--sa-acid)}
+
+/* Sonic sculpture */
+.sonic-sculpture{
+  position:relative;aspect-ratio:1/1;max-width:610px;width:100%;justify-self:end;
+  transform-style:preserve-3d;perspective:900px
+}
+.sonic-sculpture .disc{
+  position:absolute;inset:9%;border:1px solid rgba(240,236,226,.22);border-radius:50%;
+  background:radial-gradient(circle at 44% 40%,rgba(255,255,255,.06),transparent 34%),#0c0c0b;
+  box-shadow:inset 0 0 0 24px #090909,inset 0 0 0 25px rgba(240,236,226,.09),0 0 100px rgba(109,99,255,.08)
+}
+.sonic-sculpture .disc:before,.sonic-sculpture .disc:after{content:"";position:absolute;border-radius:50%;border:1px solid rgba(240,236,226,.12)}
+.sonic-sculpture .disc:before{inset:17%}.sonic-sculpture .disc:after{inset:34%;background:var(--sa-red);border:0;box-shadow:0 0 0 9px #090909,0 0 0 10px rgba(240,236,226,.18)}
+.sonic-sculpture .orbit{position:absolute;inset:0;border-radius:50%;animation:orbitSpin 22s linear infinite}
+.sonic-sculpture .orbit.orbit-2{inset:12%;animation-duration:16s;animation-direction:reverse}
+@keyframes orbitSpin{to{rotate:360deg}}
+.sonic-sculpture .orbit span{
+  position:absolute;left:50%;top:0;transform:translateX(-50%);font:500 .68rem "JetBrains Mono";letter-spacing:.16em;color:var(--sa-acid);text-transform:uppercase
+}
+.sonic-sculpture .orbit.orbit-2 span{color:var(--sa-pink)}
+.sonic-sculpture .core-word{
+  position:absolute;inset:0;display:grid;place-items:center;z-index:4;font:400 clamp(3.5rem,7vw,7rem) "Italiana";letter-spacing:-.05em;color:var(--sa-paper);
+  text-shadow:10px 0 0 rgba(109,99,255,.22),-10px 0 0 rgba(255,77,46,.18)
+}
+.sonic-sculpture .core-word.swap{animation:coreSwap .55s cubic-bezier(.16,1,.3,1)}
+@keyframes coreSwap{0%{opacity:0;transform:scale(.8) rotate(-5deg);filter:blur(10px)}100%{opacity:1;transform:none;filter:none}}
+.phoneme-field{position:absolute;inset:-4%;pointer-events:none;z-index:6}
+.phoneme-field span{position:absolute;font:500 var(--fs,.7rem) "JetBrains Mono";color:var(--c,var(--sa-paper));opacity:var(--o,.65);transform:rotate(var(--r,0deg));animation:phonemeFloat var(--d,8s) ease-in-out infinite alternate}
+@keyframes phonemeFloat{to{translate:var(--x,6px) var(--y,-12px);rotate:8deg}}
+.sonic-sculpture .wave-stack{position:absolute;left:-3%;right:-3%;top:50%;height:160px;translate:0 -50%;display:flex;align-items:center;justify-content:center;gap:7px;z-index:3;mix-blend-mode:screen}
+.sonic-sculpture .wave-stack i{width:3px;height:var(--h);background:linear-gradient(var(--sa-blue),var(--sa-red),var(--sa-acid));opacity:.75;transform-origin:center;animation:waveBreath var(--t) ease-in-out infinite alternate}
+@keyframes waveBreath{to{scale:1 1.45;opacity:1}}
+.sculpture-label{position:absolute;z-index:8;font:500 .58rem "JetBrains Mono";letter-spacing:.18em;text-transform:uppercase;color:#817d75}
+.sculpture-label.a{left:4%;top:20%;rotate:-90deg}.sculpture-label.b{right:1%;bottom:24%;rotate:90deg}.sculpture-label.c{left:18%;bottom:8%;color:var(--sa-red)}
+.sculpture-cross{position:absolute;right:12%;top:12%;width:54px;height:54px;z-index:8}
+.sculpture-cross:before,.sculpture-cross:after{content:"";position:absolute;left:50%;top:50%;background:var(--sa-acid);transform:translate(-50%,-50%)}.sculpture-cross:before{width:54px;height:1px}.sculpture-cross:after{height:54px;width:1px}
+
+/* Manifesto ribbon */
+html[data-theme="sonic-art"] .keyword-marquee{
+  border:0;border-top:1px solid var(--sa-line);border-bottom:1px solid var(--sa-line);background:var(--sa-paper);color:#090909;transform:rotate(-1.2deg) scale(1.01);margin:24px 0 90px;overflow:hidden
+}
+html[data-theme="sonic-art"] .keyword-marquee div{font:700 clamp(1rem,1.7vw,1.4rem) "Space Grotesk";letter-spacing:.06em;padding:14px 0;text-transform:uppercase}
+
+/* Chapters */
+.art-chapter{position:relative;padding:clamp(90px,11vw,170px) 0;border-bottom:1px solid var(--sa-line)}
+.art-chapter .chapter-grid{display:grid;grid-template-columns:170px 1fr;gap:clamp(30px,6vw,90px);align-items:start}
+.chapter-index{position:sticky;top:140px;font:500 .62rem "JetBrains Mono";letter-spacing:.2em;color:var(--sa-red);text-transform:uppercase}
+.chapter-index strong{display:block;font:400 clamp(4.8rem,8vw,8.5rem) "Italiana";color:var(--sa-paper);letter-spacing:-.07em;line-height:.8;margin-top:12px}
+.chapter-copy{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(300px,.8fr);gap:clamp(30px,5vw,76px);align-items:end}
+.chapter-copy h2{font-size:clamp(3rem,6vw,6.8rem);line-height:.92;letter-spacing:-.055em;text-transform:uppercase;margin:0}
+.chapter-copy h2 em{font-family:"Italiana";font-weight:400;color:var(--sa-acid);text-transform:none}
+.chapter-copy p{font-size:1rem;line-height:1.8;margin:0 0 6px}
+.chapter-note{font:500 .65rem "JetBrains Mono";letter-spacing:.08em;color:#6d6962;text-transform:uppercase;border-left:1px solid var(--sa-red);padding-left:14px;margin-top:20px}
+
+/* Feature triptych is poster-like, not cards */
+.art-triptych{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--sa-line);border-bottom:1px solid var(--sa-line);margin-top:70px}
+.art-panel{min-height:460px;padding:34px 30px 28px;border-right:1px solid var(--sa-line);position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;transition:background .35s ease,color .35s ease}
+.art-panel:last-child{border-right:0}
+.art-panel .roman{position:absolute;top:26px;left:28px;font:500 .64rem "JetBrains Mono";letter-spacing:.14em;color:#77736c}
+.art-panel .glyph{position:absolute;right:-.05em;top:.02em;font:400 clamp(8rem,13vw,14rem) "Italiana";line-height:1;color:transparent;-webkit-text-stroke:1px rgba(240,236,226,.12);transition:.35s ease}
+.art-panel h3{font-size:clamp(1.65rem,2.4vw,2.5rem);line-height:1.05;letter-spacing:-.04em;margin:0 0 14px;text-transform:uppercase}
+.art-panel p{max-width:330px;line-height:1.65;margin:0 0 24px}
+.art-panel .text-link{align-self:flex-start;border:0;border-bottom:1px solid currentColor;background:none;color:var(--sa-paper);padding:0 0 5px;border-radius:0;font:600 .68rem "JetBrains Mono";letter-spacing:.08em;text-transform:uppercase}
+.art-panel:nth-child(1):hover{background:var(--sa-red);color:#090909}.art-panel:nth-child(2):hover{background:var(--sa-acid);color:#090909}.art-panel:nth-child(3):hover{background:var(--sa-blue);color:#fff}
+.art-panel:hover h3,.art-panel:hover p,.art-panel:hover .text-link{color:currentColor}.art-panel:hover .glyph{-webkit-text-stroke-color:currentColor;opacity:.25;transform:rotate(-8deg) scale(1.08)}
+
+/* Community as installation */
+.community-installation{padding:clamp(90px,11vw,170px) 0;position:relative}
+.installation-head{display:grid;grid-template-columns:1fr auto;gap:30px;align-items:end;margin-bottom:52px}
+.installation-head h2{font-size:clamp(3.2rem,6.4vw,7.2rem);line-height:.87;letter-spacing:-.06em;text-transform:uppercase;margin:0}
+.installation-head h2 span{display:block;font-family:"Italiana";font-weight:400;color:var(--sa-pink);text-transform:none}
+.installation-caption{max-width:360px;font:500 .68rem "JetBrains Mono";line-height:1.7;letter-spacing:.06em;color:#817d75;text-transform:uppercase}
+.judgement-stage{display:grid;grid-template-columns:1fr 220px 1fr;align-items:center;border:1px solid var(--sa-line);min-height:360px;position:relative;background:#0c0c0b}
+.judgement-word{font-size:clamp(2.8rem,5vw,5.6rem);font-weight:600;letter-spacing:-.05em;text-transform:uppercase;text-align:center}
+.judgement-word.left{color:var(--sa-paper)}.judgement-word.right{color:var(--sa-acid)}
+.judgement-center{height:100%;border-left:1px solid var(--sa-line);border-right:1px solid var(--sa-line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
+.judgement-center .ear{width:72px;height:98px;border:1px solid var(--sa-red);border-radius:55% 48% 50% 43%;position:relative;rotate:12deg}
+.judgement-center .ear:after{content:"";position:absolute;inset:23px 20px;border:1px solid var(--sa-red);border-radius:50% 40%}
+.judgement-center small{font:500 .6rem "JetBrains Mono";letter-spacing:.14em;color:#807c74;text-transform:uppercase;text-align:center}
+.judgement-score{position:absolute;right:18px;top:18px;font:500 .62rem "JetBrains Mono";color:var(--sa-red);letter-spacing:.1em}
+.installation-actions{display:flex;justify-content:space-between;align-items:center;margin-top:18px}
+.installation-actions .secondary-btn{border-radius:0;background:none;border:1px solid var(--sa-line);color:var(--sa-paper);box-shadow:none}
+.installation-actions .secondary-btn:hover{background:var(--sa-paper);color:#090909;border-color:var(--sa-paper);transform:none}
+
+/* All app pages inherit the artwork */
+html[data-theme="sonic-art"] .app-shell{padding-top:145px;padding-bottom:100px;position:relative}
+html[data-theme="sonic-art"] .app-shell:before{content:attr(data-art-label);position:absolute;right:clamp(22px,4vw,64px);top:106px;font:500 .6rem "JetBrains Mono";letter-spacing:.18em;color:#625f59;text-transform:uppercase}
+html[data-theme="sonic-art"] .page-title{padding-bottom:32px;border-bottom:1px solid var(--sa-line);align-items:end}
+html[data-theme="sonic-art"] .page-title h1{font-size:clamp(3.8rem,7vw,7.8rem);letter-spacing:-.065em;line-height:.85;text-transform:uppercase;margin-top:12px}
+html[data-theme="sonic-art"] .kicker,
+html[data-theme="sonic-art"] .filter-label{font:500 .62rem "JetBrains Mono";letter-spacing:.17em;color:var(--sa-red);text-transform:uppercase}
+html[data-theme="sonic-art"] .points-pill{border:1px solid var(--sa-line);background:none;border-radius:0;color:var(--sa-acid);box-shadow:none;font:500 .68rem "JetBrains Mono";letter-spacing:.08em}
+html[data-theme="sonic-art"] .search-panel{
+  margin-top:36px;padding:0 0 26px;background:none;border:0;border-bottom:1px solid var(--sa-line);border-radius:0;box-shadow:none;overflow:visible
+}
+html[data-theme="sonic-art"] .search-row{align-items:end}
+html[data-theme="sonic-art"] .grow-field label{font:500 .62rem "JetBrains Mono";letter-spacing:.13em;text-transform:uppercase;color:#77736c}
+html[data-theme="sonic-art"] .input-with-icon{
+  background:none;border:0;border-bottom:1px solid rgba(240,236,226,.42);border-radius:0;box-shadow:none;color:var(--sa-paper);min-height:62px
+}
+html[data-theme="sonic-art"] .input-with-icon:focus-within{border-color:var(--sa-acid);box-shadow:none}
+html[data-theme="sonic-art"] .input-with-icon span{color:var(--sa-red);font-size:1.4rem}
+html[data-theme="sonic-art"] .input-with-icon input{font-size:clamp(1.3rem,2.4vw,2rem);color:var(--sa-paper)}
+html[data-theme="sonic-art"] .segmented{border:0;background:none;gap:6px}
+html[data-theme="sonic-art"] .segmented button{
+  border:1px solid var(--sa-line);background:none;color:#89857d;border-radius:0;box-shadow:none;font:500 .63rem "JetBrains Mono";letter-spacing:.07em;text-transform:uppercase
+}
+html[data-theme="sonic-art"] .segmented button:hover{color:var(--sa-paper);border-color:#77736c}
+html[data-theme="sonic-art"] .segmented button.active{background:var(--sa-paper);color:#090909;border-color:var(--sa-paper)}
+html[data-theme="sonic-art"] select{border-radius:0;background:#0d0d0c;color:var(--sa-paper);border:1px solid var(--sa-line);box-shadow:none}
+html[data-theme="sonic-art"] .query-insight{
+  background:#0d0d0c;border:1px solid var(--sa-line);border-radius:0;box-shadow:none;clip-path:none;position:relative
+}
+html[data-theme="sonic-art"] .query-insight:after{content:"PHONETIC / ANALYSIS";position:absolute;right:14px;bottom:10px;font:500 .52rem "JetBrains Mono";letter-spacing:.14em;color:#46433f}
+html[data-theme="sonic-art"] .insight-label{color:var(--sa-acid);font-family:"JetBrains Mono"}
+html[data-theme="sonic-art"] .insight-main strong{font-family:"Space Grotesk";font-size:1.55rem;color:var(--sa-paper)}
+html[data-theme="sonic-art"] .insight-meta span{background:none;color:#a19d94;border:1px solid var(--sa-line);border-radius:0}
+html[data-theme="sonic-art"] .results-head{margin-top:42px;padding-bottom:14px;border-bottom:1px solid var(--sa-line)}
+html[data-theme="sonic-art"] .results-head strong{font-size:1rem;text-transform:uppercase;letter-spacing:.06em}
+html[data-theme="sonic-art"] .engine-state{border-radius:0;background:none;border:1px solid var(--sa-line);color:#8d8981;font:500 .6rem "JetBrains Mono";letter-spacing:.08em;text-transform:uppercase}
+html[data-theme="sonic-art"] .secondary-btn{
+  background:none;color:var(--sa-paper);border:1px solid var(--sa-line);border-radius:0;box-shadow:none;text-transform:uppercase;letter-spacing:.08em;font-size:.66rem
+}
+html[data-theme="sonic-art"] .secondary-btn:hover{background:var(--sa-paper);color:#090909;border-color:var(--sa-paper);transform:none;box-shadow:none}
+
+/* Result list as score sheet */
+html[data-theme="sonic-art"] .result-list{gap:0;border-bottom:1px solid var(--sa-line)}
+html[data-theme="sonic-art"] .rhyme-card.ai-rhyme{
+  display:grid;grid-template-columns:88px minmax(220px,1.1fr) minmax(280px,.9fr) auto;
+  gap:20px;background:transparent;border:0;border-top:1px solid var(--sa-line);border-radius:0;box-shadow:none;clip-path:none;padding:24px 0;transition:.25s ease
+}
+html[data-theme="sonic-art"] .rhyme-card.ai-rhyme:hover{transform:none;background:linear-gradient(90deg,rgba(255,77,46,.055),transparent 42%)}
+html[data-theme="sonic-art"] .match-score{
+  width:64px;height:64px;border:1px solid var(--sa-line);border-radius:50%;background:none;color:var(--sa-acid);box-shadow:none;transform:none;font:500 1.25rem "Italiana"
+}
+html[data-theme="sonic-art"] .rhyme-word strong{font-size:clamp(1.5rem,2.3vw,2.2rem);letter-spacing:-.035em;text-transform:uppercase}
+html[data-theme="sonic-art"] .rhyme-word small{color:#77736d}
+html[data-theme="sonic-art"] .ai-chip{border-radius:0;background:var(--sa-red);color:#090909;border:0}
+html[data-theme="sonic-art"] .micro-tag{border:0;border-bottom:1px solid var(--sa-line);border-radius:0;background:none;color:#8c887f;padding:5px 0;font:500 .6rem "JetBrains Mono";letter-spacing:.05em}
+html[data-theme="sonic-art"] .icon-btn,
+html[data-theme="sonic-art"] .favorite-btn{border-radius:50%;background:none;color:var(--sa-paper);border:1px solid var(--sa-line);box-shadow:none}
+html[data-theme="sonic-art"] .favorite-btn.active{background:var(--sa-pink);color:#090909;border-color:var(--sa-pink)}
+html[data-theme="sonic-art"] .rhyme-explanation{grid-column:2/-1;border-top:0;padding-top:0;color:#706c65}
+html[data-theme="sonic-art"] .rhyme-explanation p{color:#918d85}
+html[data-theme="sonic-art"] .confidence-meter{height:2px;border-radius:0;background:#262521}
+html[data-theme="sonic-art"] .confidence-meter i{border-radius:0;background:linear-gradient(90deg,var(--sa-red),var(--sa-acid))}
+
+/* Empty state as art plate */
+html[data-theme="sonic-art"] .search-empty{
+  min-height:430px;display:grid;place-items:center;align-content:center;border:0;border-radius:0;background:radial-gradient(circle at center,rgba(109,99,255,.08),transparent 36%);
+  position:relative
+}
+html[data-theme="sonic-art"] .search-empty:before{content:"/ / / / / / / / /";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-18deg);font:400 clamp(3rem,7vw,7rem) "Italiana";letter-spacing:.08em;color:rgba(240,236,226,.035);white-space:nowrap}
+html[data-theme="sonic-art"] .search-empty .empty-glyph{border-radius:50%;background:var(--sa-red);color:#090909;border:0;box-shadow:0 0 0 14px #090909,0 0 0 15px var(--sa-line);font-family:"Italiana";position:relative;z-index:1}
+html[data-theme="sonic-art"] .search-empty strong{font-size:1.5rem;text-transform:uppercase;letter-spacing:-.02em;position:relative;z-index:1}
+html[data-theme="sonic-art"] .search-empty p{color:#77736c;position:relative;z-index:1}
+
+/* Community / Beats / Profile surfaces */
+html[data-theme="sonic-art"] .sticker-card,
+html[data-theme="sonic-art"] .review-chip{
+  border:1px solid var(--sa-line);border-radius:0;background:#0d0d0c;box-shadow:none;clip-path:none
+}
+html[data-theme="sonic-art"] .submission-card{border-width:1px 0 0;padding-inline:0;background:transparent}
+html[data-theme="sonic-art"] .submission-pair{font-size:1.35rem}
+html[data-theme="sonic-art"] .arrow-pill{background:var(--sa-red);color:#090909;border-radius:50%}
+html[data-theme="sonic-art"] .status-pill{border-radius:0;background:none;border:1px solid var(--sa-line);color:#8e8a82}
+html[data-theme="sonic-art"] .ai-check-btn{border-radius:0;background:none;border:1px solid var(--sa-red);color:var(--sa-red);text-transform:uppercase;letter-spacing:.08em}
+html[data-theme="sonic-art"] .approve-btn{background:var(--sa-acid);color:#090909;border:0;border-radius:0}
+html[data-theme="sonic-art"] .reject-btn{background:none;color:var(--sa-paper);border:1px solid var(--sa-line);border-radius:0}
+html[data-theme="sonic-art"] .leaderboard{background:var(--sa-red);color:#090909;border:0}
+html[data-theme="sonic-art"] .leaderboard h3,
+html[data-theme="sonic-art"] .leaderboard strong,
+html[data-theme="sonic-art"] .leaderboard b{color:#090909}
+html[data-theme="sonic-art"] .leaderboard .kicker{color:#090909;opacity:.7}
+html[data-theme="sonic-art"] .leaderboard small,
+html[data-theme="sonic-art"] .leaderboard p{color:rgba(9,9,9,.68)}
+html[data-theme="sonic-art"] .leader-icon{background:#090909;color:var(--sa-red);border-radius:50%}
+html[data-theme="sonic-art"] .beat-card{background:#0d0d0c}
+html[data-theme="sonic-art"] .beat-art{border-radius:0;border:0;filter:saturate(.72) contrast(1.08)}
+html[data-theme="sonic-art"] .beat-card:hover .beat-art{filter:saturate(1.2) contrast(1.04)}
+html[data-theme="sonic-art"] .play-btn{border-radius:50%;background:var(--sa-paper);color:#090909;border:0;box-shadow:none}
+html[data-theme="sonic-art"] .profile-hero{background:linear-gradient(90deg,var(--sa-blue),#3c34b8);border:0;color:#fff}
+html[data-theme="sonic-art"] .profile-hero h1,
+html[data-theme="sonic-art"] .profile-hero p{color:#fff}
+html[data-theme="sonic-art"] .profile-avatar{border-radius:50%;background:var(--sa-acid);color:#090909;border:0;box-shadow:none}
+html[data-theme="sonic-art"] .stat-card span{color:var(--sa-red)}
+
+/* Mobile */
+@media(max-width:980px){
+  .sonic-cursor{display:none}
+  html[data-theme="sonic-art"] .desktop-nav{display:none}
+  html[data-theme="sonic-art"] .sonic-hero{grid-template-columns:1fr;min-height:auto;padding-top:145px}
+  .sonic-sculpture{justify-self:center;max-width:560px;margin-top:20px}
+  .art-chapter .chapter-grid{grid-template-columns:1fr}.chapter-index{position:static;display:flex;align-items:baseline;gap:20px}.chapter-index strong{font-size:4rem}
+  .chapter-copy{grid-template-columns:1fr}
+  .art-triptych{grid-template-columns:1fr}.art-panel{min-height:340px;border-right:0;border-bottom:1px solid var(--sa-line)}
+  .art-panel:last-child{border-bottom:0}
+  .judgement-stage{grid-template-columns:1fr;min-height:520px}.judgement-center{height:160px;border:0;border-top:1px solid var(--sa-line);border-bottom:1px solid var(--sa-line)}
+  .installation-head{grid-template-columns:1fr}
+}
+@media(max-width:700px){
+  .sonic-progress{display:none}
+  html[data-theme="sonic-art"] .topbar{width:calc(100% - 16px);top:8px}
+  html[data-theme="sonic-art"] .brand-name{display:none}
+  html[data-theme="sonic-art"] .sonic-title{font-size:clamp(3.8rem,20vw,6rem);line-height:.82}
+  html[data-theme="sonic-art"] .sonic-title .line:nth-child(2){margin-left:.15em}
+  html[data-theme="sonic-art"] .sonic-title .line:nth-child(3){font-size:.62em;margin-left:0}
+  html[data-theme="sonic-art"] .hero-search{grid-template-columns:22px 1fr;gap:8px}
+  html[data-theme="sonic-art"] .hero-search input{grid-column:2}
+  html[data-theme="sonic-art"] .hero-search .candy-btn{grid-column:1/-1;grid-row:2;width:100%}
+  .sonic-sculpture{max-width:360px}
+  .sculpture-label{font-size:.48rem}
+  html[data-theme="sonic-art"] .keyword-marquee{margin-bottom:55px}
+  .art-chapter{padding:70px 0}
+  .chapter-copy h2,.installation-head h2{font-size:3rem}
+  .art-panel{padding:28px 20px;min-height:300px}
+  .judgement-word{font-size:2.5rem}
+  .installation-actions{align-items:flex-start;gap:12px;flex-direction:column}
+  html[data-theme="sonic-art"] .app-shell{padding-top:115px;padding-bottom:80px}
+  html[data-theme="sonic-art"] .page-title{align-items:flex-start;gap:18px}
+  html[data-theme="sonic-art"] .page-title h1{font-size:3.4rem}
+  html[data-theme="sonic-art"] .rhyme-card.ai-rhyme{grid-template-columns:60px 1fr auto;padding:20px 0}
+  html[data-theme="sonic-art"] .rhyme-card.ai-rhyme .tag-row{grid-column:2/-1}
+  html[data-theme="sonic-art"] .rhyme-explanation{grid-column:1/-1}
+}
+@media(prefers-reduced-motion:reduce){
+  .sonic-sculpture .orbit,.phoneme-field span,.sonic-sculpture .wave-stack i,.mini-star{animation:none!important}
+}
