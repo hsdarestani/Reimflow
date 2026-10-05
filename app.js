@@ -32,6 +32,9 @@ const starterBeats=[
 {id:"b6",title:"Glass Keys",producer:"Ari Loops",type:"Sample",bpm:110,license:"Commercial License",art:"art-mint",plays:"510"}
 ];
 
+let activeSearchController=null;
+let searchSequence=0;
+
 const state={
 points:Number(localStorage.getItem("reimflow_points")||120),
 favorites:JSON.parse(localStorage.getItem("reimflow_favorites")||"[]"),
@@ -101,20 +104,42 @@ $("#syllableFilter").addEventListener("change",e=>{
 
 function requestSignature(){return[normalize(state.currentQuery),state.category,state.syllables].join("|")}
 
+function setSearchBusy(busy){
+  const buttons=[
+    document.querySelector("#heroSearch button[type='submit']"),
+    document.querySelector("#rhymeSearchForm button[type='submit']")
+  ].filter(Boolean);
+  buttons.forEach(button=>{
+    button.disabled=busy;
+    button.setAttribute("aria-busy",String(busy));
+    if(!button.dataset.originalLabel)button.dataset.originalLabel=button.innerHTML;
+    button.innerHTML=busy?'Analysiere… <span>···</span>':button.dataset.originalLabel;
+  });
+}
+
 async function searchRhymes(force=false){
   if(!state.currentQuery)return;
   const signature=requestSignature();
   if(!force&&signature===state.searchSignature&&state.aiResults.length){renderRhymes();return}
-  state.searchLoading=true;updateEngineState();renderLoading();renderQueryInsight(null);
-  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),45000);
+
+  if(activeSearchController) activeSearchController.abort();
+  activeSearchController=new AbortController();
+  const controller=activeSearchController;
+  const seq=++searchSequence;
+
+  state.searchLoading=true;setSearchBusy(true);updateEngineState();renderLoading();renderQueryInsight(null);
+  const timer=setTimeout(()=>controller.abort(),22000);
   try{
     const response=await fetch("/api/rhymes",{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify({query:state.currentQuery,category:state.category,syllables:state.syllables}),signal:controller.signal});
     const data=await response.json().catch(()=>({}));
+    if(seq!==searchSequence)return;
     if(!response.ok)throw new Error(data.message||"AI Suche nicht verfügbar");
     state.aiResults=Array.isArray(data.rhymes)?data.rhymes:[];
     state.queryAnalysis=data.analysis||null;state.searchSignature=signature;state.engineOnline=true;state.searchLoading=false;
     renderRhymes();renderQueryInsight(state.queryAnalysis);updateEngineState(data.cached?"Cache":"Live");
   }catch(err){
+    if(seq!==searchSequence)return;
+    if(err.name==="AbortError" && controller!==activeSearchController)return;
     const fallback=curatedFallback[normalize(state.currentQuery)];
     state.searchLoading=false;state.engineOnline=false;
     if(fallback){
@@ -124,7 +149,14 @@ async function searchRhymes(force=false){
       state.aiResults=[];state.queryAnalysis=null;
       renderRhymes(err.name==="AbortError"?"Die Analyse hat zu lange gedauert. Bitte erneut versuchen.":err.message);updateEngineState();
     }
-  }finally{clearTimeout(timer)}
+  }finally{
+    clearTimeout(timer);
+    if(seq===searchSequence){
+      state.searchLoading=false;
+      setSearchBusy(false);
+      if(activeSearchController===controller)activeSearchController=null;
+    }
+  }
 }
 
 function filteredRhymes(){
