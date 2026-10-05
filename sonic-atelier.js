@@ -32,7 +32,7 @@
   const phonemes=["aɪ","ɔʏ","ʃ","ŋ","ɪ","oː","ə","ts","ç","ʁ","aː","ɛ","FLOW","BAR","/r/","/k/","/f/","ˈ","ˌ","∞","REIM","SILBE","KLANG"];
   const field=document.querySelector(".phoneme-field");
   if(field){
-    for(let i=0;i<38;i++){
+    for(let i=0;i<28;i++){
       const s=document.createElement("span");
       s.textContent=phonemes[i%phonemes.length];
       const x=(i*37)%97,y=(i*61)%91;
@@ -51,7 +51,7 @@
   // Create responsive waveform bars.
   const wave=document.querySelector(".wave-stack");
   if(wave){
-    for(let i=0;i<47;i++){
+    for(let i=0;i<35;i++){
       const bar=document.createElement("i");
       const d=Math.abs(i-23);
       const h=22+Math.max(0,74-d*2.4)+(i%4)*5;
@@ -119,6 +119,10 @@
       if(i%3===e.target.value.length%3)bar.style.opacity=String(.5+n*.5);
     });
   });
+
+  // Pause decorative motion when the tab is hidden to keep the artwork light on GPU/CPU.
+  const syncPause=()=>document.documentElement.classList.toggle("art-paused",document.hidden);
+  document.addEventListener("visibilitychange",syncPause);syncPause();
 
   // Keep custom chrome hidden when another theme is chosen.
   function sync(){
