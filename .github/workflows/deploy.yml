@@ -18,7 +18,7 @@ jobs:
 
       - name: Prepare deploy archive
         run: |
-          tar --exclude='.git' --exclude='.github' -czf /tmp/reimflow.tar.gz index.html styles.css themes.css ai-engine.css theme-engine.js app.js api.py README.md
+          tar --exclude='.git' --exclude='.github' -czf /tmp/reimflow.tar.gz index.html styles.css themes.css ai-engine.css sonic-atelier.css theme-engine.js sonic-atelier.js app.js api.py README.md
 
       - name: Install SSH helper
         run: |
