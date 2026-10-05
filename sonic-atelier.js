@@ -29,10 +29,10 @@
   addEventListener("scroll",updateProgress,{passive:true});updateProgress();
 
   // Populate phoneme constellation with deterministic positions.
-  const phonemes=["aɪ","ɔʏ","ʃ","ŋ","ɪ","oː","ə","ts","ç","ʁ","aː","ɛ","FLOW","BAR","/r/","/k/","/f/","ˈ","ˌ","∞","REIM","SILBE","KLANG"];
+  const phonemes=["aɪ","ɔʏ","ʃ","ŋ","ɪ","oː","ə","ts","ç","ʁ","aː","ɛ","BAR","/r/","/k/","/f/","ˈ","ˌ","∞","REIM","SILBE","KLANG"];
   const field=document.querySelector(".phoneme-field");
   if(field){
-    for(let i=0;i<28;i++){
+    for(let i=0;i<18;i++){
       const s=document.createElement("span");
       s.textContent=phonemes[i%phonemes.length];
       const x=(i*37)%97,y=(i*61)%91;
@@ -51,7 +51,7 @@
   // Create responsive waveform bars.
   const wave=document.querySelector(".wave-stack");
   if(wave){
-    for(let i=0;i<35;i++){
+    for(let i=0;i<27;i++){
       const bar=document.createElement("i");
       const d=Math.abs(i-23);
       const h=22+Math.max(0,74-d*2.4)+(i%4)*5;
@@ -63,7 +63,7 @@
 
   // Word sculpture changes like a kinetic poster.
   const core=document.querySelector(".core-word");
-  const words=["KLANG","SILBE","FLOW","REIM"];
+  const words=["KLANG","SILBE","REIM"];
   let wi=0;
   setInterval(()=>{
     if(!core||!isArt()||matchMedia("(prefers-reduced-motion: reduce)").matches)return;
