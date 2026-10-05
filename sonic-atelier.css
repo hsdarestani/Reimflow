@@ -103,7 +103,7 @@ html[data-theme="sonic-art"] .sonic-hero{
   align-items:center;gap:clamp(30px,5vw,90px);padding-top:120px;padding-bottom:70px;position:relative
 }
 html[data-theme="sonic-art"] .sonic-hero:before{
-  content:"REIM / FLOW";position:absolute;left:clamp(22px,4vw,64px);bottom:26px;
+  content:"REIM / KLANG";position:absolute;left:clamp(22px,4vw,64px);bottom:26px;
   font:500 .62rem "JetBrains Mono";letter-spacing:.32em;color:#77736b
 }
 html[data-theme="sonic-art"] .sonic-hero:after{
@@ -726,5 +726,93 @@ html[data-theme="sonic-art"] .page.active{
 
   html[data-theme="sonic-art"] .sonic-sculpture{
     transform:none!important;
+  }
+}
+
+
+/* Desktop scale refinement: keep the art direction, reduce oversized typography */
+@media(min-width:1100px){
+  html[data-theme="sonic-art"] .container{
+    max-width:1280px;
+  }
+
+  html[data-theme="sonic-art"] .sonic-hero{
+    grid-template-columns:minmax(0,1fr) minmax(360px,.78fr);
+    gap:clamp(40px,4.5vw,72px);
+    padding-top:112px;
+    padding-bottom:58px;
+  }
+
+  html[data-theme="sonic-art"] .sonic-title{
+    font-size:clamp(4.2rem,6.35vw,7.25rem);
+    line-height:.84;
+    max-width:760px;
+    margin:22px 0 18px;
+  }
+
+  html[data-theme="sonic-art"] .hero-copy>p{
+    max-width:540px;
+    font-size:1rem;
+    line-height:1.68;
+  }
+
+  html[data-theme="sonic-art"] .sonic-sculpture{
+    max-width:500px;
+  }
+
+  .art-chapter{
+    padding:clamp(86px,8vw,120px) 0;
+  }
+
+  .art-chapter .chapter-grid{
+    grid-template-columns:130px 1fr;
+    gap:56px;
+  }
+
+  .chapter-index strong{
+    font-size:clamp(4rem,5.4vw,5.8rem);
+  }
+
+  .chapter-copy{
+    grid-template-columns:minmax(0,1.08fr) minmax(280px,.72fr);
+    gap:48px;
+  }
+
+  .chapter-copy h2{
+    font-size:clamp(2.9rem,4.25vw,4.75rem);
+    line-height:.94;
+    max-width:780px;
+  }
+
+  .art-panel{
+    min-height:360px;
+    padding:28px 26px 24px;
+  }
+
+  .art-panel .glyph{
+    font-size:clamp(6rem,9vw,9rem);
+  }
+
+  .art-panel h3{
+    font-size:clamp(1.45rem,1.85vw,2rem);
+  }
+
+  .community-installation{
+    padding:clamp(90px,8vw,125px) 0;
+  }
+
+  .installation-head h2{
+    font-size:clamp(3rem,4.7vw,5.2rem);
+    line-height:.92;
+    max-width:900px;
+  }
+
+  .judgement-word{
+    font-size:clamp(2.5rem,3.8vw,4.2rem);
+  }
+
+  html[data-theme="sonic-art"] .page-title h1{
+    font-size:clamp(3.1rem,4.8vw,5.2rem);
+    line-height:.9;
   }
 }
