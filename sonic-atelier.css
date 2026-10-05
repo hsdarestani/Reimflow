@@ -700,3 +700,31 @@ html[data-theme="sonic-art"] .favorite-btn.active{
     background:var(--sa-red);
   }
 }
+
+
+/* Stability pass: page transitions without JS mutation loops */
+html[data-theme="sonic-art"] .page.active{
+  animation:artPageIn .42s cubic-bezier(.16,1,.3,1);
+}
+
+/* Keep low-end/mobile browsers responsive while preserving the composition */
+@media(max-width:760px){
+  html[data-theme="sonic-art"] body:after{
+    display:none;
+  }
+
+  html[data-theme="sonic-art"] .topbar,
+  html[data-theme="sonic-art"] .mobile-nav{
+    backdrop-filter:none;
+  }
+
+  html[data-theme="sonic-art"] .sonic-sculpture .orbit,
+  html[data-theme="sonic-art"] .sonic-sculpture .wave-stack i,
+  html[data-theme="sonic-art"] .mini-star{
+    animation:none!important;
+  }
+
+  html[data-theme="sonic-art"] .sonic-sculpture{
+    transform:none!important;
+  }
+}
