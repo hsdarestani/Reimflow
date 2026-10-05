@@ -16,9 +16,9 @@
   const themeMeta = document.querySelector('meta[name="theme-color"]');
 
   function setTheme(name, persist = true) {
-    if (!themes[name]) name = "playful";
+    if (!themes[name]) name = "art-deco";
     root.dataset.theme = name;
-    if (persist) localStorage.setItem("reimflow_theme", name);
+    if (persist) localStorage.setItem("reimflow_theme_v2", name);
     if (currentLabel) currentLabel.textContent = themes[name].label;
     if (themeMeta) themeMeta.setAttribute("content", themes[name].color);
     document.querySelectorAll("[data-theme-option]").forEach((button) => {
@@ -29,8 +29,8 @@
     window.dispatchEvent(new CustomEvent("reimflow:themechange", { detail: { theme: name } }));
   }
 
-  const stored = localStorage.getItem("reimflow_theme");
-  setTheme(themes[stored] ? stored : (root.dataset.theme || "playful"), false);
+  const stored = localStorage.getItem("reimflow_theme_v2");
+  setTheme(themes[stored] ? stored : (root.dataset.theme || "art-deco"), false);
 
   toggle?.addEventListener("click", (event) => {
     event.stopPropagation();
