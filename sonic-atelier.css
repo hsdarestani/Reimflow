@@ -376,3 +376,107 @@ html[data-theme="sonic-art"] .stat-card span{color:var(--sa-red)}
 }
 
 html.art-paused[data-theme="sonic-art"] .sonic-sculpture .orbit,html.art-paused[data-theme="sonic-art"] .phoneme-field span,html.art-paused[data-theme="sonic-art"] .sonic-sculpture .wave-stack i{animation-play-state:paused!important}
+
+
+/* Mobile artwork dock: integrated with Sonic Atelier */
+@media(max-width:760px){
+  html[data-theme="sonic-art"] body{
+    padding-bottom:calc(82px + env(safe-area-inset-bottom,0px));
+  }
+
+  html[data-theme="sonic-art"] .mobile-nav{
+    position:fixed;
+    left:10px;
+    right:10px;
+    bottom:calc(8px + env(safe-area-inset-bottom,0px));
+    width:auto;
+    height:64px;
+    padding:5px 6px;
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    align-items:stretch;
+    gap:2px;
+    background:rgba(9,9,9,.88);
+    border:1px solid rgba(240,236,226,.16);
+    border-radius:0;
+    box-shadow:0 14px 44px rgba(0,0,0,.48);
+    backdrop-filter:blur(20px) saturate(135%);
+    z-index:140;
+    overflow:hidden;
+  }
+
+  html[data-theme="sonic-art"] .mobile-nav:before{
+    content:"";
+    position:absolute;
+    left:0;
+    right:0;
+    top:0;
+    height:1px;
+    background:linear-gradient(90deg,var(--sa-red),transparent 34%,transparent 66%,var(--sa-blue));
+    pointer-events:none;
+  }
+
+  html[data-theme="sonic-art"] .mobile-nav button{
+    min-width:0;
+    min-height:52px;
+    padding:6px 2px 5px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:4px;
+    border:0;
+    border-radius:0;
+    background:transparent;
+    color:#716d66;
+    box-shadow:none;
+    font:500 .48rem "JetBrains Mono",monospace;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    position:relative;
+    transition:color .2s ease,background .2s ease;
+  }
+
+  html[data-theme="sonic-art"] .mobile-nav button span{
+    width:24px;
+    height:24px;
+    display:grid;
+    place-items:center;
+    border:1px solid transparent;
+    border-radius:50%;
+    font-size:.92rem;
+    line-height:1;
+    color:inherit;
+    background:transparent;
+  }
+
+  html[data-theme="sonic-art"] .mobile-nav button.active{
+    color:var(--sa-paper);
+    background:rgba(255,255,255,.025);
+  }
+
+  html[data-theme="sonic-art"] .mobile-nav button.active span{
+    color:#090909;
+    background:var(--sa-acid);
+    border-color:var(--sa-acid);
+  }
+
+  html[data-theme="sonic-art"] .mobile-nav button.active:after{
+    content:"";
+    position:absolute;
+    left:50%;
+    bottom:2px;
+    width:14px;
+    height:1px;
+    transform:translateX(-50%);
+    background:var(--sa-red);
+  }
+
+  html[data-theme="sonic-art"] .quick-tags{
+    padding-bottom:12px;
+  }
+
+  html[data-theme="sonic-art"] .sonic-hero{
+    padding-bottom:96px;
+  }
+}
