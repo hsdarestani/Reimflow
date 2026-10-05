@@ -1,6 +1,7 @@
 
 (() => {
   const themes = {
+    "sonic-art": { label: "Sonic Atelier", color: "#FF4D2E" },
     playful: { label: "Playful", color: "#8B5CF6" },
     linear: { label: "Linear", color: "#5E6AD2" },
     "minimal-dark": { label: "Minimal Dark", color: "#F59E0B" },
@@ -16,9 +17,9 @@
   const themeMeta = document.querySelector('meta[name="theme-color"]');
 
   function setTheme(name, persist = true) {
-    if (!themes[name]) name = "art-deco";
+    if (!themes[name]) name = "sonic-art";
     root.dataset.theme = name;
-    if (persist) localStorage.setItem("reimflow_theme_v2", name);
+    if (persist) localStorage.setItem("reimflow_theme_v3", name);
     if (currentLabel) currentLabel.textContent = themes[name].label;
     if (themeMeta) themeMeta.setAttribute("content", themes[name].color);
     document.querySelectorAll("[data-theme-option]").forEach((button) => {
@@ -29,8 +30,8 @@
     window.dispatchEvent(new CustomEvent("reimflow:themechange", { detail: { theme: name } }));
   }
 
-  const stored = localStorage.getItem("reimflow_theme_v2");
-  setTheme(themes[stored] ? stored : (root.dataset.theme || "art-deco"), false);
+  const stored = localStorage.getItem("reimflow_theme_v3");
+  setTheme(themes[stored] ? stored : (root.dataset.theme || "sonic-art"), false);
 
   toggle?.addEventListener("click", (event) => {
     event.stopPropagation();
