@@ -36,6 +36,11 @@ Erweitere Eigennamen NIEMALS selbstständig. Aus "Benzema" darf nicht "Karim Ben
 Verkürze mehrteilige Namen oder Phrasen ebenfalls nicht. Analysiere exakt die Zeichenfolge, die der Nutzer eingegeben hat.
 Wenn die Eingabe wahrscheinlich falsch geschrieben ist, setze correction nur bei sehr hoher Sicherheit als separaten Vorschlag; ändere interpreted_as trotzdem nicht.
 Bei Eigennamen, fremdsprachigen Namen, Marken oder unklarer Aussprache: keine erfundene Betonung behaupten. Unsicherheit kurz in note nennen und bei den Reimtreffern konservativer bewerten.
+Bei mehrteiligen Namen oder Phrasen analysierst du ZWEI Ebenen:
+A) den Gesamtklang der kompletten Query für echte Phrase- oder Multi-Silben-Reime;
+B) den dominanten Reimanker am Ende der Query, meistens das letzte betonte Wort oder die letzten 2 bis 4 betonten Silben.
+Wenn für A kaum natürliche Treffer existieren, darfst du starke Treffer für B liefern. Kennzeichne sie ehrlich als Multi-Silben, Near Rhyme, Slant Rhyme, Assonanz oder Phrase und behaupte keinen perfekten Reim.
+Ein mehrteiliger Name wie "Karim Benzema" darf also Treffer bekommen, die stark auf "Benzema" oder den Endklang der gesamten Phrase passen. Die Query selbst bleibt trotzdem exakt "Karim Benzema".
 pronunciation ist eine leicht lesbare Aussprachehilfe für deutsche Nutzer; ipa ist möglichst korrekte IPA.
 Erklärungen kurz und konkret. Vermeide Duplikate und bloße Flexionsvarianten. Sei kreativ, aber phonetisch ehrlich."""
 
@@ -151,12 +156,22 @@ class Handler(BaseHTTPRequestHandler):
             if not query or len(query)>MAX_QUERY_LEN: self.send_json(400,{"error":"INVALID_QUERY","message":"Bitte ein Wort oder eine kurze Phrase eingeben."}); return
             if category not in {"Alle","Nomen","Adjektiv","Verb","Umgangssprache","Sonstiges"}: category="Alle"
             if syllables not in {"Alle","1","2","3","4+"}: syllables="Alle"
-            key=hashlib.sha256(("rhymes|v6|"+query.casefold()+"|"+category+"|"+syllables).encode()).hexdigest()
+            key=hashlib.sha256(("rhymes|v7|"+query.casefold()+"|"+category+"|"+syllables).encode()).hexdigest()
             cached=cache_get(key)
             if cached: self.send_json(200,cached); return
-            user_text=json.dumps({"query":query,"filters":{"category":category,"syllables":syllables},"instructions":"Erzeuge 12 bis 16 starke unterschiedliche Treffer für exakt diese Query. Erweitere oder verkürze Namen niemals. Wenn ein Filter gesetzt ist, priorisiere ihn strikt. Bei Alle diversifiziere Wortarten. Bewerte nach realem Klang im Rap. Bei Eigennamen und unsicherer Aussprache konservativ bewerten und keine Betonung erfinden."},ensure_ascii=False)
+            user_text=json.dumps({"query":query,"filters":{"category":category,"syllables":syllables},"instructions":"Erzeuge 12 bis 16 brauchbare Treffer für exakt diese Query. Erweitere oder verkürze Namen niemals. Bei mehrteiligen Namen oder Phrasen zuerst den Gesamtklang prüfen und zusätzlich den dominanten End-Reimanker verwenden, wenn natürliche Vollphrasen-Reime rar sind. Lieber ehrliche Near-, Slant-, Assonanz- oder Phrase-Reime liefern als null Treffer oder erfundene Wörter. Wenn ein Filter gesetzt ist, priorisiere ihn strikt. Bei Alle diversifiziere Wortarten. Bewerte nach realem Klang im Rap. Bei Eigennamen und unsicherer Aussprache konservativ bewerten und keine Betonung erfinden."},ensure_ascii=False)
             try:
                 data,model=call_openai(user_text,RHYME_SCHEMA,"reimflow_rhymes",DEVELOPER_PROMPT); data=sanitize(data,query)
+                if len(data.get("rhymes",[])) < 4:
+                    retry_text=json.dumps({
+                        "query":query,
+                        "filters":{"category":category,"syllables":syllables},
+                        "instructions":"RETRY: Die erste Suche hatte zu wenige Treffer. Behalte die Query exakt unverändert. Nutze für mehrteilige Namen/Phrasen den letzten betonten Klangblock als Reimanker und liefere natürliche Multi-Silben-, Near-, Slant-, Assonanz- oder Phrase-Reime. Keine Fantasiewörter. Mindestens 8 brauchbare Treffer, Qualität ehrlich bewerten."
+                    },ensure_ascii=False)
+                    retry,model=call_openai(retry_text,RHYME_SCHEMA,"reimflow_rhymes_retry",DEVELOPER_PROMPT)
+                    retry=sanitize(retry,query)
+                    if len(retry.get("rhymes",[])) > len(data.get("rhymes",[])):
+                        data=retry
                 result={"ok":True,"engine":"ai_phonetic","model":model,"cached":False,**data}; cache_put(key,result); self.send_json(200,result)
             except Exception as e:
                 print("rhyme error:",str(e)[:600],flush=True); self.send_json(503 if "AI_NOT_CONFIGURED" in str(e) else 502,{"error":"AI_UNAVAILABLE","message":"Die KI-Reimsuche ist gerade nicht erreichbar. Bitte versuche es gleich nochmal."})
