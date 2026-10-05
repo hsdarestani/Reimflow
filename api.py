@@ -31,7 +31,11 @@ Multi-Silben-Reime, Slant Rhymes, Assonanzen und Reime über Wortgrenzen hinweg 
 Deutsche Umgangssprache, etablierter Slang, Eigennamen, Marken und englische Code-Switches sind erlaubt, wenn sie im Rap plausibel sind.
 Erfinde KEINE Fantasiewörter. Nutze reale Wörter, gebräuchliche Phrasen, bekannte Namen/Marken oder klar etablierte Umgangssprache.
 Ein Score über 90 ist selten und verlangt einen sehr starken Klang-Match.
-Wenn die Eingabe wahrscheinlich falsch geschrieben ist, setze correction nur bei hoher Sicherheit; korrigiere sonst nicht stillschweigend.
+WICHTIG: analysis.input und analysis.interpreted_as müssen exakt der vom Nutzer eingegebenen, getrimmten Query entsprechen.
+Erweitere Eigennamen NIEMALS selbstständig. Aus "Benzema" darf nicht "Karim Benzema" werden. Aus "Ronaldo" darf nicht "Cristiano Ronaldo" werden.
+Verkürze mehrteilige Namen oder Phrasen ebenfalls nicht. Analysiere exakt die Zeichenfolge, die der Nutzer eingegeben hat.
+Wenn die Eingabe wahrscheinlich falsch geschrieben ist, setze correction nur bei sehr hoher Sicherheit als separaten Vorschlag; ändere interpreted_as trotzdem nicht.
+Bei Eigennamen, fremdsprachigen Namen, Marken oder unklarer Aussprache: keine erfundene Betonung behaupten. Unsicherheit kurz in note nennen und bei den Reimtreffern konservativer bewerten.
 pronunciation ist eine leicht lesbare Aussprachehilfe für deutsche Nutzer; ipa ist möglichst korrekte IPA.
 Erklärungen kurz und konkret. Vermeide Duplikate und bloße Flexionsvarianten. Sei kreativ, aber phonetisch ehrlich."""
 
@@ -101,8 +105,17 @@ def call_openai(user_text,schema,schema_name,developer_prompt):
             raise
     raise last or RuntimeError("OPENAI_UNAVAILABLE")
 
-def sanitize(data):
-    analysis=data.get("analysis") or {}; seen=set(); clean=[]
+def sanitize(data, query):
+    analysis=data.get("analysis") or {}
+    analysis["input"]=query
+    analysis["interpreted_as"]=query
+    if analysis.get("correction"):
+        correction=str(analysis["correction"]).strip()
+        if not correction or correction.casefold()==query.casefold():
+            analysis["correction"]=None
+        else:
+            analysis["correction"]=correction[:120]
+    seen=set(); clean=[]
     for r in data.get("rhymes") or []:
         word=str(r.get("word","")).strip()
         if not word or word.casefold() in seen: continue
@@ -138,12 +151,12 @@ class Handler(BaseHTTPRequestHandler):
             if not query or len(query)>MAX_QUERY_LEN: self.send_json(400,{"error":"INVALID_QUERY","message":"Bitte ein Wort oder eine kurze Phrase eingeben."}); return
             if category not in {"Alle","Nomen","Adjektiv","Verb","Umgangssprache","Sonstiges"}: category="Alle"
             if syllables not in {"Alle","1","2","3","4+"}: syllables="Alle"
-            key=hashlib.sha256(("rhymes|v4|"+query.casefold()+"|"+category+"|"+syllables).encode()).hexdigest()
+            key=hashlib.sha256(("rhymes|v6|"+query.casefold()+"|"+category+"|"+syllables).encode()).hexdigest()
             cached=cache_get(key)
             if cached: self.send_json(200,cached); return
-            user_text=json.dumps({"query":query,"filters":{"category":category,"syllables":syllables},"instructions":"Erzeuge 12 bis 16 starke unterschiedliche Treffer. Wenn ein Filter gesetzt ist, priorisiere ihn strikt. Bei Alle diversifiziere Wortarten. Bewerte nach realem Klang im Rap."},ensure_ascii=False)
+            user_text=json.dumps({"query":query,"filters":{"category":category,"syllables":syllables},"instructions":"Erzeuge 12 bis 16 starke unterschiedliche Treffer für exakt diese Query. Erweitere oder verkürze Namen niemals. Wenn ein Filter gesetzt ist, priorisiere ihn strikt. Bei Alle diversifiziere Wortarten. Bewerte nach realem Klang im Rap. Bei Eigennamen und unsicherer Aussprache konservativ bewerten und keine Betonung erfinden."},ensure_ascii=False)
             try:
-                data,model=call_openai(user_text,RHYME_SCHEMA,"reimflow_rhymes",DEVELOPER_PROMPT); data=sanitize(data)
+                data,model=call_openai(user_text,RHYME_SCHEMA,"reimflow_rhymes",DEVELOPER_PROMPT); data=sanitize(data,query)
                 result={"ok":True,"engine":"ai_phonetic","model":model,"cached":False,**data}; cache_put(key,result); self.send_json(200,result)
             except Exception as e:
                 print("rhyme error:",str(e)[:600],flush=True); self.send_json(503 if "AI_NOT_CONFIGURED" in str(e) else 502,{"error":"AI_UNAVAILABLE","message":"Die KI-Reimsuche ist gerade nicht erreichbar. Bitte versuche es gleich nochmal."})
