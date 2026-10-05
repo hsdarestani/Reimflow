@@ -95,18 +95,8 @@
   },{threshold:.12});
   document.querySelectorAll(".art-chapter,.art-panel,.community-installation").forEach(el=>io.observe(el));
 
-  // Page changes feel like scene cuts instead of dashboard tab switches.
-  const pages=[...document.querySelectorAll(".page")];
-  const observer=new MutationObserver(mutations=>{
-    for(const m of mutations){
-      if(m.type==="attributes"&&m.attributeName==="class"&&m.target.classList.contains("active")){
-        const p=m.target;
-        p.classList.remove("art-enter");
-        requestAnimationFrame(()=>p.classList.add("art-enter"));
-      }
-    }
-  });
-  pages.forEach(p=>observer.observe(p,{attributes:true}));
+  // Page transitions are handled by CSS on .page.active.
+  // Do not observe and mutate page classes here: that creates a self-triggering loop.
 
   // Audio-reactive-ish illusion: search typing nudges the sculpture.
   const heroInput=document.getElementById("heroQuery");
