@@ -18,37 +18,78 @@ jobs:
 
       - name: Prepare deploy archive
         run: |
-          tar --exclude='.git' --exclude='.github' -czf /tmp/reimflow.tar.gz index.html styles.css themes.css theme-engine.js app.js README.md
+          tar --exclude='.git' --exclude='.github' -czf /tmp/reimflow.tar.gz index.html styles.css themes.css ai-engine.css theme-engine.js app.js api.py README.md
 
       - name: Install SSH helper
         run: |
           sudo apt-get update
           sudo apt-get install -y sshpass
-          
-      - name: Upload files
+
+      - name: Upload files and protected AI key
         env:
-          SSHPASS: ${{ secrets.PASS }}
-          DEPLOY_HOST: ${{ secrets.HOST }}
+          SSHPASS: \${{ secrets.PASS }}
+          DEPLOY_HOST: \${{ secrets.HOST }}
+          OPENAI_API_KEY: \${{ secrets.OPENAIAPIKEY }}
         run: |
           test -n "$DEPLOY_HOST"
           test -n "$SSHPASS"
-          sshpass -e scp -o StrictHostKeyChecking=no /tmp/reimflow.tar.gz root@"$DEPLOY_HOST":/tmp/reimflow.tar.gz
+          test -n "$OPENAI_API_KEY"
+          printf '%s' "$OPENAI_API_KEY" | base64 -w0 > /tmp/reimflow-openai-key.b64
+          sshpass -e scp -o StrictHostKeyChecking=no /tmp/reimflow.tar.gz /tmp/reimflow-openai-key.b64 root@"$DEPLOY_HOST":/tmp/
 
       - name: Configure server and publish
         env:
-          SSHPASS: ${{ secrets.PASS }}
-          DEPLOY_HOST: ${{ secrets.HOST }}
+          SSHPASS: \${{ secrets.PASS }}
+          DEPLOY_HOST: \${{ secrets.HOST }}
         run: |
           sshpass -e ssh -o StrictHostKeyChecking=no root@"$DEPLOY_HOST" 'bash -s' <<'REMOTE'
           set -euo pipefail
 
           apt-get update
-          DEBIAN_FRONTEND=noninteractive apt-get install -y nginx certbot python3-certbot-nginx
+          DEBIAN_FRONTEND=noninteractive apt-get install -y nginx certbot python3-certbot-nginx python3
 
-          mkdir -p /var/www/reimflow
+          mkdir -p /var/www/reimflow /opt/reimflow-api /var/lib/reimflow
           rm -rf /var/www/reimflow/*
           tar -xzf /tmp/reimflow.tar.gz -C /var/www/reimflow
-          chown -R www-data:www-data /var/www/reimflow
+
+          install -m 0644 /var/www/reimflow/api.py /opt/reimflow-api/api.py
+          rm -f /var/www/reimflow/api.py
+          chown -R www-data:www-data /var/www/reimflow /var/lib/reimflow
+          chown root:root /opt/reimflow-api/api.py
+
+          install -m 0600 /dev/null /etc/reimflow.env
+          printf 'OPENAI_API_KEY=' >/etc/reimflow.env
+          base64 -d /tmp/reimflow-openai-key.b64 >>/etc/reimflow.env
+          printf '\nOPENAI_MODEL=gpt-5.6-terra\nREIMFLOW_DB=/var/lib/reimflow/reimflow.sqlite3\n' >>/etc/reimflow.env
+
+          cat >/etc/systemd/system/reimflow-api.service <<'SERVICE'
+          [Unit]
+          Description=Reimflow AI Rhyme API
+          After=network-online.target
+          Wants=network-online.target
+
+          [Service]
+          Type=simple
+          User=www-data
+          Group=www-data
+          WorkingDirectory=/opt/reimflow-api
+          EnvironmentFile=/etc/reimflow.env
+          ExecStart=/usr/bin/python3 /opt/reimflow-api/api.py
+          Restart=always
+          RestartSec=2
+          NoNewPrivileges=true
+          PrivateTmp=true
+          ProtectSystem=strict
+          ProtectHome=true
+          ReadWritePaths=/var/lib/reimflow
+
+          [Install]
+          WantedBy=multi-user.target
+          SERVICE
+
+          systemctl daemon-reload
+          systemctl enable reimflow-api.service
+          systemctl restart reimflow-api.service
 
           cat >/etc/nginx/sites-available/reimflow <<'NGINX'
           server {
@@ -59,12 +100,24 @@ jobs:
               root /var/www/reimflow;
               index index.html;
 
+              location /api/ {
+                  proxy_pass http://127.0.0.1:8787;
+                  proxy_http_version 1.1;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+                  proxy_connect_timeout 5s;
+                  proxy_read_timeout 50s;
+                  client_max_body_size 32k;
+              }
+
               location / {
                   try_files $uri $uri/ /index.html;
               }
 
               location ~* \.(css|js|svg|png|jpg|jpeg|webp|woff2?)$ {
-                  expires 7d;
+                  expires 10m;
                   add_header Cache-Control "public";
                   try_files $uri =404;
               }
@@ -79,17 +132,29 @@ jobs:
 
           certbot --nginx -d reimflow.smarbiz.sbs --non-interactive --agree-tos --register-unsafely-without-email --redirect || true
 
-          rm -f /tmp/reimflow.tar.gz
+          for i in $(seq 1 15); do
+            if curl -fsS http://127.0.0.1:8787/api/health | grep -q '"ai": true'; then
+              echo "AI service healthy"
+              break
+            fi
+            if [ "$i" = "15" ]; then
+              systemctl status reimflow-api.service --no-pager || true
+              journalctl -u reimflow-api.service -n 80 --no-pager || true
+              exit 1
+            fi
+            sleep 2
+          done
+
+          rm -f /tmp/reimflow.tar.gz /tmp/reimflow-openai-key.b64
           REMOTE
 
-      - name: Verify deployment
+      - name: Verify frontend and AI endpoint
         run: |
           for i in {1..12}; do
-            if curl -fsSL --max-time 10 https://reimflow.smarbiz.sbs | grep -q "Reimflow"; then
-              echo "Deployment verified"
+            if curl -fsSL --max-time 10 https://reimflow.smarbiz.sbs | grep -q "Reimflow" && curl -fsSL --max-time 10 https://reimflow.smarbiz.sbs/api/health | grep -q '"ai": true'; then
+              echo "Frontend and AI API verified"
               exit 0
             fi
             sleep 5
           done
-          echo "HTTPS verification failed, checking HTTP"
-          curl -fsSL --max-time 10 http://reimflow.smarbiz.sbs | grep -q "Reimflow"
+          exit 1
