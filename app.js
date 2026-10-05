@@ -128,7 +128,7 @@ async function searchRhymes(force=false){
   const seq=++searchSequence;
 
   state.searchLoading=true;setSearchBusy(true);updateEngineState();renderLoading();renderQueryInsight(null);
-  const timer=setTimeout(()=>controller.abort(),22000);
+  const timer=setTimeout(()=>controller.abort(),38000);
   try{
     const response=await fetch("/api/rhymes",{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify({query:state.currentQuery,category:state.category,syllables:state.syllables}),signal:controller.signal});
     const data=await response.json().catch(()=>({}));
@@ -141,13 +141,22 @@ async function searchRhymes(force=false){
     if(seq!==searchSequence)return;
     if(err.name==="AbortError" && controller!==activeSearchController)return;
     const fallback=curatedFallback[normalize(state.currentQuery)];
-    state.searchLoading=false;state.engineOnline=false;
+    state.searchLoading=false;
     if(fallback){
+      state.engineOnline=true;
       state.aiResults=fallback.rhymes;state.queryAnalysis=fallback.analysis;state.searchSignature=signature;
-      renderRhymes();renderQueryInsight(fallback.analysis,true);updateEngineState("Fallback");toast("AI gerade nicht erreichbar. Kuratierte Ersatztreffer werden gezeigt.");
+      renderRhymes();renderQueryInsight(fallback.analysis,true);updateEngineState("Fallback");toast("Die Live Analyse war zu langsam. Kuratierte Ersatztreffer werden gezeigt.");
     }else{
       state.aiResults=[];state.queryAnalysis=null;
-      renderRhymes(err.name==="AbortError"?"Die Analyse hat zu lange gedauert. Bitte erneut versuchen.":err.message);updateEngineState();
+      if(err.name==="AbortError"){
+        state.engineOnline=true;
+        renderRhymes("Die Analyse wurde nach längerer Wartezeit abgebrochen. Bitte erneut versuchen.");
+        updateEngineState("Timeout");
+      }else{
+        state.engineOnline=false;
+        renderRhymes(err.message);
+        updateEngineState();
+      }
     }
   }finally{
     clearTimeout(timer);
@@ -169,7 +178,10 @@ function filteredRhymes(){
 
 function renderLoading(){
   $("#resultsCount").textContent="Analysiere…";$("#resultsFor").textContent=" „"+state.currentQuery+"“";
-  $("#rhymeResults").innerHTML=Array.from({length:5},(_,i)=>'<div class="rhyme-skeleton" style="--i:'+i+'"><span></span><div><b></b><small></small></div><i></i></div>').join("");
+  $("#rhymeResults").innerHTML='<div class="search-progress-copy"><strong>Klang wird analysiert</strong><span id="searchProgressText">Aussprache und Reimanker werden erkannt…</span></div>'+Array.from({length:4},(_,i)=>'<div class="rhyme-skeleton" style="--i:'+i+'"><span></span><div><b></b><small></small></div><i></i></div>').join("");
+  const seqNow=searchSequence;
+  setTimeout(()=>{if(seqNow===searchSequence&&state.searchLoading){const el=$("#searchProgressText");if(el)el.textContent="Eigennamen und Phrasen brauchen manchmal etwas länger…"}},7000);
+  setTimeout(()=>{if(seqNow===searchSequence&&state.searchLoading){const el=$("#searchProgressText");if(el)el.textContent="Fast fertig. Die Seite bleibt weiter bedienbar."}},16000);
 }
 
 function renderQueryInsight(analysis,fallback=false){
