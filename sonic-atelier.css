@@ -374,3 +374,5 @@ html[data-theme="sonic-art"] .stat-card span{color:var(--sa-red)}
 @media(prefers-reduced-motion:reduce){
   .sonic-sculpture .orbit,.phoneme-field span,.sonic-sculpture .wave-stack i,.mini-star{animation:none!important}
 }
+
+html.art-paused[data-theme="sonic-art"] .sonic-sculpture .orbit,html.art-paused[data-theme="sonic-art"] .phoneme-field span,html.art-paused[data-theme="sonic-art"] .sonic-sculpture .wave-stack i{animation-play-state:paused!important}
