@@ -1,0 +1,95 @@
+name: Deploy Reimflow
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: reimflow-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare deploy archive
+        run: |
+          tar --exclude='.git' --exclude='.github' -czf /tmp/reimflow.tar.gz index.html styles.css app.js README.md
+
+      - name: Install SSH helper
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sshpass
+          
+      - name: Upload files
+        env:
+          SSHPASS: ${{ secrets.PASS }}
+          DEPLOY_HOST: ${{ secrets.HOST }}
+        run: |
+          test -n "$DEPLOY_HOST"
+          test -n "$SSHPASS"
+          sshpass -e scp -o StrictHostKeyChecking=no /tmp/reimflow.tar.gz root@"$DEPLOY_HOST":/tmp/reimflow.tar.gz
+
+      - name: Configure server and publish
+        env:
+          SSHPASS: ${{ secrets.PASS }}
+          DEPLOY_HOST: ${{ secrets.HOST }}
+        run: |
+          sshpass -e ssh -o StrictHostKeyChecking=no root@"$DEPLOY_HOST" 'bash -s' <<'REMOTE'
+          set -euo pipefail
+
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y nginx certbot python3-certbot-nginx
+
+          mkdir -p /var/www/reimflow
+          rm -rf /var/www/reimflow/*
+          tar -xzf /tmp/reimflow.tar.gz -C /var/www/reimflow
+          chown -R www-data:www-data /var/www/reimflow
+
+          cat >/etc/nginx/sites-available/reimflow <<'NGINX'
+          server {
+              listen 80;
+              listen [::]:80;
+              server_name reimflow.smarbiz.sbs;
+
+              root /var/www/reimflow;
+              index index.html;
+
+              location / {
+                  try_files $uri $uri/ /index.html;
+              }
+
+              location ~* \.(css|js|svg|png|jpg|jpeg|webp|woff2?)$ {
+                  expires 7d;
+                  add_header Cache-Control "public";
+                  try_files $uri =404;
+              }
+          }
+          NGINX
+
+          ln -sfn /etc/nginx/sites-available/reimflow /etc/nginx/sites-enabled/reimflow
+          rm -f /etc/nginx/sites-enabled/default
+          nginx -t
+          systemctl enable nginx
+          systemctl reload nginx
+
+          certbot --nginx -d reimflow.smarbiz.sbs --non-interactive --agree-tos --register-unsafely-without-email --redirect || true
+
+          rm -f /tmp/reimflow.tar.gz
+          REMOTE
+
+      - name: Verify deployment
+        run: |
+          for i in {1..12}; do
+            if curl -fsSL --max-time 10 https://reimflow.smarbiz.sbs | grep -q "Reimflow"; then
+              echo "Deployment verified"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "HTTPS verification failed, checking HTTP"
+          curl -fsSL --max-time 10 http://reimflow.smarbiz.sbs | grep -q "Reimflow"
