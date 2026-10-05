@@ -45,8 +45,16 @@ jobs:
           sshpass -e ssh -o StrictHostKeyChecking=no root@"$DEPLOY_HOST" 'bash -s' <<'REMOTE'
           set -euo pipefail
 
-          apt-get update
-          DEBIAN_FRONTEND=noninteractive apt-get install -y nginx certbot python3-certbot-nginx python3
+          if ! command -v nginx >/dev/null 2>&1 || ! command -v certbot >/dev/null 2>&1 || ! command -v python3 >/dev/null 2>&1; then
+            for i in $(seq 1 60); do
+              if ! fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 && ! fuser /var/lib/dpkg/lock >/dev/null 2>&1; then
+                break
+              fi
+              sleep 2
+            done
+            apt-get update
+            DEBIAN_FRONTEND=noninteractive apt-get install -y nginx certbot python3-certbot-nginx python3
+          fi
 
           mkdir -p /var/www/reimflow /opt/reimflow-api /var/lib/reimflow
           rm -rf /var/www/reimflow/*
