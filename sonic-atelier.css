@@ -480,3 +480,223 @@ html.art-paused[data-theme="sonic-art"] .sonic-sculpture .orbit,html.art-paused[
     padding-bottom:96px;
   }
 }
+
+
+/* Ashkan feedback pass: calmer, clearer, almost monochrome */
+html[data-theme="sonic-art"]{
+  --sa-paper:#f1eee6;
+  --sa-muted:#938f87;
+  --sa-red:#ff5136;
+  --sa-acid:#f1eee6;
+  --sa-blue:#f1eee6;
+  --sa-pink:#f1eee6;
+  --sa-line:rgba(241,238,230,.14);
+  --theme-accent:#ff5136;
+}
+
+html[data-theme="sonic-art"] body{
+  background:
+    radial-gradient(900px 560px at 84% -10%,rgba(255,81,54,.055),transparent 65%),
+    #090909;
+}
+
+html[data-theme="sonic-art"] .theme-swatch{
+  background:linear-gradient(135deg,var(--sa-red) 0 48%,var(--sa-paper) 48% 52%,#090909 52%);
+}
+
+.theme-preview.sonic{
+  background:linear-gradient(135deg,#090909 0 62%,#ff5136 62% 74%,#f1eee6 74%);
+  color:#f1eee6;
+}
+
+html[data-theme="sonic-art"] .topbar:before{
+  background:linear-gradient(90deg,var(--sa-red),transparent 42%,transparent);
+}
+
+html[data-theme="sonic-art"] .sonic-title .line:nth-child(1){
+  color:var(--sa-paper);
+}
+
+html[data-theme="sonic-art"] .sonic-title .line:nth-child(2){
+  color:var(--sa-red);
+  margin-left:.16em;
+}
+
+html[data-theme="sonic-art"] .sonic-title{
+  line-height:.84;
+}
+
+html[data-theme="sonic-art"] .hero-copy>p{
+  max-width:560px;
+}
+
+html[data-theme="sonic-art"] .phoneme-field span{
+  color:var(--sa-paper)!important;
+  opacity:.28!important;
+}
+
+html[data-theme="sonic-art"] .sonic-sculpture .orbit.orbit-2 span{
+  color:#77736b;
+}
+
+html[data-theme="sonic-art"] .sonic-sculpture .wave-stack i{
+  background:linear-gradient(var(--sa-paper),var(--sa-red),var(--sa-paper));
+  opacity:.48;
+}
+
+html[data-theme="sonic-art"] .sonic-sculpture .core-word{
+  text-shadow:none;
+}
+
+html[data-theme="sonic-art"] .sculpture-cross:before,
+html[data-theme="sonic-art"] .sculpture-cross:after{
+  background:var(--sa-red);
+}
+
+html[data-theme="sonic-art"] .keyword-marquee{
+  transform:none;
+  margin:12px 0 72px;
+  background:#0b0b0a;
+  color:#8f8b83;
+  border-top:1px solid var(--sa-line);
+  border-bottom:1px solid var(--sa-line);
+}
+
+html[data-theme="sonic-art"] .keyword-marquee div{
+  font-size:.7rem;
+  font-family:"JetBrains Mono",monospace;
+  font-weight:500;
+  letter-spacing:.12em;
+  padding:12px 0;
+}
+
+html[data-theme="sonic-art"] .chapter-copy h2 em{
+  color:var(--sa-red);
+}
+
+.art-panel:nth-child(1):hover,
+.art-panel:nth-child(2):hover,
+.art-panel:nth-child(3):hover{
+  background:#12110f;
+  color:var(--sa-paper);
+}
+
+.art-panel:hover .glyph{
+  -webkit-text-stroke-color:var(--sa-red);
+  opacity:.32;
+}
+
+.installation-head h2 span{
+  color:var(--sa-red);
+}
+
+.judgement-word.right{
+  color:var(--sa-paper);
+}
+
+html[data-theme="sonic-art"] .confidence-meter i{
+  background:var(--sa-red);
+}
+
+html[data-theme="sonic-art"] .leaderboard{
+  background:#11110f;
+  color:var(--sa-paper);
+  border:1px solid var(--sa-line);
+}
+
+html[data-theme="sonic-art"] .leaderboard h3,
+html[data-theme="sonic-art"] .leaderboard strong,
+html[data-theme="sonic-art"] .leaderboard b{
+  color:var(--sa-paper);
+}
+
+html[data-theme="sonic-art"] .leaderboard .kicker{
+  color:var(--sa-red);
+  opacity:1;
+}
+
+html[data-theme="sonic-art"] .leaderboard small,
+html[data-theme="sonic-art"] .leaderboard p{
+  color:var(--sa-muted);
+}
+
+html[data-theme="sonic-art"] .leader-icon{
+  background:var(--sa-red);
+  color:#090909;
+}
+
+html[data-theme="sonic-art"] .profile-hero{
+  background:#11110f;
+  border:1px solid var(--sa-line);
+  color:var(--sa-paper);
+}
+
+html[data-theme="sonic-art"] .profile-avatar{
+  background:var(--sa-red);
+  color:#090909;
+}
+
+html[data-theme="sonic-art"] .favorite-btn.active{
+  background:var(--sa-red);
+  color:#090909;
+  border-color:var(--sa-red);
+}
+
+@media(max-width:760px){
+  html[data-theme="sonic-art"] .sonic-hero{
+    padding-top:122px;
+    padding-bottom:58px;
+  }
+
+  html[data-theme="sonic-art"] .eyebrow{
+    font-size:.58rem;
+    letter-spacing:.1em;
+  }
+
+  html[data-theme="sonic-art"] .sonic-title{
+    font-size:clamp(3.55rem,18vw,5.5rem);
+    line-height:.88;
+    margin:22px 0 22px;
+  }
+
+  html[data-theme="sonic-art"] .sonic-title .line:nth-child(2){
+    margin-left:.08em;
+  }
+
+  html[data-theme="sonic-art"] .hero-copy>p{
+    font-size:.96rem;
+    line-height:1.65;
+    margin:20px 0 26px;
+  }
+
+  html[data-theme="sonic-art"] .sonic-sculpture{
+    max-width:315px;
+    margin-top:8px;
+  }
+
+  html[data-theme="sonic-art"] .phoneme-field,
+  html[data-theme="sonic-art"] .orbit.orbit-2,
+  html[data-theme="sonic-art"] .sculpture-label.a,
+  html[data-theme="sonic-art"] .sculpture-label.b{
+    display:none;
+  }
+
+  html[data-theme="sonic-art"] .keyword-marquee{
+    margin-top:0;
+    margin-bottom:48px;
+  }
+
+  html[data-theme="sonic-art"] .mobile-nav:before{
+    background:linear-gradient(90deg,var(--sa-red),transparent 45%,transparent);
+  }
+
+  html[data-theme="sonic-art"] .mobile-nav button.active span{
+    background:var(--sa-paper);
+    border-color:var(--sa-paper);
+    color:#090909;
+  }
+
+  html[data-theme="sonic-art"] .mobile-nav button.active:after{
+    background:var(--sa-red);
+  }
+}
