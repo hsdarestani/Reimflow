@@ -5,8 +5,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 HOST="127.0.0.1"; PORT=int(os.getenv("PORT","8787"))
 OPENAI_API_KEY=os.getenv("OPENAI_API_KEY","").strip()
-PRIMARY_MODEL=os.getenv("OPENAI_MODEL","gpt-5.6-terra").strip()
-FALLBACK_MODELS=[m for m in [PRIMARY_MODEL,"gpt-5.6-luna","gpt-5-mini"] if m]
+PRIMARY_MODEL=os.getenv("OPENAI_MODEL","gpt-6-luna").strip()
+FALLBACK_MODELS=[m for m in [PRIMARY_MODEL,"gpt-5.6-terra","gpt-5.6-sol","gpt-5-mini"] if m]
 DB_PATH=os.getenv("REIMFLOW_DB","/var/lib/reimflow/reimflow.sqlite3")
 CACHE_TTL=60*60*24*30; MAX_QUERY_LEN=120; RATE_LIMIT=24; RATE_WINDOW=60
 _lock=threading.Lock(); _rate=defaultdict(deque)
@@ -14,7 +14,7 @@ _lock=threading.Lock(); _rate=defaultdict(deque)
 RHYME_SCHEMA={"type":"object","additionalProperties":False,"required":["analysis","rhymes"],"properties":{
 "analysis":{"type":"object","additionalProperties":False,"required":["input","interpreted_as","pronunciation","ipa","syllables","language","correction","note"],"properties":{
 "input":{"type":"string"},"interpreted_as":{"type":"string"},"pronunciation":{"type":"string"},"ipa":{"type":"string"},"syllables":{"type":"integer","minimum":1,"maximum":20},"language":{"type":"string"},"correction":{"type":["string","null"]},"note":{"type":"string"}}},
-"rhymes":{"type":"array","minItems":4,"maxItems":16,"items":{"type":"object","additionalProperties":False,"required":["word","pronunciation","ipa","syllables","category","register","score","confidence","kind","explanation"],"properties":{
+"rhymes":{"type":"array","minItems":4,"maxItems":10,"items":{"type":"object","additionalProperties":False,"required":["word","pronunciation","ipa","syllables","category","register","score","confidence","kind","explanation"],"properties":{
 "word":{"type":"string"},"pronunciation":{"type":"string"},"ipa":{"type":"string"},"syllables":{"type":"integer","minimum":1,"maximum":20},
 "category":{"type":"string","enum":["Nomen","Adjektiv","Verb","Umgangssprache","Sonstiges"]},
 "register":{"type":"string","enum":["Standard","Umgangssprache","Slang","Name/Marke","Englisch/Code-Switch"]},
@@ -92,11 +92,12 @@ def call_openai(user_text,schema,schema_name,developer_prompt):
         body={"model":model,"store":False,"reasoning":{"effort":"low"},"input":[
             {"role":"developer","content":[{"type":"input_text","text":developer_prompt}]},
             {"role":"user","content":[{"type":"input_text","text":user_text}]}],
+            "max_output_tokens":3200,
             "text":{"format":{"type":"json_schema","name":schema_name,"strict":True,"schema":schema}}}
         req=urllib.request.Request("https://api.openai.com/v1/responses",data=json.dumps(body,ensure_ascii=False).encode(),method="POST",
             headers={"Authorization":"Bearer "+OPENAI_API_KEY,"Content-Type":"application/json","User-Agent":"Reimflow/1.0"})
         try:
-            with urllib.request.urlopen(req,timeout=42) as resp: raw=json.loads(resp.read().decode())
+            with urllib.request.urlopen(req,timeout=18) as resp: raw=json.loads(resp.read().decode())
             text=extract_output_text(raw)
             if not text: raise RuntimeError("EMPTY_AI_RESPONSE")
             return json.loads(text),model
@@ -129,7 +130,7 @@ def sanitize(data, query):
         r["score"]=max(0,min(100,int(r.get("score",0)))); r["confidence"]=max(0,min(100,int(r.get("confidence",0)))); r["syllables"]=max(1,min(20,int(r.get("syllables",1))))
         clean.append(r)
     clean.sort(key=lambda x:(x["score"],x["confidence"]),reverse=True)
-    return {"analysis":analysis,"rhymes":clean[:16]}
+    return {"analysis":analysis,"rhymes":clean[:10]}
 
 class Handler(BaseHTTPRequestHandler):
     server_version="ReimflowAPI/1.0"
@@ -156,10 +157,10 @@ class Handler(BaseHTTPRequestHandler):
             if not query or len(query)>MAX_QUERY_LEN: self.send_json(400,{"error":"INVALID_QUERY","message":"Bitte ein Wort oder eine kurze Phrase eingeben."}); return
             if category not in {"Alle","Nomen","Adjektiv","Verb","Umgangssprache","Sonstiges"}: category="Alle"
             if syllables not in {"Alle","1","2","3","4+"}: syllables="Alle"
-            key=hashlib.sha256(("rhymes|v7|"+query.casefold()+"|"+category+"|"+syllables).encode()).hexdigest()
+            key=hashlib.sha256(("rhymes|v8|"+query.casefold()+"|"+category+"|"+syllables).encode()).hexdigest()
             cached=cache_get(key)
             if cached: self.send_json(200,cached); return
-            user_text=json.dumps({"query":query,"filters":{"category":category,"syllables":syllables},"instructions":"Erzeuge 12 bis 16 brauchbare Treffer für exakt diese Query. Erweitere oder verkürze Namen niemals. Bei mehrteiligen Namen oder Phrasen zuerst den Gesamtklang prüfen und zusätzlich den dominanten End-Reimanker verwenden, wenn natürliche Vollphrasen-Reime rar sind. Lieber ehrliche Near-, Slant-, Assonanz- oder Phrase-Reime liefern als null Treffer oder erfundene Wörter. Wenn ein Filter gesetzt ist, priorisiere ihn strikt. Bei Alle diversifiziere Wortarten. Bewerte nach realem Klang im Rap. Bei Eigennamen und unsicherer Aussprache konservativ bewerten und keine Betonung erfinden."},ensure_ascii=False)
+            user_text=json.dumps({"query":query,"filters":{"category":category,"syllables":syllables},"instructions":"Erzeuge 8 bis 10 brauchbare Treffer für exakt diese Query. Erweitere oder verkürze Namen niemals. Bei mehrteiligen Namen oder Phrasen zuerst den Gesamtklang prüfen und zusätzlich den dominanten End-Reimanker verwenden, wenn natürliche Vollphrasen-Reime rar sind. Lieber ehrliche Near-, Slant-, Assonanz- oder Phrase-Reime liefern als null Treffer oder erfundene Wörter. Wenn ein Filter gesetzt ist, priorisiere ihn strikt. Bei Alle diversifiziere Wortarten. Bewerte nach realem Klang im Rap. Bei Eigennamen und unsicherer Aussprache konservativ bewerten und keine Betonung erfinden."},ensure_ascii=False)
             try:
                 data,model=call_openai(user_text,RHYME_SCHEMA,"reimflow_rhymes",DEVELOPER_PROMPT); data=sanitize(data,query)
                 if len(data.get("rhymes",[])) < 4:
