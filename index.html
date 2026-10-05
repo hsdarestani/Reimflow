@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#8B5CF6" />
-  <script>try{document.documentElement.dataset.theme=localStorage.getItem("reimflow_theme_v2")||"art-deco"}catch(e){document.documentElement.dataset.theme="art-deco"}</script>
+  <script>try{document.documentElement.dataset.theme=localStorage.getItem("reimflow_theme_v3")||"sonic-art"}catch(e){document.documentElement.dataset.theme="sonic-art"}</script>
   <meta name="description" content="Reimflow findet Reime nach Klang, Silben und Aussprache. Für Rapper, Producer und die Community." />
   <title>Reimflow · Reime, Beats und Samples</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="themes.css" />
   <link rel="stylesheet" href="ai-engine.css" />
+  <link rel="stylesheet" href="sonic-atelier.css" />
 </head>
 <body>
   <div class="theme-atmosphere" aria-hidden="true"><span class="ambient-one"></span><span class="ambient-two"></span><span class="ambient-three"></span></div>
@@ -40,7 +41,10 @@
       </button>
       <div class="theme-menu" id="themeMenu" role="radiogroup" aria-label="Design auswählen">
         <div class="theme-menu-title">Design Style</div>
-        <button class="theme-option" type="button" role="radio" data-theme-option="playful" aria-checked="true">
+        <button class="theme-option" type="button" role="radio" data-theme-option="sonic-art" aria-checked="true">
+          <span class="theme-preview sonic" aria-hidden="true"></span><span><strong>Sonic Atelier</strong><small>Reimflow Original · Klang als Kunst</small></span><span class="theme-check">✓</span>
+        </button>
+        <button class="theme-option" type="button" role="radio" data-theme-option="playful" aria-checked="false">
           <span class="theme-preview playful" aria-hidden="true"></span><span><strong>Playful</strong><small>Original · hell & geometrisch</small></span><span class="theme-check">✓</span>
         </button>
         <button class="theme-option" type="button" role="radio" data-theme-option="linear" aria-checked="false">
@@ -62,93 +66,108 @@
 
   <main>
     <section class="page active" data-page="home">
-      <div class="hero container">
+      <div class="sonic-hero container">
         <div class="hero-copy">
           <div class="eyebrow"><span class="mini-star">✦</span> AI hört Klang, nicht nur Buchstaben</div>
-          <h1>Finde den <span class="marker violet">Flow</span><br>für deine <span class="marker pink">Lines.</span></h1>
-          <p>Gib jedes Wort, jeden Namen oder jede Phrase ein. Reimflow analysiert Aussprache, Silben, Betonung und Rap Flow und ergänzt die Community, bis die eigene Reimdatenbank wächst.</p>
+          <h1 class="sonic-title" aria-label="Finde den Flow für deine Lines">
+            <span class="line">Finde den</span>
+            <span class="line">Flow</span>
+            <span class="line">für deine Lines</span>
+          </h1>
+          <p>Kein Wörterbuch. Ein Instrument für Klang. Reimflow zerlegt Namen, Wörter und Phrasen in Aussprache, Silben und Rhythmus und baut daraus neue Wege für deine nächste Line.</p>
           <form class="hero-search" id="heroSearch">
             <label class="sr-only" for="heroQuery">Wort oder Phrase</label>
-            <input id="heroQuery" autocomplete="off" placeholder="z. B. Jude Bellingham" />
-            <button class="candy-btn" type="submit">Reime finden <span>→</span></button>
+            <input id="heroQuery" autocomplete="off" placeholder="Schreib etwas, das klingen soll …" />
+            <button class="candy-btn" type="submit">Klang öffnen <span>→</span></button>
           </form>
           <div class="quick-tags">
-            <span>Beliebt:</span>
+            <span>Try /</span>
             <button data-example="Jude Bellingham">Jude Bellingham</button>
             <button data-example="Taycan Turbo">Taycan Turbo</button>
             <button data-example="Berlin">Berlin</button>
           </div>
         </div>
 
-        <div class="hero-board" aria-label="Beispiel für Reimergebnisse">
-          <div class="dots"></div>
-          <div class="floating-note note-a">3 Silben</div>
-          <div class="floating-note note-b">Nomen</div>
-          <div class="sticker-card hero-card">
-            <div class="card-topline">
-              <span class="status-pill violet-bg">Klang Match</span>
-              <button class="icon-btn speak-btn" data-speak="Jude Bellingham" aria-label="Aussprache anhören">♫</button>
-            </div>
-            <div class="source-word">Jude Bellingham</div>
-            <div class="pronunciation">juːd ˈbɛlɪŋəm</div>
-            <div class="connector-line"><span></span><strong>REIMT AUF</strong><span></span></div>
-            <div class="result-preview">
-              <div>
-                <strong>blue Talisman</strong>
-                <small>Multi Silben · Umgangssprache</small>
-              </div>
-              <div class="score-bubble">91</div>
-            </div>
-          </div>
-          <div class="burst">FLOW<br>READY</div>
+        <div class="sonic-sculpture" aria-label="Interaktive Klangskulptur">
+          <div class="disc"></div>
+          <div class="orbit"><span>PHONEM · RHYTHMUS · STRESS · KLANG ·</span></div>
+          <div class="orbit orbit-2"><span>REIM / FLOW / SILBE / BAR /</span></div>
+          <div class="wave-stack" aria-hidden="true"></div>
+          <div class="phoneme-field" aria-hidden="true"></div>
+          <div class="core-word">KLANG</div>
+          <div class="sculpture-cross" aria-hidden="true"></div>
+          <div class="sculpture-label a">phonetic object</div>
+          <div class="sculpture-label b">generated in real time</div>
+          <div class="sculpture-label c">RF / 2026</div>
+          <button class="speak-btn sr-only" data-speak="Reimflow">Aussprache</button>
         </div>
       </div>
 
       <div class="keyword-marquee" aria-hidden="true">
-        <div>REIME ✦ SILBEN ✦ AUSSPRACHE ✦ BARS ✦ BEATS ✦ SAMPLES ✦ COMMUNITY ✦ REIME ✦ SILBEN ✦ AUSSPRACHE ✦ BARS ✦ BEATS ✦ SAMPLES ✦ COMMUNITY ✦</div>
+        <div>AUSSPRACHE / SILBEN / STRESS / SLANG / MULTI SILBEN / ASSONANZ / PHONETIK / FLOW / BARS / AUSSPRACHE / SILBEN / STRESS / SLANG /</div>
       </div>
 
-      <section class="container section-space">
-        <div class="section-heading">
-          <div><span class="kicker">So funktioniert es</span><h2>Von der Idee zur Line.</h2></div>
-          <p>Ein Werkzeug für echte Rap Praxis. Schnell suchen, den Klang prüfen und gute Reime gemeinsam besser machen.</p>
-        </div>
-        <div class="feature-grid">
-          <article class="sticker-card feature-card accent-violet">
-            <span class="feature-number">01</span><div class="feature-icon">◎</div>
-            <h3>Nach Klang suchen</h3><p>Buchstaben sind nicht alles. Reimflow achtet auf Silben, Aussprache und Rhythmus.</p>
-            <button class="text-link" data-go="rhymes">Jetzt testen →</button>
-          </article>
-          <article class="sticker-card feature-card accent-pink">
-            <span class="feature-number">02</span><div class="feature-icon">✦</div>
-            <h3>Reime beitragen</h3><p>Füttere die Community mit neuen Wörtern und Reimen. Gute Beiträge bringen Punkte.</p>
-            <button class="text-link" data-go="community">Beitrag senden →</button>
-          </article>
-          <article class="sticker-card feature-card accent-yellow">
-            <span class="feature-number">03</span><div class="feature-icon">▶</div>
-            <h3>Beats entdecken</h3><p>Producer laden Beats und Samples hoch. Rapper finden Material für ihre nächsten Tracks.</p>
-            <button class="text-link" data-go="beats">Beats öffnen →</button>
-          </article>
+      <section class="art-chapter">
+        <div class="container chapter-grid">
+          <div class="chapter-index">Kapitel <strong>I</strong></div>
+          <div>
+            <div class="chapter-copy">
+              <h2>Wir suchen nicht nach <em>Buchstaben.</em><br>Wir suchen nach Klang.</h2>
+              <div>
+                <p>Ein Reim lebt im Mund, nicht auf dem Papier. Deshalb schaut Reimflow auf Betonung, Vokale, Konsonanten, Silbenzahl und Rhythmus. Auch Namen, Marken, Slang und Code Switch gehören dazu.</p>
+                <div class="chapter-note">Speech → phonetics → rhyme space → line</div>
+              </div>
+            </div>
+
+            <div class="art-triptych">
+              <article class="art-panel">
+                <span class="roman">I / HÖREN</span><span class="glyph">ʃ</span>
+                <h3>Klang suchen</h3>
+                <p>AI analysiert reale Aussprache und baut starke Perfect, Multi Silben und Slant Rhymes.</p>
+                <button class="text-link" data-go="rhymes">Engine öffnen →</button>
+              </article>
+              <article class="art-panel">
+                <span class="roman">II / PRÜFEN</span><span class="glyph">✓</span>
+                <h3>Menschen hören mit</h3>
+                <p>Tester prüfen, ob ein Reim im echten Rap funktioniert. AI hilft, ersetzt aber nicht das Ohr.</p>
+                <button class="text-link" data-go="community">Community öffnen →</button>
+              </article>
+              <article class="art-panel">
+                <span class="roman">III / BAUEN</span><span class="glyph">∞</span>
+                <h3>Aus Klang wird Track</h3>
+                <p>Beats und Samples liegen im selben kreativen Raum. Reim finden, Material hören, weiterbauen.</p>
+                <button class="text-link" data-go="beats">Beats öffnen →</button>
+              </article>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section class="container split-callout">
-        <div>
-          <span class="kicker">Community Qualität</span>
-          <h2>Nicht jeder Reim kommt einfach durch.</h2>
-          <p>Tester hören hin und prüfen, ob Aussprache und Klang wirklich passen. So wächst eine Datenbank, die für Rap gemacht ist.</p>
-          <button class="secondary-btn" data-go="community">Tester Bereich ansehen</button>
-        </div>
-        <div class="review-stack">
-          <div class="review-chip rotate-left"><span>✓</span> Aussprache passt</div>
-          <div class="review-chip rotate-right"><span>✓</span> Silben passen</div>
-          <div class="review-chip rotate-left"><span>✓</span> Rap tauglich</div>
+      <section class="community-installation">
+        <div class="container">
+          <div class="installation-head">
+            <h2>Der Reim ist erst echt,<span>wenn er im Ohr besteht.</span></h2>
+            <div class="installation-caption">Reimflow wächst als kollektives Klangarchiv. Community Beiträge treffen auf AI Analyse und menschliche Prüfung.</div>
+          </div>
+          <div class="judgement-stage">
+            <div class="judgement-word left">BELLINGHAM</div>
+            <div class="judgement-center">
+              <div class="ear" aria-hidden="true"></div>
+              <small>Human ear<br>+ AI check</small>
+            </div>
+            <div class="judgement-word right">TALISMAN</div>
+            <div class="judgement-score">KLANG MATCH / 91</div>
+          </div>
+          <div class="installation-actions">
+            <span class="chapter-note">Nicht jeder Eintrag wird übernommen. Gute Reime werden bestätigt, schlechte verschwinden.</span>
+            <button class="secondary-btn" data-go="community">Tester Bereich ansehen →</button>
+          </div>
         </div>
       </section>
     </section>
 
     <section class="page" data-page="rhymes">
-      <div class="container app-shell">
+      <div class="container app-shell" data-art-label="02 / RHYME ENGINE">
         <div class="page-title">
           <div><span class="kicker">AI Phonetic Rhyme Engine</span><h1>Finde deinen Reim.</h1></div>
           <div class="points-pill">✦ <span data-points>120</span> Punkte</div>
@@ -192,7 +211,7 @@
     </section>
 
     <section class="page" data-page="community">
-      <div class="container app-shell">
+      <div class="container app-shell" data-art-label="03 / COMMUNITY">
         <div class="page-title">
           <div><span class="kicker">Gemeinsam besser</span><h1>Community & Tester.</h1></div>
           <button class="candy-btn" id="openSubmit">Reim hinzufügen <span>＋</span></button>
@@ -224,7 +243,7 @@
     </section>
 
     <section class="page" data-page="beats">
-      <div class="container app-shell">
+      <div class="container app-shell" data-art-label="04 / SOUND LIBRARY">
         <div class="page-title">
           <div><span class="kicker">Für Rapper & Producer</span><h1>Beats & Samples.</h1></div>
           <button class="candy-btn" id="openBeatUpload">Upload <span>↑</span></button>
@@ -238,7 +257,7 @@
     </section>
 
     <section class="page" data-page="profile">
-      <div class="container app-shell">
+      <div class="container app-shell" data-art-label="05 / PROFILE">
         <div class="profile-hero sticker-card">
           <div class="profile-avatar">HF</div>
           <div class="profile-copy"><span class="status-pill violet-bg">Rapper</span><h1>Hossein Flow</h1><p>@hosseinflow · Frankfurt</p></div>
@@ -325,6 +344,7 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="theme-engine.js"></script>
+  <script src="sonic-atelier.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
