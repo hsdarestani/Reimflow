@@ -4,14 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#8B5CF6" />
+  <script>try{document.documentElement.dataset.theme=localStorage.getItem("reimflow_theme")||"playful"}catch(e){document.documentElement.dataset.theme="playful"}</script>
   <meta name="description" content="Reimflow findet Reime nach Klang, Silben und Aussprache. Für Rapper, Producer und die Community." />
   <title>Reimflow · Reime, Beats und Samples</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Italiana&family=JetBrains+Mono:wght@400;500;600&family=Josefin+Sans:wght@400;500;600;700&family=Marcellus&family=Orbitron:wght@400;500;700;900&family=Outfit:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Share+Tech+Mono&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="themes.css" />
 </head>
 <body>
+  <div class="theme-atmosphere" aria-hidden="true"><span class="ambient-one"></span><span class="ambient-two"></span><span class="ambient-three"></span></div>
   <div class="shape shape-a" aria-hidden="true"></div>
   <div class="shape shape-b" aria-hidden="true"></div>
   <div class="shape shape-c" aria-hidden="true"></div>
@@ -28,6 +31,31 @@
       <button class="nav-link" data-go="beats">Beats</button>
       <button class="nav-link" data-go="profile">Profil</button>
     </nav>
+    <div class="theme-switcher">
+      <button class="theme-toggle" id="themeToggle" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="themeMenu">
+        <span class="theme-swatch" aria-hidden="true"></span>
+        <span class="theme-current">Playful</span>
+        <span class="theme-caret" aria-hidden="true">⌄</span>
+      </button>
+      <div class="theme-menu" id="themeMenu" role="radiogroup" aria-label="Design auswählen">
+        <div class="theme-menu-title">Design Style</div>
+        <button class="theme-option" type="button" role="radio" data-theme-option="playful" aria-checked="true">
+          <span class="theme-preview playful" aria-hidden="true"></span><span><strong>Playful</strong><small>Original · hell & geometrisch</small></span><span class="theme-check">✓</span>
+        </button>
+        <button class="theme-option" type="button" role="radio" data-theme-option="linear" aria-checked="false">
+          <span class="theme-preview linear" aria-hidden="true"></span><span><strong>Linear / Modern</strong><small>Cinematic · Indigo · Glass</small></span><span class="theme-check">✓</span>
+        </button>
+        <button class="theme-option" type="button" role="radio" data-theme-option="minimal-dark" aria-checked="false">
+          <span class="theme-preview minimal" aria-hidden="true"></span><span><strong>Minimalist Dark</strong><small>Slate · Amber · Calm</small></span><span class="theme-check">✓</span>
+        </button>
+        <button class="theme-option" type="button" role="radio" data-theme-option="vaporwave" aria-checked="false">
+          <span class="theme-preview vapor" aria-hidden="true"></span><span><strong>Vaporwave</strong><small>Neon · CRT · Outrun</small></span><span class="theme-check">✓</span>
+        </button>
+        <button class="theme-option" type="button" role="radio" data-theme-option="art-deco" aria-checked="false">
+          <span class="theme-preview deco" aria-hidden="true"></span><span><strong>Art Deco</strong><small>Obsidian · Gold · Gatsby</small></span><span class="theme-check">✓</span>
+        </button>
+      </div>
+    </div>
     <button class="pill-btn small" data-go="premium">Premium <span class="button-dot">↗</span></button>
   </header>
 
@@ -292,6 +320,7 @@
   </dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="theme-engine.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
