@@ -27,9 +27,9 @@ jobs:
 
       - name: Upload files and protected AI key
         env:
-          SSHPASS: \${{ secrets.PASS }}
-          DEPLOY_HOST: \${{ secrets.HOST }}
-          OPENAI_API_KEY: \${{ secrets.OPENAIAPIKEY }}
+          SSHPASS: ${{ secrets.PASS }}
+          DEPLOY_HOST: ${{ secrets.HOST }}
+          OPENAI_API_KEY: ${{ secrets.OPENAIAPIKEY }}
         run: |
           test -n "$DEPLOY_HOST"
           test -n "$SSHPASS"
@@ -39,8 +39,8 @@ jobs:
 
       - name: Configure server and publish
         env:
-          SSHPASS: \${{ secrets.PASS }}
-          DEPLOY_HOST: \${{ secrets.HOST }}
+          SSHPASS: ${{ secrets.PASS }}
+          DEPLOY_HOST: ${{ secrets.HOST }}
         run: |
           sshpass -e ssh -o StrictHostKeyChecking=no root@"$DEPLOY_HOST" 'bash -s' <<'REMOTE'
           set -euo pipefail
