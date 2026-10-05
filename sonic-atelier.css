@@ -816,3 +816,30 @@ html[data-theme="sonic-art"] .page.active{
     line-height:.9;
   }
 }
+
+
+.search-progress-copy{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:18px;
+  padding:14px 0 18px;
+  border-bottom:1px solid var(--sa-line);
+  color:var(--sa-paper);
+}
+.search-progress-copy strong{
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+}
+.search-progress-copy span{
+  color:var(--sa-muted);
+  font-size:.72rem;
+}
+@media(max-width:760px){
+  .search-progress-copy{
+    align-items:flex-start;
+    flex-direction:column;
+    gap:5px;
+  }
+}
