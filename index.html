@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#8B5CF6" />
+  <meta name="description" content="Reimflow findet Reime nach Klang, Silben und Aussprache. Für Rapper, Producer und die Community." />
+  <title>Reimflow · Reime, Beats und Samples</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="shape shape-a" aria-hidden="true"></div>
+  <div class="shape shape-b" aria-hidden="true"></div>
+  <div class="shape shape-c" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <a class="brand" href="#" data-go="home" aria-label="Reimflow Start">
+      <span class="brand-mark"><span>R</span></span>
+      <span class="brand-name">Reim<span>flow</span></span>
+    </a>
+    <nav class="desktop-nav" aria-label="Hauptnavigation">
+      <button class="nav-link active" data-go="home">Start</button>
+      <button class="nav-link" data-go="rhymes">Reime</button>
+      <button class="nav-link" data-go="community">Community</button>
+      <button class="nav-link" data-go="beats">Beats</button>
+      <button class="nav-link" data-go="profile">Profil</button>
+    </nav>
+    <button class="pill-btn small" data-go="premium">Premium <span class="button-dot">↗</span></button>
+  </header>
+
+  <main>
+    <section class="page active" data-page="home">
+      <div class="hero container">
+        <div class="hero-copy">
+          <div class="eyebrow"><span class="mini-star">✦</span> Reime, die wirklich klingen</div>
+          <h1>Finde den <span class="marker violet">Flow</span><br>für deine <span class="marker pink">Lines.</span></h1>
+          <p>Suche nach Klang, Silben und Aussprache. Entdecke Umgangssprache, Namen, Marken und Reime aus der Community.</p>
+          <form class="hero-search" id="heroSearch">
+            <label class="sr-only" for="heroQuery">Wort oder Phrase</label>
+            <input id="heroQuery" autocomplete="off" placeholder="z. B. Jude Bellingham" />
+            <button class="candy-btn" type="submit">Reime finden <span>→</span></button>
+          </form>
+          <div class="quick-tags">
+            <span>Beliebt:</span>
+            <button data-example="Jude Bellingham">Jude Bellingham</button>
+            <button data-example="Taycan Turbo">Taycan Turbo</button>
+            <button data-example="Berlin">Berlin</button>
+          </div>
+        </div>
+
+        <div class="hero-board" aria-label="Beispiel für Reimergebnisse">
+          <div class="dots"></div>
+          <div class="floating-note note-a">3 Silben</div>
+          <div class="floating-note note-b">Nomen</div>
+          <div class="sticker-card hero-card">
+            <div class="card-topline">
+              <span class="status-pill violet-bg">Klang Match</span>
+              <button class="icon-btn speak-btn" data-speak="Jude Bellingham" aria-label="Aussprache anhören">♫</button>
+            </div>
+            <div class="source-word">Jude Bellingham</div>
+            <div class="pronunciation">juːd ˈbɛlɪŋəm</div>
+            <div class="connector-line"><span></span><strong>REIMT AUF</strong><span></span></div>
+            <div class="result-preview">
+              <div>
+                <strong>blue Talisman</strong>
+                <small>Multi Silben · Umgangssprache</small>
+              </div>
+              <div class="score-bubble">91</div>
+            </div>
+          </div>
+          <div class="burst">FLOW<br>READY</div>
+        </div>
+      </div>
+
+      <div class="keyword-marquee" aria-hidden="true">
+        <div>REIME ✦ SILBEN ✦ AUSSPRACHE ✦ BARS ✦ BEATS ✦ SAMPLES ✦ COMMUNITY ✦ REIME ✦ SILBEN ✦ AUSSPRACHE ✦ BARS ✦ BEATS ✦ SAMPLES ✦ COMMUNITY ✦</div>
+      </div>
+
+      <section class="container section-space">
+        <div class="section-heading">
+          <div><span class="kicker">So funktioniert es</span><h2>Von der Idee zur Line.</h2></div>
+          <p>Ein Werkzeug für echte Rap Praxis. Schnell suchen, den Klang prüfen und gute Reime gemeinsam besser machen.</p>
+        </div>
+        <div class="feature-grid">
+          <article class="sticker-card feature-card accent-violet">
+            <span class="feature-number">01</span><div class="feature-icon">◎</div>
+            <h3>Nach Klang suchen</h3><p>Buchstaben sind nicht alles. Reimflow achtet auf Silben, Aussprache und Rhythmus.</p>
+            <button class="text-link" data-go="rhymes">Jetzt testen →</button>
+          </article>
+          <article class="sticker-card feature-card accent-pink">
+            <span class="feature-number">02</span><div class="feature-icon">✦</div>
+            <h3>Reime beitragen</h3><p>Füttere die Community mit neuen Wörtern und Reimen. Gute Beiträge bringen Punkte.</p>
+            <button class="text-link" data-go="community">Beitrag senden →</button>
+          </article>
+          <article class="sticker-card feature-card accent-yellow">
+            <span class="feature-number">03</span><div class="feature-icon">▶</div>
+            <h3>Beats entdecken</h3><p>Producer laden Beats und Samples hoch. Rapper finden Material für ihre nächsten Tracks.</p>
+            <button class="text-link" data-go="beats">Beats öffnen →</button>
+          </article>
+        </div>
+      </section>
+
+      <section class="container split-callout">
+        <div>
+          <span class="kicker">Community Qualität</span>
+          <h2>Nicht jeder Reim kommt einfach durch.</h2>
+          <p>Tester hören hin und prüfen, ob Aussprache und Klang wirklich passen. So wächst eine Datenbank, die für Rap gemacht ist.</p>
+          <button class="secondary-btn" data-go="community">Tester Bereich ansehen</button>
+        </div>
+        <div class="review-stack">
+          <div class="review-chip rotate-left"><span>✓</span> Aussprache passt</div>
+          <div class="review-chip rotate-right"><span>✓</span> Silben passen</div>
+          <div class="review-chip rotate-left"><span>✓</span> Rap tauglich</div>
+        </div>
+      </section>
+    </section>
+
+    <section class="page" data-page="rhymes">
+      <div class="container app-shell">
+        <div class="page-title">
+          <div><span class="kicker">Rhyme Engine</span><h1>Finde deinen Reim.</h1></div>
+          <div class="points-pill">✦ <span data-points>120</span> Punkte</div>
+        </div>
+
+        <div class="search-panel sticker-card">
+          <form id="rhymeSearchForm" class="search-row">
+            <div class="grow-field">
+              <label for="rhymeQuery">Wort oder Phrase</label>
+              <div class="input-with-icon"><span>⌕</span><input id="rhymeQuery" value="Jude Bellingham" autocomplete="off" /></div>
+            </div>
+            <button class="candy-btn" type="submit">Suchen <span>→</span></button>
+          </form>
+          <div class="filters">
+            <div>
+              <span class="filter-label">Wortart</span>
+              <div class="segmented" id="categoryFilters">
+                <button class="active" data-category="Alle">Alle</button>
+                <button data-category="Nomen">Nomen</button>
+                <button data-category="Adjektiv">Adjektiv</button>
+                <button data-category="Verb">Verb</button>
+                <button data-category="Umgangssprache">Umgangssprache</button>
+              </div>
+            </div>
+            <div>
+              <label class="filter-label" for="syllableFilter">Silben</label>
+              <select id="syllableFilter"><option value="Alle">Alle</option><option>1</option><option>2</option><option>3</option><option>4+</option></select>
+            </div>
+          </div>
+        </div>
+
+        <div class="results-head">
+          <div><strong id="resultsCount">0 Reime</strong><span id="resultsFor"> für „Jude Bellingham“</span></div>
+          <button class="secondary-btn compact" id="speakQuery">♫ Aussprache</button>
+        </div>
+        <div id="rhymeResults" class="result-list"></div>
+      </div>
+    </section>
+
+    <section class="page" data-page="community">
+      <div class="container app-shell">
+        <div class="page-title">
+          <div><span class="kicker">Gemeinsam besser</span><h1>Community & Tester.</h1></div>
+          <button class="candy-btn" id="openSubmit">Reim hinzufügen <span>＋</span></button>
+        </div>
+
+        <div class="community-grid">
+          <div>
+            <div class="subtabs" role="tablist">
+              <button class="active" data-community-tab="feed">Neue Beiträge</button>
+              <button data-community-tab="tester">Tester Bereich</button>
+            </div>
+            <div id="communityFeed" class="community-tab active"></div>
+            <div id="testerQueue" class="community-tab"></div>
+          </div>
+
+          <aside class="sticker-card leaderboard">
+            <div class="leader-icon">♛</div>
+            <span class="kicker">Diese Woche</span>
+            <h3>Top Contributor</h3>
+            <ol>
+              <li><span class="avatar violet-bg">MK</span><div><strong>MicKönig</strong><small>48 Beiträge</small></div><b>1.240</b></li>
+              <li><span class="avatar pink-bg">LF</span><div><strong>LineFactory</strong><small>36 Beiträge</small></div><b>980</b></li>
+              <li><span class="avatar mint-bg">NS</span><div><strong>Nachtstudio</strong><small>29 Beiträge</small></div><b>760</b></li>
+            </ol>
+            <p class="tiny-note">Punkte gibt es für bestätigte Reime und hilfreiche Tests.</p>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section class="page" data-page="beats">
+      <div class="container app-shell">
+        <div class="page-title">
+          <div><span class="kicker">Für Rapper & Producer</span><h1>Beats & Samples.</h1></div>
+          <button class="candy-btn" id="openBeatUpload">Upload <span>↑</span></button>
+        </div>
+        <div class="beat-toolbar">
+          <div class="segmented" id="beatFilters"><button class="active" data-beat-filter="Alle">Alle</button><button data-beat-filter="Beat">Beats</button><button data-beat-filter="Sample">Samples</button></div>
+          <div class="input-with-icon mini"><span>⌕</span><input id="beatSearch" placeholder="Producer oder Titel" /></div>
+        </div>
+        <div id="beatGrid" class="beat-grid"></div>
+      </div>
+    </section>
+
+    <section class="page" data-page="profile">
+      <div class="container app-shell">
+        <div class="profile-hero sticker-card">
+          <div class="profile-avatar">HF</div>
+          <div class="profile-copy"><span class="status-pill violet-bg">Rapper</span><h1>Hossein Flow</h1><p>@hosseinflow · Frankfurt</p></div>
+          <button class="secondary-btn compact">Profil bearbeiten</button>
+        </div>
+        <div class="stats-grid">
+          <div class="sticker-card stat-card"><span>✦</span><strong data-points>120</strong><small>Punkte</small></div>
+          <div class="sticker-card stat-card"><span>✓</span><strong id="acceptedCount">8</strong><small>Bestätigte Reime</small></div>
+          <div class="sticker-card stat-card"><span>♫</span><strong>4</strong><small>Gespeicherte Beats</small></div>
+          <div class="sticker-card stat-card"><span>♛</span><strong>#42</strong><small>Community Rang</small></div>
+        </div>
+        <div class="profile-grid">
+          <div class="sticker-card">
+            <span class="kicker">Deine Aktivität</span><h3>Letzte Beiträge</h3>
+            <div id="profileActivity" class="activity-list"></div>
+          </div>
+          <div class="sticker-card premium-mini">
+            <div class="burst small-burst">PRO</div><span class="kicker">Mehr Flow</span><h3>Reimflow Premium</h3>
+            <p>Mehr Suchfilter, tiefere Klang Treffer, keine Limits und Extras für Rapper und Producer.</p>
+            <button class="candy-btn full" data-go="premium">Premium ansehen <span>→</span></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="page" data-page="premium">
+      <div class="container app-shell">
+        <div class="pricing-intro"><span class="kicker">Free oder Premium</span><h1>Mehr Möglichkeiten für deinen Flow.</h1><p>Starte kostenlos. Upgrade erst, wenn du mehr Tiefe und kreative Werkzeuge brauchst.</p></div>
+        <div class="pricing-grid">
+          <article class="sticker-card price-card">
+            <span class="status-pill">FREE</span><h2>0 €</h2><p>Für den Einstieg und die Community.</p>
+            <ul><li>✓ Reimsuche</li><li>✓ Basis Filter</li><li>✓ Community Beiträge</li><li>✓ Beats entdecken</li></ul>
+            <button class="secondary-btn full">Aktueller Plan</button>
+          </article>
+          <article class="sticker-card price-card featured">
+            <div class="popular-star">MOST<br>POPULAR</div>
+            <span class="status-pill violet-bg">PREMIUM</span><h2>4,99 € <small>/ Monat</small></h2><p>Für Rapper, die tiefer suchen wollen.</p>
+            <ul><li>✓ Erweiterte Klang Suche</li><li>✓ Multi Silben Filter</li><li>✓ Unbegrenzte Favoriten</li><li>✓ Keine Werbung</li><li>✓ Producer Extras</li></ul>
+            <button class="candy-btn full">Premium testen <span>→</span></button>
+          </article>
+        </div>
+        <p class="prototype-note">Preis und Leistungsumfang sind in dieser Testversion Platzhalter und können nach Feedback angepasst werden.</p>
+      </div>
+    </section>
+  </main>
+
+  <nav class="mobile-nav" aria-label="Mobile Navigation">
+    <button class="active" data-go="home"><span>⌂</span>Start</button>
+    <button data-go="rhymes"><span>◎</span>Reime</button>
+    <button data-go="community"><span>✦</span>Community</button>
+    <button data-go="beats"><span>▶</span>Beats</button>
+    <button data-go="profile"><span>☺</span>Profil</button>
+  </nav>
+
+  <dialog id="submitDialog" class="modal">
+    <form method="dialog" class="modal-card" id="submitRhymeForm">
+      <div class="modal-head"><div><span class="kicker">Community Beitrag</span><h2>Neuen Reim senden</h2></div><button class="close-btn" value="cancel" aria-label="Schließen">×</button></div>
+      <label>Ausgangswort<input id="submitSource" required placeholder="z. B. Bellingham"></label>
+      <label>Dein Reim<input id="submitTarget" required placeholder="z. B. Talisman"></label>
+      <div class="two-col">
+        <label>Wortart<select id="submitCategory"><option>Nomen</option><option>Adjektiv</option><option>Verb</option><option>Umgangssprache</option><option>Sonstiges</option></select></label>
+        <label>Silben<select id="submitSyllables"><option>1</option><option>2</option><option selected>3</option><option>4+</option></select></label>
+      </div>
+      <label>Aussprache optional<input id="submitPronunciation" placeholder="z. B. ta lis man"></label>
+      <p class="form-note">Dein Beitrag landet zuerst im Tester Bereich. Nach Bestätigung bekommst du weitere Punkte.</p>
+      <button class="candy-btn full" type="submit" value="default">Beitrag senden <span>→</span></button>
+    </form>
+  </dialog>
+
+  <dialog id="beatDialog" class="modal">
+    <form method="dialog" class="modal-card" id="beatUploadForm">
+      <div class="modal-head"><div><span class="kicker">Producer Upload</span><h2>Beat oder Sample hochladen</h2></div><button class="close-btn" value="cancel" aria-label="Schließen">×</button></div>
+      <label>Titel<input id="beatTitle" required placeholder="z. B. Midnight Bounce"></label>
+      <div class="two-col">
+        <label>Typ<select id="beatType"><option>Beat</option><option>Sample</option></select></label>
+        <label>BPM<input id="beatBpm" type="number" min="40" max="240" value="92"></label>
+      </div>
+      <label>Lizenz<select id="beatLicense"><option>Free Use</option><option>Non Commercial</option><option>Commercial License</option></select></label>
+      <label>Audio Datei<input id="beatFile" type="file" accept="audio/*"></label>
+      <p class="form-note">Für den Prototyp bleibt eine ausgewählte Datei nur bis zum Neuladen der Seite abspielbar.</p>
+      <button class="candy-btn full" type="submit" value="default">Upload hinzufügen <span>↑</span></button>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
