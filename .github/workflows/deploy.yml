@@ -113,12 +113,17 @@ jobs:
               }
 
               location / {
+                  add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0" always;
+                  add_header Pragma "no-cache" always;
+                  add_header Expires "0" always;
                   try_files $uri $uri/ /index.html;
               }
 
               location ~* \.(css|js|svg|png|jpg|jpeg|webp|woff2?)$ {
-                  expires 10m;
-                  add_header Cache-Control "public";
+                  expires -1;
+                  add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0" always;
+                  add_header Pragma "no-cache" always;
+                  add_header Expires "0" always;
                   try_files $uri =404;
               }
           }
