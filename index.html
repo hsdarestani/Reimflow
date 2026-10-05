@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#8B5CF6" />
-  <script>try{document.documentElement.dataset.theme=localStorage.getItem("reimflow_theme")||"playful"}catch(e){document.documentElement.dataset.theme="playful"}</script>
+  <script>try{document.documentElement.dataset.theme=localStorage.getItem("reimflow_theme_v2")||"art-deco"}catch(e){document.documentElement.dataset.theme="art-deco"}</script>
   <meta name="description" content="Reimflow findet Reime nach Klang, Silben und Aussprache. Für Rapper, Producer und die Community." />
   <title>Reimflow · Reime, Beats und Samples</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,6 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Italiana&family=JetBrains+Mono:wght@400;500;600&family=Josefin+Sans:wght@400;500;600;700&family=Marcellus&family=Orbitron:wght@400;500;700;900&family=Outfit:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Share+Tech+Mono&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="themes.css" />
+  <link rel="stylesheet" href="ai-engine.css" />
 </head>
 <body>
   <div class="theme-atmosphere" aria-hidden="true"><span class="ambient-one"></span><span class="ambient-two"></span><span class="ambient-three"></span></div>
@@ -63,9 +64,9 @@
     <section class="page active" data-page="home">
       <div class="hero container">
         <div class="hero-copy">
-          <div class="eyebrow"><span class="mini-star">✦</span> Reime, die wirklich klingen</div>
+          <div class="eyebrow"><span class="mini-star">✦</span> AI hört Klang, nicht nur Buchstaben</div>
           <h1>Finde den <span class="marker violet">Flow</span><br>für deine <span class="marker pink">Lines.</span></h1>
-          <p>Suche nach Klang, Silben und Aussprache. Entdecke Umgangssprache, Namen, Marken und Reime aus der Community.</p>
+          <p>Gib jedes Wort, jeden Namen oder jede Phrase ein. Reimflow analysiert Aussprache, Silben, Betonung und Rap Flow und ergänzt die Community, bis die eigene Reimdatenbank wächst.</p>
           <form class="hero-search" id="heroSearch">
             <label class="sr-only" for="heroQuery">Wort oder Phrase</label>
             <input id="heroQuery" autocomplete="off" placeholder="z. B. Jude Bellingham" />
@@ -149,7 +150,7 @@
     <section class="page" data-page="rhymes">
       <div class="container app-shell">
         <div class="page-title">
-          <div><span class="kicker">Rhyme Engine</span><h1>Finde deinen Reim.</h1></div>
+          <div><span class="kicker">AI Phonetic Rhyme Engine</span><h1>Finde deinen Reim.</h1></div>
           <div class="points-pill">✦ <span data-points>120</span> Punkte</div>
         </div>
 
@@ -157,7 +158,7 @@
           <form id="rhymeSearchForm" class="search-row">
             <div class="grow-field">
               <label for="rhymeQuery">Wort oder Phrase</label>
-              <div class="input-with-icon"><span>⌕</span><input id="rhymeQuery" value="Jude Bellingham" autocomplete="off" /></div>
+              <div class="input-with-icon"><span>⌕</span><input id="rhymeQuery" value="" autocomplete="off" placeholder="z. B. Jude Bellingham, Lamborghini, Nacht..." /></div>
             </div>
             <button class="candy-btn" type="submit">Suchen <span>→</span></button>
           </form>
@@ -179,8 +180,11 @@
           </div>
         </div>
 
+        <div id="queryInsight" class="query-insight" hidden></div>
+
         <div class="results-head">
-          <div><strong id="resultsCount">0 Reime</strong><span id="resultsFor"> für „Jude Bellingham“</span></div>
+          <div><strong id="resultsCount">Bereit</strong><span id="resultsFor"></span></div>
+          <span class="engine-state" id="engineState"><span></span> Engine Check</span>
           <button class="secondary-btn compact" id="speakQuery">♫ Aussprache</button>
         </div>
         <div id="rhymeResults" class="result-list"></div>
