@@ -68,7 +68,7 @@ jobs:
           install -m 0600 /dev/null /etc/reimflow.env
           printf 'OPENAI_API_KEY=' >/etc/reimflow.env
           base64 -d /tmp/reimflow-openai-key.b64 >>/etc/reimflow.env
-          printf '\nOPENAI_MODEL=gpt-5.6-terra\nREIMFLOW_DB=/var/lib/reimflow/reimflow.sqlite3\n' >>/etc/reimflow.env
+          printf '\nOPENAI_MODEL=gpt-6-luna\nREIMFLOW_DB=/var/lib/reimflow/reimflow.sqlite3\n' >>/etc/reimflow.env
 
           cat >/etc/systemd/system/reimflow-api.service <<'SERVICE'
           [Unit]
