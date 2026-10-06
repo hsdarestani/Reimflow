@@ -132,12 +132,32 @@ html[data-theme="sonic-art"] .hero-copy>p{
   max-width:620px;font-size:clamp(1rem,1.4vw,1.18rem);line-height:1.7;color:#b4afa4;margin:26px 0 32px
 }
 html[data-theme="sonic-art"] .hero-search{
-  max-width:700px;border:0;border-bottom:1px solid rgba(240,236,226,.5);border-radius:0;background:transparent;box-shadow:none;padding:0 0 8px;display:grid;grid-template-columns:1fr auto;gap:12px;position:relative
+  max-width:700px;
+  border:1px solid rgba(240,236,226,.28);
+  border-radius:2px;
+  background:rgba(240,236,226,.045);
+  box-shadow:0 14px 34px rgba(0,0,0,.2),inset 0 0 0 1px rgba(255,255,255,.015);
+  padding:8px;
+  display:grid;
+  grid-template-columns:28px minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+  position:relative;
+  transition:border-color .2s ease,background .2s ease,box-shadow .2s ease
 }
-html[data-theme="sonic-art"] .hero-search:before{content:"⌕";font:400 1.5rem "Space Grotesk";color:var(--sa-red);align-self:center}
-html[data-theme="sonic-art"] .hero-search input{grid-column:2/3;grid-row:1;width:100%;font:500 clamp(1.15rem,2vw,1.65rem) "Space Grotesk";background:none;color:var(--sa-paper);padding:14px 0;border:0;outline:0}
-html[data-theme="sonic-art"] .hero-search input::placeholder{color:#5f5b55}
-html[data-theme="sonic-art"] .hero-search .candy-btn{grid-column:3;grid-row:1}
+html[data-theme="sonic-art"] .hero-search:hover{
+  border-color:rgba(240,236,226,.46);
+  background:rgba(240,236,226,.065)
+}
+html[data-theme="sonic-art"] .hero-search:focus-within{
+  border-color:var(--sa-red);
+  background:rgba(240,236,226,.075);
+  box-shadow:0 0 0 2px rgba(255,79,63,.14),0 18px 42px rgba(0,0,0,.28)
+}
+html[data-theme="sonic-art"] .hero-search:before{content:"⌕";font:400 1.5rem "Space Grotesk";color:var(--sa-red);align-self:center;justify-self:center}
+html[data-theme="sonic-art"] .hero-search input{grid-column:2/3;grid-row:1;width:100%;font:500 clamp(1.15rem,2vw,1.65rem) "Space Grotesk";background:transparent;color:var(--sa-paper);padding:14px 4px;border:0;outline:0;min-width:0}
+html[data-theme="sonic-art"] .hero-search input::placeholder{color:#9a958b;opacity:1}
+html[data-theme="sonic-art"] .hero-search .candy-btn{grid-column:3;grid-row:1;min-width:154px}
 html[data-theme="sonic-art"] .candy-btn{
   background:var(--sa-red);color:#090909;border:0;border-radius:0;box-shadow:none;font:700 .68rem "Space Grotesk";letter-spacing:.12em;text-transform:uppercase;min-height:48px
 }
