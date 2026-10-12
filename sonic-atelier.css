@@ -863,3 +863,84 @@ html[data-theme="sonic-art"] .page.active{
     gap:5px;
   }
 }
+
+
+/* Rhyme search loading: dark editorial rows, never white skeleton cards in Sonic Atelier.
+   Matches the real results' score-sheet rhythm and respects reduced motion. */
+html[data-theme="sonic-art"] .rhyme-skeleton {
+  position:relative;
+  grid-template-columns:64px minmax(0,1fr) minmax(110px,180px);
+  gap:22px;
+  min-height:106px;
+  padding:20px 12px;
+  border:0;
+  border-top:1px solid var(--sa-line);
+  border-radius:0;
+  background:linear-gradient(90deg,rgba(240,236,226,.025),rgba(240,236,226,.006) 72%,transparent);
+  box-shadow:none;
+}
+html[data-theme="sonic-art"] .rhyme-skeleton::before {
+  content:"";
+  position:absolute;
+  top:23px;
+  bottom:23px;
+  left:0;
+  width:2px;
+  background:var(--sa-red);
+  opacity:.28;
+}
+html[data-theme="sonic-art"] .rhyme-skeleton>span,
+html[data-theme="sonic-art"] .rhyme-skeleton b,
+html[data-theme="sonic-art"] .rhyme-skeleton small,
+html[data-theme="sonic-art"] .rhyme-skeleton i {
+  background:linear-gradient(100deg,#20201e 15%,#33332f 45%,#20201e 75%);
+  background-size:240% 100%;
+  animation:saSkeletonShimmer 1.8s ease-in-out infinite;
+  box-shadow:none;
+}
+html[data-theme="sonic-art"] .rhyme-skeleton>span {
+  width:58px;
+  height:58px;
+  border:1px solid rgba(255,77,46,.25);
+  border-radius:50%;
+}
+html[data-theme="sonic-art"] .rhyme-skeleton b {
+  width:min(62%,320px);
+  height:14px;
+  border-radius:3px;
+}
+html[data-theme="sonic-art"] .rhyme-skeleton small {
+  width:min(42%,205px);
+  height:9px;
+  margin-top:12px;
+  border-radius:3px;
+}
+html[data-theme="sonic-art"] .rhyme-skeleton i {
+  width:100%;
+  height:24px;
+  border-radius:3px;
+  opacity:.8;
+}
+@keyframes saSkeletonShimmer {
+  from{background-position:160% 0}
+  to{background-position:-100% 0}
+}
+@media(max-width:760px){
+  html[data-theme="sonic-art"] .rhyme-skeleton{
+    grid-template-columns:48px minmax(0,1fr);
+    gap:14px;
+    min-height:84px;
+    padding:16px 6px;
+  }
+  html[data-theme="sonic-art"] .rhyme-skeleton>span{width:44px;height:44px}
+  html[data-theme="sonic-art"] .rhyme-skeleton i{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  html[data-theme="sonic-art"] .rhyme-skeleton,
+  html[data-theme="sonic-art"] .rhyme-skeleton>span,
+  html[data-theme="sonic-art"] .rhyme-skeleton b,
+  html[data-theme="sonic-art"] .rhyme-skeleton small,
+  html[data-theme="sonic-art"] .rhyme-skeleton i{
+    animation:none!important;
+  }
+}
