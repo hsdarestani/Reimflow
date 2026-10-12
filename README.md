@@ -1,21 +1,32 @@
 # Reimflow
 
-Early testable prototype for a German rap rhyme community.
+German-language rap rhyme and producer-community prototype. Live testing URL: **https://reimflow.smarbiz.sbs/**.
 
-## Prototype scope
+## Current functionality
 
-The current MVP focuses on validating the product flow:
+- Phonetic AI rhyme search (requires server-side `OPENAI_API_KEY`)
+- Rhyme validation / tester AI check (same API key)
+- Syllable and part-of-speech filters, pronunciation hints and browser speech synthesis
+- Community submissions, tester review and point badges (currently local browser prototype state)
+- Beats and samples catalogue, locally previewed uploads
+- Rapper/producer profile preview and Free/Premium presentation
+- Six switchable design themes
 
-* phonetic rhyme search with word type and syllable filters
-* rhyme strength and pronunciation hints
-* user submissions and points
-* tester review queue
-* beats and samples discovery
-* rapper and producer profile preview
-* Free and Premium presentation
+**Prototype caveat:** Submissions, approvals, favorites and points still use browser localStorage and the beat upload preview uses an in-memory object URL. They are **not** persisted across users or recovered from a failed server. The backend currently stores only SQLite AI result cache; there is no shared user account or payment backend yet.
 
-Prototype interactions are stored locally in the browser. This first version is intended for UX and concept testing before the shared backend and authentication layer are added.
+## Hosting / deployment (STRATO)
 
-## Deployment
+- Host: `82.165.187.14` (shared STRATO host, also running A+ Publisher)
+- Isolated source deployment under `/opt/reimflow` with separate Docker Compose services `web` (Nginx) and `api` (Python), constrained resources and persistent cache directory `/opt/reimflow/data`.
+- HTTPS termination is provided by the **existing** Publisher Caddy service; no additional host listener on ports 80 or 443.
+- The canonical Caddy route and the safe production deployment workflow are maintained in [hsdarestani/publisher](https://github.com/hsdarestani/publisher):
+  - [Caddyfile](https://github.com/hsdarestani/publisher/blob/main/Caddyfile)
+  - [Deploy Reimflow on STRATO](https://github.com/hsdarestani/publisher/blob/main/.github/workflows/reimflow-strato-deploy.yml)
+- To publish future changes, run **Deploy Reimflow on STRATO (isolated)** from the Publisher repo Actions tab. The workflow reads current Reimflow `main` and verifies the live HTTPS website and `/api/health`.
+- The GitHub Actions workflow in **this** repository validates source only. The former password-based Hetzner deployment was retired.
 
-Pushes to `main` trigger the GitHub Actions deployment workflow. The workflow expects repository secrets named `HOST` and `PASS` and deploys to `reimflow.smarbiz.sbs`.
+## Enable AI
+
+Set the **Publisher** production GitHub Actions secret `OPENAI_API_KEY` (do not put the key in code, logs or chat), then rerun the Publisher **Deploy Reimflow on STRATO (isolated)** workflow.
+
+Check `https://reimflow.smarbiz.sbs/api/health`. The JSON field `ai` must be `true` before live AI endpoints `/api/rhymes` and `/api/validate` can function. If the field is `false`, the browser still shows an offline demo/fallback but genuine AI search is unavailable.
