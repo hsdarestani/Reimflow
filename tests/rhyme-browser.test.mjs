@@ -21,7 +21,7 @@ try{
       return route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({
         ok:true,engine:"ai_phonetic",cached:false,
         analysis:{input:"Blue Talisman",interpreted_as:"Blue Talisman",pronunciation:"",ipa:"",syllables:4,language:"Englisch",correction:null,note:""},
-        rhymes:[{word:"sample",category:"Nomen",syllables:2,pronunciation:"",ipa:"",score:66,confidence:60,register:"Englisch/Code-Switch",kind:"Near Rhyme",explanation:"Test response, not real rhyme"}]
+        quality_reviewed:true,rhymes:[{word:"Calamari",category:"Nomen",syllables:4,pronunciation:"",ipa:"",score:0,confidence:0,strength:"brauchbar",register:"Englisch/Code-Switch",kind:"Near Rhyme",explanation:"Getesteter Klanganker"}]
       })});
     });
     await page.goto("/",{waitUntil:"domcontentloaded"});
@@ -29,17 +29,20 @@ try{
     await page.locator(nav).click();
     await page.locator("#rhymeQuery").fill("Blue Talisman");
     await page.locator("#rhymeSearchForm button[type='submit']").click();
-    const note=page.locator(".rhyme-offline-note");
-    await note.waitFor({state:"visible",timeout:8500});
-    assert.match(await note.innerText(),/ohne KI-Prüfung/);
-    assert.ok(await page.locator(".rhyme-card").count()>=3,
-      "A phrase with the suffix Talisman should have real dictionary-word suggestions");
-    assert.match(await page.locator(".rhyme-card .ai-chip").first().innerText(),/IDEE/);
-    assert.ok(!(await page.locator("#rhymeResults").innerText()).includes("Die Reimsuche konnte nicht geladen werden."));
-    await page.locator("#retryOnlineSearch").click();
+    const message=page.locator(".search-empty.error");
+    await message.waitFor({state:"visible",timeout:8500});
+    assert.match(await message.innerText(),/nicht geladen werden/);
+    assert.equal(await page.locator(".rhyme-card").count(),0,
+      "Unverified filler words must not be displayed after an AI error.");
+    assert.equal(await page.locator(".rhyme-offline-note").count(),0,
+      "No automatic unvalidated suffix fallback.");
+    await page.locator("#retrySearch").click();
+
     await page.locator(".rhyme-card .ai-chip").getByText("KI").first().waitFor({timeout:8500});
-    assert.equal(await note.count(),0,"Offline caveat must disappear for live AI success");
+    assert.equal(await message.count(),0,"Error state must disappear for live AI success");
     assert.equal(await page.locator(".rhyme-card").count(),1);
+    assert.match(await page.locator(".rhyme-card .match-score").first().innerText(),/NAH/);
+    assert.doesNotMatch(await page.locator(".rhyme-card").first().innerText(),/% Sicherheit/);
     assert.equal(tries,2);
     assert.deepEqual(errors,[],JSON.stringify({viewport:viewport.width,errors}));
     console.log(viewport.width+"px Blue Talisman failed API -> honest offline words -> retry AI: PASSED");
