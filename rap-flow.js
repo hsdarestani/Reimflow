@@ -21,7 +21,7 @@ const TOTAL_COUNTIN=4,MAX_BYTES=4*1024*1024;
 let phase="idle",context=null,media=null,recorder=null,recorded=null,previewUrl=null,chunks=[],currentResult=null;
 let timer=0,animation=0,nextBeat=0,nextBeatAudio=0,startPerf=0,rapZeroPerf=0,rapDuration=0;
 let captureBeatOffset=0,bpm=92,bars=8,beatSeconds=0,noiseBuffer=null,output=null,abortUpload=null;
-let runId=0;
+let runId=0,recordedDuration=0;
 const $status=(title,detail)=>{nodes.status.textContent=title;nodes.subStatus.textContent=detail};
 function updateAnalysisState(type,message){
   const box=nodes.analysisState;
@@ -69,7 +69,8 @@ function discard(){
   if(abortUpload){abortUpload.abort();abortUpload=null}
   if(previewUrl){URL.revokeObjectURL(previewUrl);previewUrl=null}
   nodes.player.removeAttribute("src");nodes.player.load();
-  recorded=null;currentResult=null;chunks=[];
+  recorded=null;currentResult=null;chunks=[];recordedDuration=0;
+  const durationLabel=el("rapRecordingDuration");if(durationLabel)durationLabel.textContent="";
   updateAnalysisState("",null);
   nodes.preview.hidden=true;nodes.results.hidden=true;nodes.discard.hidden=true;
   nodes.analyze.disabled=false;nodes.analyze.textContent="✦ Mit KI auswerten";
@@ -157,21 +158,38 @@ async function stopRecording(manual=true){
   if(animation){cancelAnimationFrame(animation);animation=0}
   await recorderStop();
   const usedType=recorder?.mimeType||selectedMime()||"audio/webm";
-  const blob=new Blob(chunks,{type:usedType});
+  const rawBlob=new Blob(chunks,{type:usedType});
   closeResources();
   clearWave();
-  if(manual||blob.size<800){
+  if(manual||rawBlob.size<800){
     phase="idle";chunks=[];
     $status("Aufnahme beendet",manual?"Du kannst eine neue Runde starten.":"Es wurde zu wenig Ton aufgenommen.");
     nodes.counter.textContent="■";
     return;
   }
-  if(blob.size>MAX_BYTES){
+  if(rawBlob.size>MAX_BYTES){
     phase="idle";chunks=[];
     $status("Datei zu groß","Bitte eine kürzere Aufnahme versuchen.");
     return;
   }
-  recorded=blob;previewUrl=URL.createObjectURL(blob);
+  // Browser WebM/Opus often lacks Duration metadata; Chrome may claim a
+  // 20-second clip is several minutes long. Decode and convert to a WAV
+  // with an explicit PCM header before preview or transcription upload.
+  try{
+    $status("Aufnahme wird vorbereitet","Die tatsächliche Länge wird geprüft.");
+    const audio=await window.ReimflowRapAudio.normalize(rawBlob);
+    recorded=audio.blob;
+    recordedDuration=audio.durationSeconds;
+    if(recorded.size>MAX_BYTES)throw new Error("Die Aufnahme ist für die Analyse zu groß.");
+  }catch(error){
+    phase="idle";chunks=[];
+    $status("Aufnahme konnte nicht vorbereitet werden","Bitte erneut aufnehmen. Der Browser konnte die Tonaufnahme nicht korrekt verarbeiten.");
+    nodes.counter.textContent="!";
+    return;
+  }
+  const durationLabel=el("rapRecordingDuration");
+  if(durationLabel)durationLabel.textContent="Tatsächliche Aufnahmelänge: "+formatClock(Math.ceil(recordedDuration));
+  previewUrl=URL.createObjectURL(recorded);
   updateAnalysisState("ready","Aufnahme gespeichert. Wenn du „Mit KI auswerten“ drückst, wird die Aufnahme zur Sprachanalyse übertragen.");
   nodes.player.src=previewUrl;
   nodes.preview.hidden=false;nodes.discard.hidden=false;
@@ -278,7 +296,7 @@ async function analyze(){
   abortUpload=new AbortController();
   const form=new FormData();
   const type=recorded.type.split(";")[0]||"audio/webm";
-  const ext=type==="audio/mp4"?"m4a":type==="audio/ogg"?"ogg":type==="audio/wav"?"wav":"webm";
+  const ext=type==="audio/wav"?"wav":type==="audio/mp4"?"m4a":type==="audio/ogg"?"ogg":"webm";
   form.append("audio",recorded,"rap."+ext);
   form.append("bpm",String(bpm));
   form.append("bars",String(bars));
@@ -287,9 +305,27 @@ async function analyze(){
   let succeeded=false;
   try{
     const response=await fetch("/api/flow/analyze",{method:"POST",body:form,signal:abortUpload.signal,credentials:"same-origin"});
+    // The reverse proxy can return non-JSON for upstream failures or body
+    // limits. Show the actual HTTP status instead of an ambiguous JSON error.
+    const contentType=response.headers.get("content-type")||"";
     let result={};
-    try{result=await response.json()}catch{throw Error("Der Server hat keine gültige Antwort gesendet.")}
-    if(!response.ok)throw Error(result.message||"Analyse nicht möglich. Bitte erneut versuchen.");
+    if(contentType.includes("application/json")){
+      try{result=await response.json()}catch{}
+    }
+    if(!response.ok){
+      const explanations={
+        400:"Die Audioaufnahme oder die Anfrage wurde abgelehnt.",
+        413:"Die Datei ist für den Server zu groß.",
+        429:"Zu viele Versuche. Bitte später erneut probieren.",
+        502:"Der Analyseserver ist vorübergehend nicht erreichbar.",
+        503:"Die KI Analyse ist gerade nicht verfügbar.",
+        504:"Die Analyse hat zu lange gedauert."
+      };
+      throw Error((result.message||explanations[response.status]||"Der Server konnte die Analyse nicht durchführen.")+" (HTTP "+response.status+")");
+    }
+    if(!contentType.includes("application/json")){
+      throw Error("Der Server hat keine Analyse als JSON zurückgegeben (HTTP "+response.status+").");
+    }
     if(!result||result.ok!==true||!["analyzed","no_speech"].includes(result.status))throw Error("Der Server hat kein gültiges Analyseergebnis geliefert.");
     display(result);
     succeeded=true;
