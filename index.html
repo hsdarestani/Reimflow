@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="comic-flow.css?v=20261014-de1" />
   <link rel="stylesheet" href="comic-variants.css?v=20261014-de1" />
   <link rel="stylesheet" href="flow-challenge.css?v=20261014-flow1" />
-  <link rel="stylesheet" href="rap-flow.css?v=20261014-rap1" />
+  <link rel="stylesheet" href="rap-flow.css?v=20261014-rap2" />
 </head>
 <body>
   <div class="theme-atmosphere" aria-hidden="true"><span class="ambient-one"></span><span class="ambient-two"></span><span class="ambient-three"></span></div>
@@ -320,18 +320,9 @@
                 <label for="rapAudioPreview">Deine Aufnahme nur auf diesem Gerät</label>
                 <audio id="rapAudioPreview" controls preload="none"></audio>
                 <button id="rapAnalyze" class="candy-btn" type="button">✦ Mit KI auswerten</button>
+                <div id="rapAnalysisState" class="rap-analysis-state" role="status" aria-live="polite" hidden></div>
               </div>
               <p class="rap-disclaimer">Kopfhörer erforderlich, damit der Beat nicht mit aufgenommen wird. Die Aufnahme wird erst beim Drücken auf „Mit KI auswerten“ übertragen. Diese Beta bewertet keine Rapqualität und hat keine amtliche oder professionelle Genauigkeit.</p>
-            </div>
-            <aside class="rap-info-card">
-              <div class="flow-micro-heading">WAS WIRD AUSGEWERTET? <span>✦</span></div>
-              <div class="rap-info-item"><strong>01 · Rhythmus</strong><p>Position der erkannten Worteinsätze im Viertel- und Achtelraster des Beats.</p></div>
-              <div class="rap-info-item"><strong>02 · Pausen</strong><p>Dauer hörbarer Wortabstände in deinem Rap.</p></div>
-              <div class="rap-info-item"><strong>03 · Dichte & Wechsel</strong><p>Geschätzte Silben pro Takt und Unterschiede zwischen den Takten.</p></div>
-              <div class="rap-info-item"><strong>04 · Worte</strong><p>Spracherkennung mit Zeitmarken. Umgangssprache und Rap können Fehler verursachen.</p></div>
-              <p class="rap-info-bottom">Die KI liefert Zeitmarken. Die Rhythmuswerte werden daraus berechnet. Keine Talentnote und keine Bewertung von Reimen oder Stimme.</p>
-            </aside>
-          </div>
           <section class="rap-results" id="rapResults" hidden aria-live="polite">
             <div class="rap-results-top"><div><span class="kicker">DEINE ANALYSE</span><h3 id="rapResultTitle">Zeitliche Auswertung</h3></div><span class="rap-beta">BETA · SCHÄTZWERTE</span></div>
             <div class="rap-metrics">
@@ -349,6 +340,17 @@
             <p id="rapLimitNote" class="rap-limit-note"></p>
             <button class="secondary-btn" id="rapShare" type="button">↗ Ergebnisse teilen</button>
           </section>
+            </div>
+            <aside class="rap-info-card">
+              <div class="flow-micro-heading">WAS WIRD AUSGEWERTET? <span>✦</span></div>
+              <div class="rap-info-item"><strong>01 · Rhythmus</strong><p>Position der erkannten Worteinsätze im Viertel- und Achtelraster des Beats.</p></div>
+              <div class="rap-info-item"><strong>02 · Pausen</strong><p>Dauer hörbarer Wortabstände in deinem Rap.</p></div>
+              <div class="rap-info-item"><strong>03 · Dichte & Wechsel</strong><p>Geschätzte Silben pro Takt und Unterschiede zwischen den Takten.</p></div>
+              <div class="rap-info-item"><strong>04 · Worte</strong><p>Spracherkennung mit Zeitmarken. Umgangssprache und Rap können Fehler verursachen.</p></div>
+              <p class="rap-info-bottom">Die KI liefert Zeitmarken. Die Rhythmuswerte werden daraus berechnet. Keine Talentnote und keine Bewertung von Reimen oder Stimme.</p>
+            </aside>
+          </div>
+
         </div>
       </div>
     </section>
@@ -536,6 +538,6 @@
   <script src="app.js?v=20261014-de1"></script>
   <script src="flow-scoring.js?v=20261014-de1"></script>
   <script src="flow-challenge.js?v=20261014-de1"></script>
-  <script src="rap-flow.js?v=20261014-rap1"></script>
+  <script src="rap-flow.js?v=20261014-rap2"></script>
 </body>
 </html>
