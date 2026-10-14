@@ -21,9 +21,9 @@ class Response:
 
 class RhymeModelsTest(unittest.TestCase):
     def test_model_ids_and_time_budgets(self):
-        self.assertIn("gpt-4o-mini",api.FALLBACK_MODELS)
+        self.assertIn("gpt-5.6-sol",api.FALLBACK_MODELS)
         self.assertNotIn("gpt-6-luna",api.FALLBACK_MODELS)
-        self.assertNotIn("gpt-5.6-terra",api.FALLBACK_MODELS)
+        self.assertIn("gpt-5.6-terra",api.QUALITY_MODEL)
 
     def test_success_after_primary_model_timeout(self):
         original=api.OPENAI_API_KEY
@@ -31,19 +31,19 @@ class RhymeModelsTest(unittest.TestCase):
         attempts=[]
         try:
             api.OPENAI_API_KEY="fake-test-token"
-            api.FALLBACK_MODELS=["gpt-4o-mini","gpt-4.1-mini"]
+            api.FALLBACK_MODELS=["gpt-5.6-sol","gpt-5.5"]
             def respond(req,timeout):
                 body=json.loads(req.data)
                 attempts.append((body,timeout))
-                if len(attempts)==1: raise TimeoutError("synthetic slow response")
+                if len(attempts)==1: raise api.urllib.error.HTTPError(req.full_url,404,"model unavailable",None,io.BytesIO(b"not found"))
                 return Response()
             with patch.object(api.urllib.request,"urlopen",side_effect=respond):
                 data,model=api.call_openai("Blue Talisman",api.RHYME_SCHEMA,"test_rhymes",api.DEVELOPER_PROMPT)
-            self.assertEqual(model,"gpt-4.1-mini")
+            self.assertEqual(model,"gpt-5.5")
             self.assertEqual(len(attempts),2)
-            self.assertNotIn("reasoning",attempts[0][0])
-            self.assertNotIn("reasoning",attempts[1][0])
-            self.assertLessEqual(attempts[0][1],23)
+            self.assertEqual(attempts[0][0]["reasoning"]["effort"],"medium")
+            self.assertEqual(attempts[1][0]["reasoning"]["effort"],"medium")
+            self.assertLessEqual(attempts[0][1],65)
             self.assertEqual(data["analysis"]["input"],"Blue Talisman")
         finally:
             api.OPENAI_API_KEY=original
