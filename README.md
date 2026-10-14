@@ -10,6 +10,8 @@ German-language rap rhyme and producer-community prototype. Live testing URL: **
 - Community submissions, tester review and point badges (currently local browser prototype state)
 - Beats and samples catalogue, locally previewed uploads
 - Rapper/producer profile preview and Free/Premium presentation
+- **Flow Challenge mini-game:** a 4-beat count-in followed by 16 timing targets over 4 bars, four selectable BPM presets (80/92/110/140), local Web Audio kick/snare/hi-hat, finger/spacebar rhythm tapping, optional microphone-onset mode (Beta), PERFECT/GOOD/OKAY/MISS timing, combo, score out of 100, local best-score record, and shareable result text. Open via the **Flow Game** navigation tab or homepage CTA.
+- **Privacy:** microphone stream is analyzed transiently with Web Audio and never recorded, uploaded or saved. Mic onset analysis is experimental and can be distorted by background sound or metronome playback; headphones recommended. The score measures beat placement accuracy only, **not** musicality or rap skill. Game requires a browser with Web Audio; Mic Beta additionally needs microphone permission on HTTPS.
 - Nine switchable designs: four fully functional comic editions (**Pop Comic**, **Street Graffiti**, **Graphic Novel**, **Clean Comic**) plus the five earlier themes.
 - The four comic editions share the original `sonic-art` page mechanics and differ through `data-comic-style` in `comic-variants.css`. Pop uses `comic-flow.css`. Select editions from the theme menu or the quick switch on the home page.
 - Selected design persists via `localStorage` (`reimflow_theme_v3`); no app API, search logic, account functionality or data persistence changed.
