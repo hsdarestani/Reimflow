@@ -5,8 +5,9 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 HOST="127.0.0.1"; PORT=int(os.getenv("PORT","8787"))
 OPENAI_API_KEY=os.getenv("OPENAI_API_KEY","").strip()
-PRIMARY_MODEL=os.getenv("OPENAI_MODEL","gpt-6-luna").strip()
-FALLBACK_MODELS=[m for m in [PRIMARY_MODEL,"gpt-5.6-terra","gpt-5.6-sol","gpt-5-mini"] if m]
+PRIMARY_MODEL=os.getenv("OPENAI_MODEL","gpt-4o-mini").strip()
+# Fast first model for interactive rhyme search; only known API model IDs.
+FALLBACK_MODELS=list(dict.fromkeys([PRIMARY_MODEL,"gpt-4.1-mini","gpt-5-mini"]))
 DB_PATH=os.getenv("REIMFLOW_DB","/var/lib/reimflow/reimflow.sqlite3")
 CACHE_TTL=60*60*24*30; MAX_QUERY_LEN=120; RATE_LIMIT=24; RATE_WINDOW=60
 _lock=threading.Lock(); _rate=defaultdict(deque)
@@ -149,27 +150,46 @@ def extract_output_text(response):
 def call_openai(user_text,schema,schema_name,developer_prompt):
     if not OPENAI_API_KEY: raise RuntimeError("AI_NOT_CONFIGURED")
     last=None
-    for model in dict.fromkeys(FALLBACK_MODELS):
-        body={"model":model,"store":False,"reasoning":{"effort":"low"},"input":[
+    started=time.monotonic()
+    # Cap total synchronous work well below browser and reverse proxy timeouts.
+    for model in FALLBACK_MODELS[:3]:
+        remaining=44-(time.monotonic()-started)
+        if remaining<5: break
+        body={"model":model,"store":False,"input":[
             {"role":"developer","content":[{"type":"input_text","text":developer_prompt}]},
             {"role":"user","content":[{"type":"input_text","text":user_text}]}],
             "max_output_tokens":3200,
             "text":{"format":{"type":"json_schema","name":schema_name,"strict":True,"schema":schema}}}
-        req=urllib.request.Request("https://api.openai.com/v1/responses",data=json.dumps(body,ensure_ascii=False).encode(),method="POST",
-            headers={"Authorization":"Bearer "+OPENAI_API_KEY,"Content-Type":"application/json","User-Agent":"Reimflow/1.0"})
+        # GPT-4.x models reject reasoning parameter; GPT-5 supports it.
+        if model.startswith("gpt-5"):
+            body["reasoning"]={"effort":"minimal"}
+        req=urllib.request.Request("https://api.openai.com/v1/responses",
+            data=json.dumps(body,ensure_ascii=False).encode("utf-8"),method="POST",
+            headers={"Authorization":"Bearer "+OPENAI_API_KEY,"Content-Type":"application/json","User-Agent":"Reimflow/1.1"})
         try:
-            with urllib.request.urlopen(req,timeout=18) as resp: raw=json.loads(resp.read().decode())
+            with urllib.request.urlopen(req,timeout=min(22,remaining)) as resp:
+                raw=json.loads(resp.read(1024*1024).decode("utf-8"))
             text=extract_output_text(raw)
             if not text: raise RuntimeError("EMPTY_AI_RESPONSE")
-            return json.loads(text),model
+            parsed=json.loads(text)
+            if not isinstance(parsed,dict): raise RuntimeError("INVALID_AI_RESPONSE")
+            return parsed,model
         except urllib.error.HTTPError as e:
-            error_body=e.read().decode("utf-8","ignore")[:1200]; last=RuntimeError(f"OPENAI_HTTP_{e.code}: {error_body}")
-            if e.code in (400,404) and ("model" in error_body.lower() or "not found" in error_body.lower()): continue
+            # Never write the full upstream body (or the user's query) to logs.
+            last=RuntimeError("OPENAI_HTTP_"+str(e.code))
+            print("rhyme upstream model:",model,"http:",e.code,flush=True)
+            # Invalid model/config: try next valid model; authorization/billing
+            # errors will not be solved with additional costly calls.
+            if e.code in (400,404,422,429,500,502,503,504): continue
             raise last
-        except Exception as e:
-            last=e
-            if "model" in str(e).lower(): continue
-            raise
+        except (TimeoutError,urllib.error.URLError) as e:
+            last=RuntimeError("OPENAI_TIMEOUT" if isinstance(e,TimeoutError) else "OPENAI_NETWORK")
+            print("rhyme upstream model:",model,"connectivity:",type(e).__name__,flush=True)
+            continue
+        except (ValueError,RuntimeError) as e:
+            last=RuntimeError("OPENAI_BAD_RESPONSE")
+            print("rhyme upstream model:",model,"response:",type(e).__name__,flush=True)
+            continue
     raise last or RuntimeError("OPENAI_UNAVAILABLE")
 
 def sanitize(data, query):
@@ -262,7 +282,11 @@ class Handler(BaseHTTPRequestHandler):
                         data=retry
                 result={"ok":True,"engine":"ai_phonetic","model":model,"cached":False,**data}; cache_put(key,result); self.send_json(200,result)
             except Exception as e:
-                print("rhyme error:",str(e)[:600],flush=True); self.send_json(503 if "AI_NOT_CONFIGURED" in str(e) else 502,{"error":"AI_UNAVAILABLE","message":"Die KI-Reimsuche ist gerade nicht erreichbar. Bitte versuche es gleich nochmal."})
+                reason=str(e)
+                code="AI_TIMEOUT" if "TIMEOUT" in reason else "AI_CONFIG" if "AI_NOT_CONFIGURED" in reason else "AI_UPSTREAM"
+                print("rhyme request failed:",code,flush=True)
+                self.send_json(504 if code=="AI_TIMEOUT" else 503 if code=="AI_CONFIG" else 502,
+                    {"error":code,"message":"Die KI-Reimsuche ist vorübergehend nicht erreichbar. Du kannst es erneut versuchen."})
             return
         if self.path=="/api/validate":
             source=str(body.get("source","")).strip(); target=str(body.get("target","")).strip()
