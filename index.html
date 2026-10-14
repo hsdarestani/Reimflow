@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="comic-flow.css?v=20261014-de1" />
   <link rel="stylesheet" href="comic-variants.css?v=20261014-de1" />
   <link rel="stylesheet" href="flow-challenge.css?v=20261014-flow1" />
-  <link rel="stylesheet" href="rap-flow.css?v=20261014-rap2" />
+  <link rel="stylesheet" href="rap-flow.css?v=20261015-wav1" />
 </head>
 <body>
   <div class="theme-atmosphere" aria-hidden="true"><span class="ambient-one"></span><span class="ambient-two"></span><span class="ambient-three"></span></div>
@@ -319,6 +319,7 @@
               <div class="rap-preview" id="rapPreview" hidden>
                 <label for="rapAudioPreview">Deine Aufnahme nur auf diesem Gerät</label>
                 <audio id="rapAudioPreview" controls preload="none"></audio>
+                <p id="rapRecordingDuration" class="rap-recording-duration" aria-live="polite"></p>
                 <button id="rapAnalyze" class="candy-btn" type="button">✦ Mit KI auswerten</button>
                 <div id="rapAnalysisState" class="rap-analysis-state" role="status" aria-live="polite" hidden></div>
               </div>
@@ -538,6 +539,7 @@
   <script src="app.js?v=20261014-de1"></script>
   <script src="flow-scoring.js?v=20261014-de1"></script>
   <script src="flow-challenge.js?v=20261014-de1"></script>
-  <script src="rap-flow.js?v=20261014-rap2"></script>
+  <script src="rap-audio.js?v=20261015-wav1"></script>
+  <script src="rap-flow.js?v=20261015-wav1"></script>
 </body>
 </html>
