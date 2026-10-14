@@ -200,7 +200,7 @@ function filteredRhymes(){
 function renderLoading(){
   $("#resultsCount").textContent="Analysiere…";$("#resultsFor").textContent=" „"+state.currentQuery+"“";
   const preview=window.ReimflowRhymePreviews?.find(state.currentQuery);
-  const phraseWords=state.currentQuery.trim().match(/[^\\W\\d_]+(?:['’\\-][^\\W\\d_]+)*/gu)||state.currentQuery.trim().split(/\\s+/);
+  const phraseWords=state.currentQuery.trim().split(/\s+/);
   const anchorWord=phraseWords.at(-1)||"";
   const phraseHint=phraseWords.length>1?'<div class="rhyme-anchor-chooser">Ganze Phrase: <strong>'+escapeHtml(state.currentQuery)+'</strong> · Endwort: <strong>'+escapeHtml(anchorWord)+'</strong><button type="button" class="secondary-btn compact" id="onlyRhymeAnchor">Nur „'+escapeHtml(anchorWord)+'“ suchen</button></div>':"";
   const first=(preview?'<div class="rhyme-preview"><strong>Sofort-Ideen fürs Endwort „'+escapeHtml(preview.anchor)+'“</strong><span class="rhyme-preview-note">Wörterbuchbeispiele, noch nicht durch die KI geprüft</span><div class="rhyme-preview-tags">'+preview.words.map(x=>'<span>'+escapeHtml(x)+'</span>').join('')+'</div>'+(preview.phrases.length?'<p>Mehrteilige Rap-Ideen: <b>'+preview.phrases.map(escapeHtml).join(' · ')+'</b></p>':'')+'<small>'+escapeHtml(preview.note)+'</small></div>':'');
