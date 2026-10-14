@@ -279,7 +279,7 @@ html[data-theme="sonic-art"] select{border-radius:0;background:#0d0d0c;color:var
 html[data-theme="sonic-art"] .query-insight{
   background:#0d0d0c;border:1px solid var(--sa-line);border-radius:0;box-shadow:none;clip-path:none;position:relative
 }
-html[data-theme="sonic-art"] .query-insight:after{content:"PHONETIC / ANALYSIS";position:absolute;right:14px;bottom:10px;font:500 .52rem "JetBrains Mono";letter-spacing:.14em;color:#46433f}
+html[data-theme="sonic-art"] .query-insight:after{content:"LAUTANALYSE";position:absolute;right:14px;bottom:10px;font:500 .52rem "JetBrains Mono";letter-spacing:.14em;color:#46433f}
 html[data-theme="sonic-art"] .insight-label{color:var(--sa-acid);font-family:"JetBrains Mono"}
 html[data-theme="sonic-art"] .insight-main strong{font-family:"Space Grotesk";font-size:1.55rem;color:var(--sa-paper)}
 html[data-theme="sonic-art"] .insight-meta span{background:none;color:#a19d94;border:1px solid var(--sa-line);border-radius:0}
