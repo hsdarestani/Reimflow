@@ -15,7 +15,7 @@ const nodes={
   player:el("rapAudioPreview"),results:el("rapResults"),grid:el("rapGrid"),pause:el("rapPause"),
   syllables:el("rapSyllables"),density:el("rapDensity"),barsVisual:el("rapBarsVisual"),
   wordTimeline:el("rapWordTimeline"),feedback:el("rapFeedback"),transcript:el("rapTranscript"),
-  limitNote:el("rapLimitNote"),share:el("rapShare"),resultTitle:el("rapResultTitle")
+  limitNote:el("rapLimitNote"),share:el("rapShare"),resultTitle:el("rapResultTitle"),analysisState:el("rapAnalysisState")
 };
 const TOTAL_COUNTIN=4,MAX_BYTES=4*1024*1024;
 let phase="idle",context=null,media=null,recorder=null,recorded=null,previewUrl=null,chunks=[],currentResult=null;
@@ -23,6 +23,13 @@ let timer=0,animation=0,nextBeat=0,nextBeatAudio=0,startPerf=0,rapZeroPerf=0,rap
 let captureBeatOffset=0,bpm=92,bars=8,beatSeconds=0,noiseBuffer=null,output=null,abortUpload=null;
 let runId=0;
 const $status=(title,detail)=>{nodes.status.textContent=title;nodes.subStatus.textContent=detail};
+function updateAnalysisState(type,message){
+  const box=nodes.analysisState;
+  if(!box)return;
+  box.hidden=!message;
+  box.className="rap-analysis-state"+(type?" "+type:"");
+  box.textContent=message||"";
+}
 function setMode(name){
   if(phase==="recording"||phase==="preparing"||phase==="uploading")return;
   const isRap=name==="rap";
@@ -63,6 +70,7 @@ function discard(){
   if(previewUrl){URL.revokeObjectURL(previewUrl);previewUrl=null}
   nodes.player.removeAttribute("src");nodes.player.load();
   recorded=null;currentResult=null;chunks=[];
+  updateAnalysisState("",null);
   nodes.preview.hidden=true;nodes.results.hidden=true;nodes.discard.hidden=true;
   nodes.analyze.disabled=false;nodes.analyze.textContent="✦ Mit KI auswerten";
   nodes.progress.style.width="0%";nodes.counter.textContent="🎙";nodes.clock.textContent="00:00";
@@ -164,6 +172,7 @@ async function stopRecording(manual=true){
     return;
   }
   recorded=blob;previewUrl=URL.createObjectURL(blob);
+  updateAnalysisState("ready","Aufnahme gespeichert. Wenn du „Mit KI auswerten“ drückst, wird die Aufnahme zur Sprachanalyse übertragen.");
   nodes.player.src=previewUrl;
   nodes.preview.hidden=false;nodes.discard.hidden=false;
   phase="preview";
@@ -261,6 +270,9 @@ async function analyze(){
   if(!recorded||phase!=="preview"||!nodes.consent.checked){$status("Einwilligung erforderlich","Bitte der Verarbeitung zustimmen.");return}
   if(recorded.size>MAX_BYTES){$status("Datei zu groß","Bitte neu aufnehmen.");return}
   phase="uploading";
+  updateAnalysisState("loading","Die Aufnahme wird analysiert. Bitte warte auf das Ergebnis.");
+  nodes.results.hidden=true;
+  currentResult=null;
   nodes.analyze.disabled=true;nodes.start.disabled=true;nodes.analyze.textContent="✦ Analyse läuft…";
   $status("KI wertet deine Aufnahme aus","Wörter und ihre Zeitmarken werden erkannt. Das kann etwas dauern.");
   abortUpload=new AbortController();
@@ -272,20 +284,27 @@ async function analyze(){
   form.append("bars",String(bars));
   form.append("beat_offset",captureBeatOffset.toFixed(4));
   const timeout=setTimeout(()=>abortUpload?.abort(),85000);
+  let succeeded=false;
   try{
     const response=await fetch("/api/flow/analyze",{method:"POST",body:form,signal:abortUpload.signal,credentials:"same-origin"});
     let result={};
     try{result=await response.json()}catch{throw Error("Der Server hat keine gültige Antwort gesendet.")}
     if(!response.ok)throw Error(result.message||"Analyse nicht möglich. Bitte erneut versuchen.");
+    if(!result||result.ok!==true||!["analyzed","no_speech"].includes(result.status))throw Error("Der Server hat kein gültiges Analyseergebnis geliefert.");
     display(result);
-    $status("Auswertung abgeschlossen","Die Berechnung basiert auf erkannten Wörtern und Zeitmarken.");
+    succeeded=true;
+    updateAnalysisState(result.status==="no_speech"?"warning":"success",result.status==="no_speech"?"Keine verständliche Stimme erkannt. Die Aufnahme kannst du erneut anhören oder eine neue aufnehmen.":"Analyse abgeschlossen. Die Ergebnisse stehen direkt unter deiner Aufnahme.");
+    $status(result.status==="no_speech"?"Keine Stimme erkannt":"Auswertung abgeschlossen","Die Berechnung basiert auf erkannten Wörtern und Zeitmarken.");
   }catch(error){
-    $status("Analyse nicht verfügbar",error?.name==="AbortError"?"Die Anfrage dauerte zu lange oder wurde unterbrochen.":error?.message||"Bitte später erneut versuchen.");
+    const reason=error?.name==="AbortError"?"Die Anfrage dauerte zu lange oder wurde unterbrochen.":error?.message||"Bitte später erneut versuchen.";
+    $status("Analyse fehlgeschlagen",reason);
+    updateAnalysisState("error","Analyse fehlgeschlagen: "+reason+" Die Aufnahme bleibt auf deinem Gerät und kann erneut gesendet werden.");
+    nodes.analysisState?.scrollIntoView({block:"center",behavior:"smooth"});
   }finally{
     clearTimeout(timeout);
     abortUpload=null;
     phase="preview";nodes.analyze.disabled=false;nodes.start.disabled=false;
-    nodes.analyze.textContent="✦ Erneut auswerten";
+    nodes.analyze.textContent=succeeded?"✦ Erneut auswerten":"✦ Analyse erneut versuchen";
   }
 }
 async function share(){
