@@ -50,3 +50,23 @@ html:is([data-theme="linear"],[data-theme="minimal-dark"],[data-theme="vaporwave
 html:is([data-theme="linear"],[data-theme="minimal-dark"],[data-theme="vaporwave"]) .search-empty p{color:var(--theme-muted)}html:is([data-theme="linear"],[data-theme="minimal-dark"],[data-theme="vaporwave"]) .ai-check-btn{background:color-mix(in srgb,var(--theme-accent) 12%,transparent);border:1px solid color-mix(in srgb,var(--theme-accent) 35%,transparent);color:var(--theme-accent)}
 html:is([data-theme="linear"],[data-theme="minimal-dark"],[data-theme="vaporwave"]) .ai-review{background:rgba(255,255,255,.025);border-color:var(--theme-border);color:var(--theme-fg)}html:is([data-theme="linear"],[data-theme="minimal-dark"],[data-theme="vaporwave"]) .ai-review span{color:var(--theme-muted)}
 @media(max-width:760px){.query-insight{grid-template-columns:1fr}.insight-meta{justify-content:flex-start}.rhyme-card.ai-rhyme{grid-template-columns:52px 1fr auto}.rhyme-card.ai-rhyme .tag-row{grid-column:2/-1}.rhyme-explanation{grid-column:1/-1;grid-template-columns:75px auto}.rhyme-explanation p{grid-column:1/-1;margin:4px 0 0}.rhyme-skeleton{grid-template-columns:48px 1fr}.rhyme-skeleton i{display:none}}
+
+/* Offline word ideas are intentionally distinguished from verified AI rhymes. */
+.rhyme-offline-note {
+  padding:18px 20px;margin:0 0 17px;
+  background:var(--theme-card,#fff9ec);
+  border:2px solid var(--theme-accent,#ff603d);
+  border-radius:16px;color:var(--theme-fg,#242429);
+}
+.rhyme-offline-note strong {display:block;font:900 1rem/1.3 "Outfit",sans-serif}
+.rhyme-offline-note p {
+  color:var(--theme-muted,#595960);
+  font:600 .83rem/1.6 "Space Grotesk",sans-serif;
+  margin:8px 0 13px;
+}
+.rhyme-offline-note button {min-height:44px}
+.ai-chip.source-offline {background:#f2d56b!important;color:#27272d!important;border-color:#48402f!important}
+@media(max-width:640px) {
+ .rhyme-offline-note {padding:15px}
+ .rhyme-offline-note button {width:100%}
+}
