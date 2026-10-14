@@ -188,7 +188,7 @@ function animate(){
   }else{
     const i=Math.min(T.BEATS-1,Math.floor(pos));
     if(i!==currentIndex){
-      if(currentIndex>=0&&currentIndex<T.BEATS&&(!hits[currentIndex])&&now>(beatStart+currentIndex*interval+PERIOD_WINDOW))record(currentIndex,{kind:"miss",points:0,label:"MISS"});
+      if(currentIndex>=0&&currentIndex<T.BEATS&&(!hits[currentIndex])&&now>(beatStart+currentIndex*interval+PERIOD_WINDOW))record(currentIndex,{kind:"miss",points:0,label:"VERPASST"});
       currentIndex=i;
       el.stage.classList.remove("counting");el.stage.classList.add("playing");
       setText(el.count,String(i+1).padStart(2,"0"));
@@ -198,7 +198,7 @@ function animate(){
       el.orbit.classList.remove("pulse");void el.orbit.offsetWidth;el.orbit.classList.add("pulse");
     }
     for(let j=0;j<=i;j++){
-      if(!hits[j]&&now>(beatStart+j*interval+PERIOD_WINDOW))record(j,{kind:"miss",points:0,label:"MISS"});
+      if(!hits[j]&&now>(beatStart+j*interval+PERIOD_WINDOW))record(j,{kind:"miss",points:0,label:"VERPASST"});
     }
     if(mode==="mic")sampleMic(now);
   }
