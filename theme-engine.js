@@ -1,7 +1,7 @@
 
 (() => {
   const themes = {
-    "sonic-art": { label: "Sonic Atelier", color: "#FF4D2E" },
+    "sonic-art": { label: "Comic Flow", color: "#FF603D" },
     playful: { label: "Playful", color: "#8B5CF6" },
     linear: { label: "Linear", color: "#5E6AD2" },
     "minimal-dark": { label: "Minimal Dark", color: "#F59E0B" },
