@@ -25,6 +25,12 @@ jobs:
           node --check flow-challenge.js
           node --check tests/flow-challenge.test.mjs
           node tests/flow-challenge.test.mjs
+      - name: Install browser smoke dependencies
+        run: |
+          npm install --no-save playwright@1.58.2
+          npx playwright install chromium
+      - name: Test actual desktop and mobile navigation in Chromium
+        run: node tests/navigation-browser.test.mjs
       - name: Verify complete existing prototype bundle
         run: |
           set -euo pipefail
