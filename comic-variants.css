@@ -106,12 +106,12 @@ html[data-comic-style="graffiti"] .theme-menu-title {color:#ccc8be}
 html[data-comic-style="graffiti"] .theme-option.active,
 html[data-comic-style="graffiti"] .theme-option:hover {background:#303133}
 html[data-comic-style="graffiti"] .sonic-hero::after {
-  content:"NO RULES / JUST RHYMES";top:97px;
+  content:"KEINE REGELN / NUR REIME";top:97px;
   color:#171717;background:#c5fa38;border-color:#f7f3e8;
   border-radius:0;box-shadow:5px 5px 0 #ad59e9;
   transform:rotate(6deg);
 }
-html[data-comic-style="graffiti"] .sonic-hero::before {content:"REIMFLOW / UNDERGROUND / EDITION 02";color:#c5fa38}
+html[data-comic-style="graffiti"] .sonic-hero::before {content:"REIMFLOW / UNTERGRUND / AUSGABE 02";color:#c5fa38}
 html[data-comic-style="graffiti"] .eyebrow {
   color:#c5fa38;background:#252526;border-color:#c5fa38;
   border-radius:2px;box-shadow:4px 4px 0 #aa55dd;
@@ -380,9 +380,9 @@ html[data-comic-style="novel"] .sonic-hero {
   grid-template-columns:minmax(0,1.18fr) minmax(290px,.82fr);
   padding-top:86px;min-height:740px;
 }
-html[data-comic-style="novel"] .sonic-hero::before {content:"VOL. 03 / STORIES IN SOUND";color:#aaa39b}
+html[data-comic-style="novel"] .sonic-hero::before {content:"BAND 03 / GESCHICHTEN IM KLANG";color:#aaa39b}
 html[data-comic-style="novel"] .sonic-hero::after {
-  content:"CHAPTER / 01";color:#fff;background:#e34948;border:0;
+  content:"KAPITEL / 01";color:#fff;background:#e34948;border:0;
   border-radius:2px;box-shadow:none;transform:none;
 }
 html[data-comic-style="novel"] .eyebrow {
@@ -712,10 +712,10 @@ html[data-comic-style="clean"] .sonic-hero {
   min-height:710px;padding-top:90px;
 }
 html[data-comic-style="clean"] .sonic-hero::before {
-  content:"WORDS / BEATS / PEOPLE / FLOW";color:#687879;
+  content:"WORTE / TAKTE / MENSCHEN / FLOW";color:#687879;
 }
 html[data-comic-style="clean"] .sonic-hero::after {
-  content:"MAKE YOUR NEXT LINE";
+  content:"DEINE NÄCHSTE ZEILE";
   color:#3a5754;background:#e1f3ec;border:1px solid #9ac3b7;
   border-radius:15px;box-shadow:none;transform:rotate(3deg);
 }
@@ -787,7 +787,7 @@ html[data-comic-style="clean"] .sonic-sculpture::before {
   transform:rotate(5deg);
 }
 html[data-comic-style="clean"] .sonic-sculpture::after {
-  content:"HELLO!";background:#ee7358;color:#fff;text-shadow:none;
+  content:"HALLO!";background:#ee7358;color:#fff;text-shadow:none;
   font:700 1.1rem "Space Grotesk",sans-serif;transform:rotate(9deg);
 }
 html[data-comic-style="clean"] .sonic-sculpture .disc {
