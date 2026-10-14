@@ -70,3 +70,10 @@ html:is([data-theme="linear"],[data-theme="minimal-dark"],[data-theme="vaporwave
  .rhyme-offline-note {padding:15px}
  .rhyme-offline-note button {width:100%}
 }
+
+/* Quality-first rhyme results: no invented confidence percent or pseudoscientific score. */
+.rhyme-card.ai-rhyme .match-score {font-size:clamp(.63rem,1.45vw,.85rem)!important;letter-spacing:-.015em!important;min-width:0;overflow:hidden;padding:3px!important;word-break:keep-all}
+.rhyme-card.ai-rhyme .rhyme-explanation {display:flex!important;flex-wrap:wrap;gap:6px;align-items:center}
+.rhyme-card.ai-rhyme .review-explanation-label {font:700 .72rem/1.4 "Space Grotesk",sans-serif;opacity:.75}
+.rhyme-card.ai-rhyme .rhyme-explanation p {flex-basis:100%;margin:4px 0 0!important}
+@media(max-width:760px) {.rhyme-card.ai-rhyme .match-score {font-size:.61rem!important}}
