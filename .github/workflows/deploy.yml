@@ -33,7 +33,9 @@ jobs:
           npm install --no-save playwright@1.58.2
           npx playwright install chromium
       - name: Test actual desktop and mobile navigation in Chromium
-        run: node tests/navigation-browser.test.mjs
+        run: |
+          node tests/navigation-browser.test.mjs
+          node tests/rap-browser.test.mjs
       - name: Verify complete existing prototype bundle
         run: |
           set -euo pipefail
