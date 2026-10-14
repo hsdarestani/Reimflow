@@ -77,3 +77,23 @@ html:is([data-theme="linear"],[data-theme="minimal-dark"],[data-theme="vaporwave
 .rhyme-card.ai-rhyme .review-explanation-label {font:700 .72rem/1.4 "Space Grotesk",sans-serif;opacity:.75}
 .rhyme-card.ai-rhyme .rhyme-explanation p {flex-basis:100%;margin:4px 0 0!important}
 @media(max-width:760px) {.rhyme-card.ai-rhyme .match-score {font-size:.61rem!important}}
+
+/* Phrase search: instant human-curated examples while independent AI review runs. */
+.rhyme-preview {background:var(--theme-card,#fffaf0);border:2px solid var(--theme-border,#252525);
+  border-radius:17px;margin:0 0 18px;padding:19px;color:var(--theme-fg,#222);box-shadow:3px 4px 0 #0002}
+.rhyme-preview>strong {display:block;font:900 clamp(.99rem,2.3vw,1.2rem)/1.4 "Outfit",sans-serif}
+.rhyme-preview-note {display:block;color:var(--theme-muted,#585858);font:.75rem/1.65 "Space Grotesk",sans-serif;margin:5px 0 10px}
+.rhyme-preview-tags {display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.rhyme-preview-tags span {background:var(--flow-neon,#f6d556);color:#191919;border:1px solid #262626;
+  border-radius:9px;padding:8px 13px;font:800 .88rem "Space Grotesk",sans-serif}
+.rhyme-preview p {margin:9px 0;color:var(--theme-fg,#111);font:.85rem/1.6 "Space Grotesk",sans-serif}
+.rhyme-preview p b {font-weight:800}
+.rhyme-preview small {display:block;color:var(--theme-muted,#666);font:.73rem/1.6 "Space Grotesk",sans-serif}
+.rhyme-group-title {font:900 clamp(.95rem,2vw,1.15rem)/1.4 "Outfit",sans-serif;
+  letter-spacing:.02em;color:var(--theme-fg,#181818);margin:24px 0 14px;
+  padding:10px 0 8px;border-bottom:2px dotted var(--theme-border,#333)}
+.search-progress-copy #cancelRhymeSearch {display:inline-flex;margin-top:13px;min-height:39px}
+@media(max-width:680px) {
+ .rhyme-preview {padding:15px}
+ .rhyme-preview-tags span {padding:7px 11px;font-size:.78rem}
+}
