@@ -278,7 +278,7 @@
     </section>
 
     <section class="page" data-page="rhymes">
-      <div class="container app-shell" data-art-label="02 / RHYME ENGINE">
+      <div class="container app-shell" data-art-label="02 / REIMSUCHE">
         <div class="page-title">
           <div><span class="kicker">KI gestützte Reimsuche</span><h1>Finde deinen Reim.</h1></div>
           <div class="points-pill">✦ <span data-points>120</span> Punkte</div>
@@ -322,7 +322,7 @@
     </section>
 
     <section class="page" data-page="community">
-      <div class="container app-shell" data-art-label="03 / COMMUNITY">
+      <div class="container app-shell" data-art-label="03 / GEMEINSCHAFT">
         <div class="page-title">
           <div><span class="kicker">Gemeinsam besser</span><h1>Community & Tester.</h1></div>
           <button class="candy-btn" id="openSubmit">Reim hinzufügen <span>＋</span></button>
@@ -341,7 +341,7 @@
           <aside class="sticker-card leaderboard">
             <div class="leader-icon">♛</div>
             <span class="kicker">Diese Woche</span>
-            <h3>Top Contributor</h3>
+            <h3>Aktivste Mitglieder</h3>
             <ol>
               <li><span class="avatar violet-bg">MK</span><div><strong>MicKönig</strong><small>48 Beiträge</small></div><b>1.240</b></li>
               <li><span class="avatar pink-bg">LF</span><div><strong>LineFactory</strong><small>36 Beiträge</small></div><b>980</b></li>
@@ -354,21 +354,21 @@
     </section>
 
     <section class="page" data-page="beats">
-      <div class="container app-shell" data-art-label="04 / SOUND LIBRARY">
+      <div class="container app-shell" data-art-label="04 / KLANGARCHIV">
         <div class="page-title">
-          <div><span class="kicker">Für Rapper & Producer</span><h1>Beats & Samples.</h1></div>
-          <button class="candy-btn" id="openBeatUpload">Upload <span>↑</span></button>
+          <div><span class="kicker">Für Rapper und Produzenten</span><h1>Beats & Samples.</h1></div>
+          <button class="candy-btn" id="openBeatUpload">Hochladen <span>↑</span></button>
         </div>
         <div class="beat-toolbar">
           <div class="segmented" id="beatFilters"><button class="active" data-beat-filter="Alle">Alle</button><button data-beat-filter="Beat">Beats</button><button data-beat-filter="Sample">Samples</button></div>
-          <div class="input-with-icon mini"><span>⌕</span><input id="beatSearch" placeholder="Producer oder Titel" /></div>
+          <div class="input-with-icon mini"><span>⌕</span><input id="beatSearch" placeholder="Produzent oder Titel" /></div>
         </div>
         <div id="beatGrid" class="beat-grid"></div>
       </div>
     </section>
 
     <section class="page" data-page="profile">
-      <div class="container app-shell" data-art-label="05 / PROFILE">
+      <div class="container app-shell" data-art-label="05 / PROFIL">
         <div class="profile-hero sticker-card">
           <div class="profile-avatar">HF</div>
           <div class="profile-copy"><span class="status-pill violet-bg">Rapper</span><h1>Hossein</h1><p>@hossein · Frankfurt</p></div>
@@ -396,15 +396,15 @@
 
     <section class="page" data-page="premium">
       <div class="container app-shell">
-        <div class="pricing-intro"><span class="kicker">Free oder Premium</span><h1>Mehr Möglichkeiten für deine Reime.</h1><p>Starte kostenlos. Upgrade erst, wenn du mehr Tiefe und kreative Werkzeuge brauchst.</p></div>
+        <div class="pricing-intro"><span class="kicker">Kostenlos oder Premium</span><h1>Mehr Möglichkeiten für deine Reime.</h1><p>Starte kostenlos. Wechsle erst zu Premium, wenn du weitere Werkzeuge brauchst.</p></div>
         <div class="pricing-grid">
           <article class="sticker-card price-card">
-            <span class="status-pill">FREE</span><h2>0 €</h2><p>Für den Einstieg und die Community.</p>
+            <span class="status-pill">KOSTENLOS</span><h2>0 €</h2><p>Für den Einstieg und die Community.</p>
             <ul><li>✓ Reimsuche</li><li>✓ Basis Filter</li><li>✓ Community Beiträge</li><li>✓ Beats entdecken</li></ul>
             <button class="secondary-btn full">Aktueller Plan</button>
           </article>
           <article class="sticker-card price-card featured">
-            <div class="popular-star">MOST<br>POPULAR</div>
+            <div class="popular-star">SEHR<br>BELIEBT</div>
             <span class="status-pill violet-bg">PREMIUM</span><h2>4,99 € <small>/ Monat</small></h2><p>Für Rapper, die tiefer suchen wollen.</p>
             <ul><li>✓ Erweiterte Klang Suche</li><li>✓ Multi Silben Filter</li><li>✓ Unbegrenzte Favoriten</li><li>✓ Keine Werbung</li><li>✓ Producer Extras</li></ul>
             <button class="candy-btn full">Premium testen <span>→</span></button>
@@ -426,7 +426,7 @@
 
   <dialog id="submitDialog" class="modal">
     <form method="dialog" class="modal-card" id="submitRhymeForm">
-      <div class="modal-head"><div><span class="kicker">Community Beitrag</span><h2>Neuen Reim senden</h2></div><button class="close-btn" value="cancel" aria-label="Schließen">×</button></div>
+      <div class="modal-head"><div><span class="kicker">Beitrag der Community</span><h2>Neuen Reim senden</h2></div><button class="close-btn" value="cancel" aria-label="Schließen">×</button></div>
       <label>Ausgangswort<input id="submitSource" required placeholder="z. B. Bellingham"></label>
       <label>Dein Reim<input id="submitTarget" required placeholder="z. B. Talisman"></label>
       <div class="two-col">
@@ -441,16 +441,16 @@
 
   <dialog id="beatDialog" class="modal">
     <form method="dialog" class="modal-card" id="beatUploadForm">
-      <div class="modal-head"><div><span class="kicker">Producer Upload</span><h2>Beat oder Sample hochladen</h2></div><button class="close-btn" value="cancel" aria-label="Schließen">×</button></div>
+      <div class="modal-head"><div><span class="kicker">Für Produzenten</span><h2>Beat oder Sample hochladen</h2></div><button class="close-btn" value="cancel" aria-label="Schließen">×</button></div>
       <label>Titel<input id="beatTitle" required placeholder="z. B. Midnight Bounce"></label>
       <div class="two-col">
         <label>Typ<select id="beatType"><option>Beat</option><option>Sample</option></select></label>
         <label>BPM<input id="beatBpm" type="number" min="40" max="240" value="92"></label>
       </div>
-      <label>Lizenz<select id="beatLicense"><option>Free Use</option><option>Non Commercial</option><option>Commercial License</option></select></label>
+      <label>Lizenz<select id="beatLicense"><option value="Free Use">Kostenlose Nutzung</option><option value="Non Commercial">Nicht kommerziell</option><option value="Commercial License">Kommerzielle Lizenz</option></select></label>
       <label>Audio Datei<input id="beatFile" type="file" accept="audio/*"></label>
       <p class="form-note">Für den Prototyp bleibt eine ausgewählte Datei nur bis zum Neuladen der Seite abspielbar.</p>
-      <button class="candy-btn full" type="submit" value="default">Upload hinzufügen <span>↑</span></button>
+      <button class="candy-btn full" type="submit" value="default">Datei hinzufügen <span>↑</span></button>
     </form>
   </dialog>
 
