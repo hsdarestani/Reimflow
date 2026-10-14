@@ -89,7 +89,7 @@ def review_and_filter(query, initial, review):
 def review_input(query,initial):
     return json.dumps({
         "query_exact":query,
-        "end_word":__import__("re").findall(r"[^\\W\\d_]+",query)[-1] if __import__("re").findall(r"[^\\W\\d_]+",query) else query,
+        "end_word":re.findall(r"[^\W\d_]+",query)[-1] if re.findall(r"[^\W\d_]+",query) else query,
         "candidate_list":[{"word":w.get("word",""),"claimed_ipa":w.get("ipa",""),
                            "claimed_kind":w.get("kind","")} for w in (initial.get("rhymes") or [])[:14]],
         "instruction":"Ignore candidate quality scores and claimed pronunciations if implausible; judge real sounding rhyme."
