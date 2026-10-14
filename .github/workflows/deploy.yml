@@ -36,6 +36,7 @@ jobs:
         run: |
           node tests/navigation-browser.test.mjs
           node tests/rap-browser.test.mjs
+          node tests/rap-result-browser.test.mjs
       - name: Verify complete existing prototype bundle
         run: |
           set -euo pipefail
@@ -63,8 +64,8 @@ jobs:
           grep -q '/api/rhymes' api.py
           grep -q '/api/validate' api.py
           grep -q '/api/flow/analyze' api.py
-          grep -q 'rap-flow.js?v=20261014-rap1' index.html
-          grep -q 'rap-flow.css?v=20261014-rap1' index.html
+          grep -q 'rap-flow.js?v=20261014-rap2' index.html
+          grep -q 'rap-flow.css?v=20261014-rap2' index.html
           grep -q 'data-page="flow"' index.html
           grep -q 'id="rapPanel"' index.html
           echo "Source is valid. STRATO deployment lives in hsdarestani/publisher under .github/workflows/reimflow-strato-deploy.yml."
