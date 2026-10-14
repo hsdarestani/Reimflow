@@ -151,7 +151,7 @@ async function searchRhymes(force=false){
     const response=await fetch("/api/rhymes",{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify({query:state.currentQuery,category:state.category,syllables:state.syllables}),signal:controller.signal});
     const data=await response.json().catch(()=>({}));
     if(seq!==searchSequence)return;
-    if(!response.ok)throw new Error(data.message||"AI Suche nicht verfügbar");
+    if(!response.ok)throw new Error(data.message||"KI Suche nicht verfügbar");
     state.aiResults=Array.isArray(data.rhymes)?data.rhymes:[];
     state.queryAnalysis=data.analysis||null;state.searchSignature=signature;state.engineOnline=true;state.searchLoading=false;
     renderRhymes();renderQueryInsight(state.queryAnalysis);updateEngineState(data.cached?"Zwischenspeicher":"Aktuell");
@@ -163,7 +163,7 @@ async function searchRhymes(force=false){
     if(fallback){
       state.engineOnline=true;
       state.aiResults=fallback.rhymes;state.queryAnalysis=fallback.analysis;state.searchSignature=signature;
-      renderRhymes();renderQueryInsight(fallback.analysis,true);updateEngineState("Ersatztreffer");toast("Die Live Analyse war zu langsam. Kuratierte Ersatztreffer werden gezeigt.");
+      renderRhymes();renderQueryInsight(fallback.analysis,true);updateEngineState("Ersatztreffer");toast("Die direkte Analyse dauerte zu lange. Vorbereitete Reime werden gezeigt.");
     }else{
       state.aiResults=[];state.queryAnalysis=null;
       if(err.name==="AbortError"){
@@ -255,17 +255,17 @@ $$("[data-community-tab]").forEach(b=>b.addEventListener("click",()=>{const tab=
 function submissionMarkup(s,tester=false){
   return '<article class="sticker-card submission-card" data-submission-card="'+s.id+'"><div><div class="submission-pair"><span>'+escapeHtml(s.source)+'</span><span class="arrow-pill">→</span><span>'+escapeHtml(s.target)+'</span></div>'+
   '<div class="submission-meta"><span class="micro-tag">'+escapeHtml(s.category)+'</span><span class="micro-tag">'+escapeHtml(String(s.syllables))+' Silben</span><span class="micro-tag">'+escapeHtml(s.pronunciation)+'</span><span class="micro-tag">'+escapeHtml(s.user)+' · '+escapeHtml(s.age)+'</span></div><div class="ai-review-slot"></div></div>'+
-  (tester?'<div class="review-actions"><button class="ai-check-btn" data-ai-review="'+s.id+'">✦ AI Check</button><button class="approve-btn" data-review="accept" data-id="'+s.id+'">✓ Passt</button><button class="reject-btn" data-review="reject" data-id="'+s.id+'">× Nein</button></div>':'<span class="status-pill '+(s.status==="accepted"?"mint-bg":"")+'">'+(s.status==="accepted"?"BESTÄTIGT":"IM TEST")+'</span>')+'</article>';
+  (tester?'<div class="review-actions"><button class="ai-check-btn" data-ai-review="'+s.id+'">✦ KI Prüfung</button><button class="approve-btn" data-review="accept" data-id="'+s.id+'">✓ Passt</button><button class="reject-btn" data-review="reject" data-id="'+s.id+'">× Nein</button></div>':'<span class="status-pill '+(s.status==="accepted"?"mint-bg":"")+'">'+(s.status==="accepted"?"BESTÄTIGT":"IM TEST")+'</span>')+'</article>';
 }
 function renderCommunity(){$("#communityFeed").innerHTML=state.submissions.filter(s=>s.status!=="rejected").slice(0,10).map(s=>submissionMarkup(s,false)).join("");const pending=state.submissions.filter(s=>s.status==="pending");$("#testerQueue").innerHTML=pending.length?pending.map(s=>submissionMarkup(s,true)).join(""):'<div class="empty-state">Aktuell gibt es keine offenen Reime zum Testen.</div>'}
 $("#testerQueue").addEventListener("click",async e=>{
   const ai=e.target.closest("[data-ai-review]");
   if(ai){
-    const s=state.submissions.find(x=>x.id===ai.dataset.aiReview);if(!s)return;ai.disabled=true;ai.textContent="AI prüft…";
+    const s=state.submissions.find(x=>x.id===ai.dataset.aiReview);if(!s)return;ai.disabled=true;ai.textContent="KI prüft…";
     try{
       const r=await fetch("/api/validate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({source:s.source,target:s.target})});const data=await r.json();if(!r.ok)throw new Error(data.message||"AI Check nicht verfügbar");
       const card=document.querySelector('[data-submission-card="'+s.id+'"]'),slot=$(".ai-review-slot",card),verdict=data.verdict==="passt"?"Passt":data.verdict==="grenzwertig"?"Grenzwertig":"Passt nicht";
-      slot.innerHTML='<div class="ai-review '+data.verdict+'"><strong>✦ AI: '+verdict+' · '+data.score+'/100</strong><span>'+escapeHtml(data.explanation||"")+'</span></div>';ai.textContent="✦ AI geprüft";
+      slot.innerHTML='<div class="ai-review '+data.verdict+'"><strong>✦ AI: '+verdict+' · '+data.score+'/100</strong><span>'+escapeHtml(data.explanation||"")+'</span></div>';ai.textContent="✦ KI geprüft";
     }catch(err){ai.disabled=false;ai.textContent="✦ AI Check";toast(err.message)}return;
   }
   const b=e.target.closest("[data-review]");if(!b)return;const s=state.submissions.find(x=>x.id===b.dataset.id);if(!s)return;s.status=b.dataset.review==="accept"?"accepted":"rejected";state.points+=b.dataset.review==="accept"?5:2;save();updatePoints();renderCommunity();toast(b.dataset.review==="accept"?"+5 Punkte für den Test":"+2 Punkte für den Test");
@@ -273,7 +273,7 @@ $("#testerQueue").addEventListener("click",async e=>{
 
 const beatDialog=$("#beatDialog");
 $("#openBeatUpload").addEventListener("click",()=>beatDialog.showModal());
-$("#beatUploadForm").addEventListener("submit",e=>{e.preventDefault();const file=$("#beatFile").files[0];state.beats.unshift({id:"u"+Date.now(),title:$("#beatTitle").value.trim(),producer:"Hossein Flow",type:$("#beatType").value,bpm:Number($("#beatBpm").value),license:$("#beatLicense").value,art:"art-violet",plays:"neu",audio:file?URL.createObjectURL(file):null});beatDialog.close();e.target.reset();renderBeats();toast("Upload zur Testansicht hinzugefügt.")});
+$("#beatUploadForm").addEventListener("submit",e=>{e.preventDefault();const file=$("#beatFile").files[0];state.beats.unshift({id:"u"+Date.now(),title:$("#beatTitle").value.trim(),producer:"Hossein Flow",type:$("#beatType").value,bpm:Number($("#beatBpm").value),license:$("#beatLicense").value,art:"art-violet",plays:"neu",audio:file?URL.createObjectURL(file):null});beatDialog.close();e.target.reset();renderBeats();toast("Datei zur Testansicht hinzugefügt.")});
 $("#beatFilters").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;state.beatFilter=b.dataset.beatFilter;$$("#beatFilters button").forEach(x=>x.classList.toggle("active",x===b));renderBeats()});
 $("#beatSearch").addEventListener("input",renderBeats);
 function renderBeats(){const term=normalize($("#beatSearch")?.value||"");const rows=state.beats.filter(b=>(state.beatFilter==="Alle"||b.type===state.beatFilter)&&(!term||normalize(b.title+" "+b.producer).includes(term)));$("#beatGrid").innerHTML=rows.map(b=>'<article class="sticker-card beat-card"><div class="beat-art '+b.art+'"><button class="play-btn" data-play="'+b.id+'" aria-label="Abspielen">▶</button></div><div class="beat-info"><h3>'+escapeHtml(b.title)+'</h3><div class="beat-meta"><span class="micro-tag">'+b.type+'</span><span class="micro-tag">'+b.bpm+' BPM</span></div><div class="beat-footer"><span>von '+escapeHtml(b.producer)+'</span><span class="license-chip">'+escapeHtml(licenseLabel(b.license))+'</span></div></div></article>').join("")}
