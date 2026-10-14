@@ -19,6 +19,8 @@ jobs:
           node --check app.js
           node --check theme-engine.js
           node --check sonic-atelier.js
+          node --check tests/comic-variants.test.mjs
+          node tests/comic-variants.test.mjs
       - name: Verify complete existing prototype bundle
         run: |
           set -euo pipefail
