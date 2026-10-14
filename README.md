@@ -10,7 +10,7 @@ German-language rap rhyme and producer-community prototype. Live testing URL: **
 - Community submissions, tester review and point badges (currently local browser prototype state)
 - Beats and samples catalogue, locally previewed uploads
 - Rapper/producer profile preview and Free/Premium presentation
-- Six switchable design themes
+- Six switchable design themes; default **Comic Flow** skin is a responsive rap/comic look layered via `comic-flow.css` over Sonic Atelier without changing the search or community logic
 
 **Prototype caveat:** Submissions, approvals, favorites and points still use browser localStorage and the beat upload preview uses an in-memory object URL. They are **not** persisted across users or recovered from a failed server. The backend currently stores only SQLite AI result cache; there is no shared user account or payment backend yet.
 
