@@ -25,10 +25,27 @@ try{
   assert.match(await state.textContent(),/Aufnahme gespeichert/);
   assert.equal(await results.isVisible(),false);
   assert.ok(await page.locator("#rapAudioPreview").getAttribute("src"));
+  assert.match(await page.locator("#rapRecordingDuration").textContent(),/Tatsächliche Aufnahmelänge:/);
+  const metadata=await page.evaluate(async()=>{
+    const audio=document.querySelector("#rapAudioPreview");
+    audio.preload="metadata";
+    audio.load();
+    if(audio.readyState<1){
+      await new Promise((resolve,reject)=>{
+        audio.addEventListener("loadedmetadata",resolve,{once:true});
+        audio.addEventListener("error",()=>reject(Error("Playback metadata rejected")),{once:true});
+        setTimeout(()=>reject(Error("Audio metadata timeout")),5000);
+      });
+    }
+    return {duration:audio.duration,url:audio.src,blobType:audio.currentSrc};
+  });
+  assert.ok(Number.isFinite(metadata.duration)&&metadata.duration>7&&metadata.duration<18,
+    "Expected a real short WAV duration, got "+JSON.stringify(metadata));
+
   let attempts=0;
   await page.route("**/api/flow/analyze",async route=>{
     attempts++;
-    if(attempts===1)await route.fulfill({status:502,contentType:"application/json",body:JSON.stringify({message:"Die Spracherkennung ist gerade nicht erreichbar."})});
+    if(attempts===1)await route.fulfill({status:502,contentType:"text/html",body:"<html><body>Bad Gateway</body></html>"});
     else await route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({
       ok:true,status:"analyzed",metrics:{
         bpm:140,bars:4,word_onset_grid_percent:68,longest_pause_sec:0.63,
@@ -41,7 +58,7 @@ try{
   });
   await page.locator("#rapAnalyze").click();
   await page.locator("#rapAnalyze").getByText("Analyse erneut versuchen").waitFor({timeout:7000});
-  assert.match(await state.textContent(),/Analyse fehlgeschlagen: Die Spracherkennung/);
+  assert.match(await state.textContent(),/Analyse fehlgeschlagen: Der Analyseserver ist vorübergehend nicht erreichbar.*HTTP 502/);
   assert.equal(await results.isVisible(),false);
   await page.locator("#rapAnalyze").click();
   await page.locator("#rapResultTitle").getByText("Dein Flow im Zeitraster").waitFor({timeout:7000});
