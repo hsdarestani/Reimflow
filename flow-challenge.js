@@ -34,7 +34,7 @@ function setButtonMode(next){
   mode=next;
   for(const b of modeButtons){const active=b.dataset.flowMode===mode;b.classList.toggle("active",active);b.setAttribute("aria-pressed",String(active))}
   setText(el.padHint,mode==="mic"?"Rap oder klatsch zum Beat · Kopfhörer nutzen":"Oder die Leertaste drücken");
-  setText(el.hint,mode==="mic"?"Mic Beta erkennt Lautstärkeimpulse nur lokal. Bitte Kopfhörer verwenden.":"Audio wird nach START aktiviert. Du kannst tippen oder die Leertaste drücken.");
+  setText(el.hint,mode==="mic"?"Der Mikrofontest erkennt Lautstärkeimpulse nur auf deinem Gerät. Bitte Kopfhörer verwenden.":"Der Ton startet nach dem Start. Tippe oder drücke die Leertaste.");
   showBest();
 }
 function showBest(){
@@ -47,17 +47,17 @@ function setControls(active){
   el.tap.disabled=!active||mode==="mic";
   modeButtons.forEach(b=>b.disabled=active);
   el.share.hidden=active||!latestScore;
-  el.start.textContent=active?"⚡ RUNNING…":"⚡ Challenge starten →";
+  el.start.textContent=active?"⚡ LÄUFT…":"⚡ Spiel starten →";
 }
 function resetVisual(){
   cells.forEach(c=>{c.className="flow-beat"});
   el.stage.classList.remove("playing","counting","finished");
   el.orbit.classList.remove("pulse");
-  setText(el.count,"▶");setText(el.stageLabel,"READY TO FLOW?");
-  setText(el.barCount,"4 BARS · 16 BEATS");
+  setText(el.count,"▶");setText(el.stageLabel,"BEREIT FÜR DEN TAKT?");
+  setText(el.barCount,"4 TAKTE · 16 SCHLÄGE");
   setText(el.score,"--");setText(el.rank,"Bist du im Takt?");
   setText(el.perfect,"0");setText(el.good,"0");setText(el.combo,"0");
-  notify("Drück START und folge dem Beat.");
+  notify("Drücke Start und folge dem Takt.");
 }
 function cleanupAudio(){
   if(micSource){try{micSource.disconnect()}catch{}micSource=null}
@@ -159,14 +159,14 @@ function inputHit(at=performance.now()){
 }
 function finish(){
   if(!running)return;
-  for(let i=0;i<T.BEATS;i++)if(!hits[i])record(i,{kind:"miss",points:0,label:"MISS"});
+  for(let i=0;i<T.BEATS;i++)if(!hits[i])record(i,{kind:"miss",points:0,label:"VERPASST"});
   const result=T.scoreRound(hits);latestScore={...result,bpm:selectedBpm,mode:selectedMode};
   clearPlayback();
   el.stage.classList.add("finished");el.stage.classList.remove("playing","counting");
-  setText(el.count,String(result.score));setText(el.stageLabel,"FLOW CHALLENGE COMPLETE");
+  setText(el.count,String(result.score));setText(el.stageLabel,"RUNDE BEENDET");
   setText(el.score,result.score);setText(el.rank,result.title);
   notify(result.subtitle);
-  setText(el.barCount,result.miss+" MISSES · "+result.maxCombo+" MAX COMBO");
+  setText(el.barCount,result.miss+" VERPASST · "+result.maxCombo+" BESTE SERIE");
   el.share.hidden=false;
   const key=keyFor(selectedBpm,selectedMode),prior=Number(store.get(key)||0);
   if(result.score>prior)store.set(key,result.score);
@@ -180,8 +180,8 @@ function animate(){
     if(currentIndex!==-T.COUNT_IN+countIndex){
       currentIndex=-T.COUNT_IN+countIndex;
       setText(el.count,String(T.COUNT_IN-countIndex));
-      setText(el.stageLabel,"COUNT IN / FOLLOW THE BEAT");
-      setText(el.barCount,"GET READY");
+      setText(el.stageLabel,"EINZÄHLEN · TAKT FINDEN");
+      setText(el.barCount,"GLEICH GEHT ES LOS");
       notify("Bereit? Hör erst den Einzähler.");
       el.stage.classList.add("counting");
     }
@@ -192,8 +192,8 @@ function animate(){
       currentIndex=i;
       el.stage.classList.remove("counting");el.stage.classList.add("playing");
       setText(el.count,String(i+1).padStart(2,"0"));
-      setText(el.stageLabel,"CATCH THE BEAT!");
-      setText(el.barCount,"BAR "+(Math.floor(i/4)+1)+" / 4");
+      setText(el.stageLabel,"TRIFF DEN TAKT!");
+      setText(el.barCount,"TAKT "+(Math.floor(i/4)+1)+" / 4");
       cells.forEach((c,j)=>c.classList.toggle("now",j===i&&!hits[j]));
       el.orbit.classList.remove("pulse");void el.orbit.offsetWidth;el.orbit.classList.add("pulse");
     }
@@ -250,7 +250,7 @@ async function start(){
       catch(err){
         cleanupAudio();
         mode="tap";setButtonMode("tap");
-        throw Error("Mikrofon nicht verfügbar. Bitte Tap Modus wählen.");
+        throw Error("Mikrofon nicht verfügbar. Bitte auf Tippen umstellen.");
       }
     }
     hits=Array.from({length:T.BEATS},()=>null);combo=0;maxCombo=0;perfect=0;good=0;
@@ -262,7 +262,7 @@ async function start(){
     running=true;starting=false;
     setControls(true);
     el.stage.classList.add("counting");
-    setText(el.hint,mode==="mic"?"Mic Beta aktiv. Zum Beat rappen oder deutlich klatschen.":"Triff mit dem Finger oder der Leertaste jeden Beat.");
+    setText(el.hint,mode==="mic"?"Mikrofontest aktiv. Sprich oder klatsche deutlich im Takt.":"Tippe mit dem Finger oder drücke die Leertaste im Takt.");
     schedule();timer=setInterval(schedule,25);animation=requestAnimationFrame(animate);
   }catch(err){
     clearPlayback();latestScore=null;setControls(false);
@@ -274,10 +274,10 @@ async function start(){
 async function share(){
   if(!latestScore)return;
   const x=latestScore;
-  const text="🎤 Reimflow Flow Challenge: "+x.score+"/100 · "+x.title+" · "+x.bpm+" BPM · "+x.maxCombo+" Combo. Beat it! https://reimflow.smarbiz.sbs/";
+  const text="🎤 Reimflow Rhythmusspiel: "+x.score+"/100 · "+x.title+" · "+x.bpm+" BPM · "+x.maxCombo+" Treffer in Folge. Schaffst du mehr? https://reimflow.smarbiz.sbs/";
   try{
-    if(navigator.share)await navigator.share({title:"Reimflow Flow Challenge",text});
-    else if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);notify("Score kopiert! ✦")}
+    if(navigator.share)await navigator.share({title:"Reimflow Rhythmusspiel",text});
+    else if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);notify("Ergebnis kopiert! ✦")}
     else notify(text);
   }catch(e){if(e?.name!=="AbortError")notify("Teilen im Browser nicht möglich.")}
 }
