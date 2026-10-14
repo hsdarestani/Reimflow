@@ -64,6 +64,8 @@ try{
     await page.locator("#rhymeSearchForm button[type='submit']").click();
     const preview=page.locator(".rhyme-preview");
     await preview.waitFor({state:"visible",timeout:1000});
+    assert.equal(await page.locator("#onlyRhymeAnchor").isVisible(),true);
+    assert.match(await page.locator("#onlyRhymeAnchor").innerText(),/paper/);
     assert.match(await preview.innerText(),/caper|scraper/);
     assert.match(await preview.innerText(),/blue vapor|true caper/i);
     await page.locator(".rhyme-group-title").first().waitFor({state:"visible",timeout:6500});
