@@ -147,7 +147,7 @@ async function searchRhymes(force=false){
   const seq=++searchSequence;
 
   state.searchLoading=true;setSearchBusy(true);updateEngineState();renderLoading();renderQueryInsight(null);
-  const timer=setTimeout(()=>controller.abort(),56000);
+  const timer=setTimeout(()=>controller.abort(),145000);
   try{
     const response=await fetch("/api/rhymes",{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify({query:state.currentQuery,category:state.category,syllables:state.syllables}),signal:controller.signal});
     const data=await response.json().catch(()=>({}));
@@ -159,7 +159,8 @@ async function searchRhymes(force=false){
   }catch(err){
     if(seq!==searchSequence)return;
     if(err.name==="AbortError" && controller!==activeSearchController)return;
-    const fallback=curatedFallback[normalize(state.currentQuery)] || window.ReimflowOfflineRhymes?.find(state.currentQuery,{category:state.category,syllables:state.syllables});
+    // No automatic suffix-based stand-ins: accuracy is more important than results.
+    const fallback=null;
     state.searchLoading=false;
     if(fallback){
       state.engineOnline=false;state.resultSource=fallback.source||"curated";
@@ -225,19 +226,21 @@ function renderRhymes(errorMessage=""){
     $("#retrySearch")?.addEventListener("click",()=>searchRhymes(true));return;
   }
   if(!rows.length){
-    list.innerHTML='<div class="search-empty"><div class="empty-glyph">∿</div><strong>Mit diesen Filtern gibt es gerade keine starken Treffer.</strong><p>Setze Wortart oder Silben auf „Alle“, oder starte eine neue AI Suche.</p><button class="secondary-btn compact" id="refineSearch">Neu analysieren</button></div>';
+    list.innerHTML='<div class="search-empty"><div class="empty-glyph">∿</div><strong>Keine verlässlichen Reime gefunden.</strong><p>Die KI hat keine phonetisch überzeugenden Vorschläge bestätigt. Probiere eine andere Aussprache oder löse den letzten Reimanker aus der Phrase. Wir zeigen lieber keine schwachen Reime.</p><button class="secondary-btn compact" id="refineSearch">Neu analysieren</button></div>';
     $("#refineSearch")?.addEventListener("click",()=>searchRhymes(true));return;
   }
   const offline=state.resultSource!=="ai";
   const caveat=offline?'<div class="rhyme-offline-note"><strong>Vorschläge ohne KI-Prüfung</strong><p>Diese Wörter haben ähnliche Endungen. Aussprache, Betonung und Reimqualität sind nicht geprüft. Bitte selbst anhören oder die KI Suche später erneut versuchen.</p><button class="secondary-btn compact" id="retryOnlineSearch">KI Suche erneut versuchen</button></div>':"";
   list.innerHTML=caveat+rows.map(r=>{
-    const fav=state.favorites.includes(r.word),score=Math.max(0,Math.min(100,Number(r.score)||0)),confidence=Math.max(0,Math.min(100,Number(r.confidence)||0));
-    const tone=score>=90?"elite":score>=80?"strong":score>=70?"good":"loose";
-    return '<article class="rhyme-card ai-rhyme '+tone+'"><div class="match-score" title="Klangwert">'+score+'</div>'+
+    const fav=state.favorites.includes(r.word);
+    const strength=r.strength==="stark"?"stark":"brauchbar";
+    const label=offline?"IDEE":strength==="stark"?"STARK":"NAH";
+    const tone=strength==="stark"?"elite":"good";
+    return '<article class="rhyme-card ai-rhyme '+tone+'"><div class="match-score" title="Einschätzung einer zweiten KI Prüfung">'+label+'</div>'+
     '<div class="rhyme-word"><div class="word-line"><strong>'+escapeHtml(r.word)+'</strong><span class="ai-chip"+(offline?" source-offline":"")+"">"+(offline?"IDEE":"KI")+"</span></div><small>'+escapeHtml(r.pronunciation||"")+(r.ipa?' · <span class="ipa-inline">'+escapeHtml(r.ipa)+'</span>':"")+'</small></div>'+
     '<div class="tag-row"><span class="micro-tag">'+escapeHtml(r.category||"Sonstiges")+'</span><span class="micro-tag">'+escapeHtml(String(r.syllables||"?"))+' Silben</span><span class="micro-tag">'+escapeHtml(rhymeKindLabel(r.kind||"Klangreim"))+'</span><span class="micro-tag">'+escapeHtml(r.register||"Standard")+'</span></div>'+
     '<div class="result-actions"><button class="icon-btn speak-result" data-word="'+escapeAttr(r.word)+'" aria-label="Aussprache anhören">♫</button><button class="favorite-btn '+(fav?"active":"")+'" data-fav="'+escapeAttr(r.word)+'" aria-label="Favorit">♥</button></div>'+
-    '<div class="rhyme-explanation"><span class="confidence-meter"><i style="width:'+confidence+'%"></i></span><span>'+(offline?"Nicht geprüft":confidence+"% Sicherheit")+'</span><p>'+escapeHtml(r.explanation||"")+'</p></div></article>';
+    '<div class="rhyme-explanation"><span class="review-explanation-label">'+(offline?"Nicht geprüft":"Zweite KI Klangprüfung · keine Wahrscheinlichkeitsangabe")+'</span><p>'+escapeHtml(r.explanation||"")+'</p></div></article>';
   }).join("");
   if(offline)$("#retryOnlineSearch")?.addEventListener("click",()=>searchRhymes(true));
 }
