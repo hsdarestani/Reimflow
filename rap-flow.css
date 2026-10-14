@@ -1,0 +1,151 @@
+/* Reimflow Rap Flow Analysis — responsive beta studio, scoped to existing themes. */
+.rap-game-switch {
+ display:flex;gap:7px;flex-wrap:wrap;max-width:680px;
+ margin:24px 0 22px;padding:6px;border:2px solid var(--theme-border,#23252c);
+ border-radius:16px;background:var(--theme-card,#fffaf0);
+}
+.rap-game-switch button {
+ flex:1;min-height:50px;min-width:175px;border:0;border-radius:12px;
+ background:transparent;color:var(--theme-fg,#1f2024);
+ font:800 .89rem "Space Grotesk",sans-serif;cursor:pointer;
+}
+.rap-game-switch button.active {background:var(--theme-accent,#ff603d);color:#fff;box-shadow:0 3px 0 rgba(0,0,0,.2)}
+.rap-beta {font:900 .64rem "JetBrains Mono",monospace;letter-spacing:.08em;padding:5px 8px;border-radius:8px;background:#ffe070;color:#252525}
+#tapGamePanel[hidden],#rapPanel[hidden],.rap-preview[hidden],.rap-results[hidden],.rap-actions button[hidden] {display:none!important}
+.rap-panel {min-width:0;max-width:100%}
+.rap-intro {display:flex;justify-content:space-between;align-items:flex-start;gap:22px;margin:12px 0 28px}
+.rap-intro h2 {
+ font:900 clamp(2.1rem,5vw,4.6rem)/1.04 "Outfit",sans-serif;
+ letter-spacing:-.055em;color:var(--theme-fg,#161717);margin:10px 0 12px
+}
+.rap-intro p {max-width:720px;font:600 1rem/1.7 "Space Grotesk",sans-serif;color:var(--theme-muted,#666)}
+.rap-badge {flex-shrink:0;padding:11px;border:2px solid var(--flow-neon,#ffe17c);border-radius:10px;background:#1d2027;color:var(--flow-neon,#ffe17c);font:900 .68rem "JetBrains Mono",monospace}
+.rap-grid {display:grid;grid-template-columns:minmax(0,1.4fr) minmax(240px,.65fr);gap:18px;align-items:start}
+.rap-record-card {padding:23px;border:2px solid var(--theme-border,#262626);border-radius:21px;background:var(--theme-card,#fffaf0);min-width:0;box-shadow:4px 5px 0 rgba(0,0,0,.14)}
+.rap-controls {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 18px}
+.rap-controls label {color:var(--theme-fg,#222);font:800 .83rem/1.5 "Space Grotesk",sans-serif}
+.rap-controls select {
+ display:block;width:100%;margin-top:7px;min-height:46px;
+ border:2px solid var(--theme-border,#333);border-radius:10px;
+ background:var(--theme-card,#fff);color:var(--theme-fg,#222);
+ padding:8px;font:700 .8rem "Space Grotesk",sans-serif
+}
+.rap-studio {
+ min-height:380px;position:relative;display:flex;flex-direction:column;
+ align-items:center;justify-content:center;gap:12px;
+ isolation:isolate;overflow:hidden;padding:25px 19px;
+ background:radial-gradient(ellipse at 50% 36%,#3d375e,#1a1b28 66%,#11131d);
+ border:3px solid #393c52;border-radius:19px;color:#fff;text-align:center;
+}
+.rap-studio:before {
+ content:"";position:absolute;inset:0;pointer-events:none;z-index:-1;
+ background:radial-gradient(#fff .75px,transparent 1px);background-size:18px 18px;opacity:.11;
+}
+.rap-studio-header {position:absolute;left:16px;right:16px;top:14px;display:flex;justify-content:space-between;color:#d8d6ea;font:900 .64rem "JetBrains Mono",monospace;letter-spacing:.05em}
+.rap-vinyl {
+ display:grid;place-items:center;width:clamp(135px,23vw,190px);height:clamp(135px,23vw,190px);
+ margin:24px auto 10px;background:#202334;border:7px solid #10121a;border-radius:50%;
+ box-shadow:0 0 0 3px var(--flow-neon,#ffd64d),0 0 0 18px #ffffff0b,0 16px 35px #0006;
+}
+.rap-vinyl span {
+ display:grid;place-items:center;width:75%;height:75%;border-radius:50%;
+ color:#111;background:var(--flow-neon,#ffe17c);
+ font:900 clamp(2.2rem,6vw,3.8rem) "Outfit",sans-serif;font-variant-numeric:tabular-nums
+}
+.rap-studio.counting .rap-vinyl {animation:rapCountPulse .5s ease-in-out alternate infinite}
+.rap-studio.recording .rap-vinyl {animation:rapSpin 3s linear infinite}
+.rap-studio.recording .rap-vinyl span {animation:rapSpin 3s linear infinite reverse}
+@keyframes rapSpin {to{transform:rotate(360deg)}}
+@keyframes rapCountPulse {to{transform:scale(1.04)}}
+.rap-progress-track {height:10px;width:min(100%,480px);border:1px solid #5b597b;border-radius:20px;background:#121321;overflow:hidden}
+#rapProgress {height:100%;width:0;background:var(--flow-neon,#ffd64d);transition:width .09s}
+.rap-wave {height:55px;display:flex;align-items:center;justify-content:center;gap:5px}
+.rap-wave span {display:block;width:5px;height:15px;border-radius:5px;background:var(--flow-hot,#ff603d);transition:height .1s}
+.rap-studio>strong {font:900 clamp(1.1rem,2vw,1.5rem)/1.25 "Outfit",sans-serif;color:#fff}
+.rap-studio>p {color:#d0ccdb;font:600 .85rem/1.5 "Space Grotesk",sans-serif;margin:0}
+.rap-consent {display:flex;align-items:flex-start;gap:12px;margin:20px 0 16px;font:500 .83rem/1.55 "Space Grotesk",sans-serif;color:var(--theme-fg,#28282c)}
+.rap-consent input {width:22px;height:22px;flex-shrink:0;margin:1px 0 0;accent-color:var(--theme-accent,#ff603d)}
+.rap-actions {display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+.rap-actions button {min-height:48px;flex:1 1 190px}
+.rap-actions button:disabled,#rapAnalyze:disabled {opacity:.52;cursor:not-allowed;transform:none!important}
+.rap-preview {margin:19px 0;padding:18px;border:1px dashed var(--theme-border,#777);border-radius:16px}
+.rap-preview label {display:block;margin-bottom:9px;font:700 .8rem "Space Grotesk",sans-serif;color:var(--theme-fg,#111)}
+.rap-preview audio {display:block;width:100%;max-width:100%;margin-bottom:12px}
+.rap-preview button {width:100%}
+.rap-disclaimer {font:500 .76rem/1.65 "Space Grotesk",sans-serif;color:var(--theme-muted,#616166);margin:14px 0 0}
+.rap-info-card {
+ border:2px solid var(--flow-neon,#ffd64d);border-radius:19px;
+ padding:22px;background:linear-gradient(145deg,#20212d,#15171c);color:#f8f7f1;
+}
+.rap-info-card .flow-micro-heading {color:var(--flow-neon,#ffd64d)}
+.rap-info-item {margin:22px 0}
+.rap-info-item strong {display:block;color:#fff;font:900 .92rem "Outfit",sans-serif}
+.rap-info-item p {color:#d4d0da;font:500 .84rem/1.6 "Space Grotesk",sans-serif;margin:6px 0 0}
+.rap-info-bottom {border-top:1px solid #55545c;padding-top:16px;color:#d8d5dc;font:500 .75rem/1.7 "Space Grotesk",sans-serif}
+.rap-results {
+ background:var(--theme-card,#fffaf0);
+ color:var(--theme-fg,#222);
+ border:2px solid var(--theme-border,#222);border-radius:21px;
+ margin-top:26px;padding:clamp(16px,3vw,28px);scroll-margin-top:120px;
+}
+.rap-results-top {display:flex;gap:14px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+.rap-results-top h3 {font:900 clamp(1.45rem,3vw,2.4rem)/1.15 "Outfit",sans-serif;color:var(--theme-fg,#111);margin:7px 0 16px}
+.rap-metrics {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.rap-metrics>div {padding:17px 11px;background:#191c27;border:1px solid #3b3e54;border-radius:14px;min-width:0}
+.rap-metrics span {display:block;color:#d8d6dd;font:700 .7rem/1.45 "Space Grotesk",sans-serif;min-height:28px}
+.rap-metrics strong {display:block;color:var(--flow-neon,#ffda6a);font:900 clamp(1.45rem,3.1vw,2.2rem)/1.2 "Outfit",sans-serif;margin:11px 0 7px;font-variant-numeric:tabular-nums}
+.rap-metrics small {display:block;color:#bfc0c9;font:.67rem/1.45 "Space Grotesk",sans-serif}
+.rap-results-bottom {display:grid;grid-template-columns:1fr 1fr;gap:22px;margin:29px 0}
+.rap-results h4 {margin:0 0 13px;font:900 1.04rem "Space Grotesk",sans-serif;color:var(--theme-fg,#111)}
+.rap-bars-visual {display:flex;align-items:end;gap:8px;min-height:120px;padding:13px 8px;border:1px solid var(--theme-border,#ccc);border-radius:13px;overflow:auto}
+.rap-bar {flex:1;display:flex;flex-direction:column;align-items:center;justify-content:end;gap:4px;min-width:21px}
+.rap-bar-value {color:var(--theme-muted,#666);font:700 .66rem "JetBrains Mono",monospace}
+.rap-bar-column {min-height:8px;width:min(100%,32px);border-radius:6px 6px 0 0;background:var(--flow-hot,#ff603d);border:1px solid #0003}
+.rap-bar small {font:700 .62rem "JetBrains Mono",monospace;color:var(--theme-muted,#666)}
+.rap-word-timeline {display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start;min-height:120px;padding:12px;border:1px solid var(--theme-border,#ccc);border-radius:13px;max-height:210px;overflow:auto}
+.rap-word-chip {align-self:flex-start;background:var(--flow-neon,#ffe27f);color:#1b1b1d;padding:6px 9px;border-radius:8px;border:1px solid #232323;font:800 .76rem "Space Grotesk",sans-serif;overflow-wrap:anywhere;max-width:100%}
+.rap-feedback {margin-top:25px}
+.rap-feedback ul {padding-left:20px;line-height:1.7;color:var(--theme-fg,#222);font:500 .91rem/1.7 "Space Grotesk",sans-serif}
+.rap-feedback li {margin:9px 0}
+.rap-transcript {background:var(--theme-bg,#fff);border:1px solid var(--theme-border,#ccc);padding:13px 18px;border-radius:13px;max-width:100%;overflow-wrap:anywhere}
+.rap-transcript summary {cursor:pointer;font:800 .84rem "Space Grotesk",sans-serif}
+.rap-transcript p,.rap-limit-note {font:500 .83rem/1.65 "Space Grotesk",sans-serif;color:var(--theme-muted,#666)}
+.rap-limit-note {margin:17px 0}
+html[data-comic-style="graffiti"] .rap-intro h2 {font-family:"Permanent Marker","Outfit",sans-serif}
+html[data-comic-style="novel"] .rap-intro h2,html[data-comic-style="clean"] .rap-intro h2 {font-family:"Marcellus",Georgia,serif}
+@media(max-width:930px) {
+ .rap-grid {grid-template-columns:minmax(0,1fr)}
+ .rap-info-card {display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
+ .rap-info-card>.flow-micro-heading,.rap-info-card>.rap-info-bottom {grid-column:1/-1}
+ .rap-intro {flex-wrap:wrap}
+}
+@media(max-width:700px) {
+ .rap-game-switch {margin-top:16px}
+ .rap-game-switch button {min-width:0;flex:1 1 0;font-size:.77rem;min-height:49px;padding:7px}
+ .rap-intro {gap:10px}
+ .rap-intro h2 {font-size:clamp(2rem,8vw,3.1rem)}
+ .rap-badge {font-size:.63rem}
+ .rap-record-card {padding:15px;border-radius:15px}
+ .rap-controls {gap:8px}
+ .rap-controls label {font-size:.75rem}
+ .rap-controls select {font-size:.74rem;padding:7px 4px;min-height:44px}
+ .rap-studio {min-height:360px;padding:50px 10px 19px}
+ .rap-vinyl {width:140px;height:140px;margin:12px 0}
+ .rap-info-card {display:block;padding:17px}
+ .rap-metrics {grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .rap-metrics>div {padding:13px}
+ .rap-metrics strong {font-size:1.65rem}
+ .rap-results-bottom {grid-template-columns:1fr;gap:16px}
+ .rap-actions button {flex:1 1 100%}
+ .rap-results {scroll-margin-top:88px}
+}
+@media(max-width:375px) {
+ .rap-game-switch button {font-size:.69rem}
+ .rap-badge {padding:8px}
+ .rap-controls {grid-template-columns:1fr}
+ .rap-studio {min-height:330px}
+}
+@media(prefers-reduced-motion:reduce){
+ .rap-vinyl,.rap-vinyl span {animation:none!important}
+ .rap-wave span,#rapProgress {transition:none!important}
+}
