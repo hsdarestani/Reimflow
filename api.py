@@ -5,17 +5,18 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 HOST="127.0.0.1"; PORT=int(os.getenv("PORT","8787"))
 OPENAI_API_KEY=os.getenv("OPENAI_API_KEY","").strip()
-PRIMARY_MODEL=os.getenv("OPENAI_MODEL","gpt-4o-mini").strip()
-# Fast first model for interactive rhyme search; only known API model IDs.
-FALLBACK_MODELS=list(dict.fromkeys([PRIMARY_MODEL,"gpt-4.1-mini","gpt-5-mini"]))
+PRIMARY_MODEL=os.getenv("OPENAI_MODEL","gpt-5.6-sol").strip()
+# High-quality only. Never silently drop to a cheap mini model for rhyme generation.
+FALLBACK_MODELS=list(dict.fromkeys([PRIMARY_MODEL,"gpt-5.5","gpt-5.4"]))
+QUALITY_MODEL=os.getenv("RHYME_REVIEW_MODEL","gpt-5.6-terra").strip()
 DB_PATH=os.getenv("REIMFLOW_DB","/var/lib/reimflow/reimflow.sqlite3")
-CACHE_TTL=60*60*24*30; MAX_QUERY_LEN=120; RATE_LIMIT=24; RATE_WINDOW=60
+CACHE_TTL=60*60*24*7; MAX_QUERY_LEN=120; RATE_LIMIT=24; RATE_WINDOW=60
 _lock=threading.Lock(); _rate=defaultdict(deque)
 
 RHYME_SCHEMA={"type":"object","additionalProperties":False,"required":["analysis","rhymes"],"properties":{
 "analysis":{"type":"object","additionalProperties":False,"required":["input","interpreted_as","pronunciation","ipa","syllables","language","correction","note"],"properties":{
 "input":{"type":"string"},"interpreted_as":{"type":"string"},"pronunciation":{"type":"string"},"ipa":{"type":"string"},"syllables":{"type":"integer","minimum":1,"maximum":20},"language":{"type":"string"},"correction":{"type":["string","null"]},"note":{"type":"string"}}},
-"rhymes":{"type":"array","minItems":4,"maxItems":10,"items":{"type":"object","additionalProperties":False,"required":["word","pronunciation","ipa","syllables","category","register","score","confidence","kind","explanation"],"properties":{
+"rhymes":{"type":"array","minItems":0,"maxItems":8,"items":{"type":"object","additionalProperties":False,"required":["word","pronunciation","ipa","syllables","category","register","score","confidence","kind","explanation"],"properties":{
 "word":{"type":"string"},"pronunciation":{"type":"string"},"ipa":{"type":"string"},"syllables":{"type":"integer","minimum":1,"maximum":20},
 "category":{"type":"string","enum":["Nomen","Adjektiv","Verb","Umgangssprache","Sonstiges"]},
 "register":{"type":"string","enum":["Standard","Umgangssprache","Slang","Name/Marke","Englisch/Code-Switch"]},
@@ -31,7 +32,7 @@ Priorisiere Lautfolge, betonte Silben, Vokale, Konsonanten, Silbenzahl und Rhyth
 Multi-Silben-Reime, Slant Rhymes, Assonanzen und Reime über Wortgrenzen hinweg sind erlaubt.
 Deutsche Umgangssprache, etablierter Slang, Eigennamen, Marken und englische Code-Switches sind erlaubt, wenn sie im Rap plausibel sind.
 Erfinde KEINE Fantasiewörter. Nutze reale Wörter, gebräuchliche Phrasen, bekannte Namen/Marken oder klar etablierte Umgangssprache.
-Ein Score über 90 ist selten und verlangt einen sehr starken Klang-Match.
+Qualität vor Quantität! Gib im Zweifelsfall nur 1 oder 2 oder 0 Vorschläge. Du darfst NULL Treffer liefern. Erzeuge niemals Füller, um eine Anzahl zu erreichen.
 WICHTIG: analysis.input und analysis.interpreted_as müssen exakt der vom Nutzer eingegebenen, getrimmten Query entsprechen.
 Erweitere Eigennamen NIEMALS selbstständig. Aus "Benzema" darf nicht "Karim Benzema" werden. Aus "Ronaldo" darf nicht "Cristiano Ronaldo" werden.
 Verkürze mehrteilige Namen oder Phrasen ebenfalls nicht. Analysiere exakt die Zeichenfolge, die der Nutzer eingegeben hat.
@@ -43,7 +44,7 @@ B) den dominanten Reimanker am Ende der Query, meistens das letzte betonte Wort 
 Wenn für A kaum natürliche Treffer existieren, darfst du starke Treffer für B liefern. Kennzeichne sie ehrlich als Multi-Silben, Near Rhyme, Slant Rhyme, Assonanz oder Phrase und behaupte keinen perfekten Reim.
 Ein mehrteiliger Name wie "Karim Benzema" darf also Treffer bekommen, die stark auf "Benzema" oder den Endklang der gesamten Phrase passen. Die Query selbst bleibt trotzdem exakt "Karim Benzema".
 pronunciation ist eine leicht lesbare Aussprachehilfe für deutsche Nutzer; ipa ist möglichst korrekte IPA.
-Erklärungen kurz und konkret. Vermeide Duplikate und bloße Flexionsvarianten. Sei kreativ, aber phonetisch ehrlich."""
+Vermeide die häufige Verwechslung von gleicher Silbenzahl/Rhythmus mit einem Reim. Bei "Blue Ferrari" sind Toyota, Karaoke, Marinade, Batterie keine starken Reime. Mögliche Ankerideen wie Safari/Calamari nur prüfen, nicht automatisch akzeptieren. Nicht behaupten, die gesamte Phrase reime sich, wenn nur das Schlusswort ähnlich klingt. Vermeide Duplikate und bloße Flexionsvarianten. Gib 0-6 Kandidaten nur wenn plausibel. Erklärungen kurz und konkret, mit konkret passendem betontem Reimkern. Sei phonetisch ehrlich."""
 
 VALIDATE_PROMPT="""Du bist ein strenger Reim-Tester für eine deutschsprachige Rap-Community.
 Prüfe zwei Wörter oder Phrasen nach realer Aussprache, betonten Silben, Vokalen, Konsonanten, Silbenzahl und Rap-Tauglichkeit.
@@ -79,6 +80,12 @@ def client_allowed(ip):
         if len(q)>=RATE_LIMIT: return False
         q.append(now); return True
 
+
+# Strict second-pass review, loaded from deployed code without extra dependencies.
+_quality_path=os.path.join(os.path.dirname(os.path.abspath(__file__)),"rhyme-quality.py")
+_quality_spec=importlib.util.spec_from_file_location("reimflow_rhyme_quality",_quality_path)
+rhyme_quality=importlib.util.module_from_spec(_quality_spec)
+_quality_spec.loader.exec_module(rhyme_quality)
 
 # Voice analysis is isolated from the rhyme cache and never persisted.
 _module_path=os.path.join(os.path.dirname(os.path.abspath(__file__)),"rap-flow-analysis.py")
@@ -147,50 +154,49 @@ def extract_output_text(response):
             if part.get("type")=="output_text" and part.get("text"): return part["text"]
     return ""
 
-def call_openai(user_text,schema,schema_name,developer_prompt):
+def call_openai(user_text,schema,schema_name,developer_prompt,models=None,effort="medium",timeout=60):
+    """One quality model per request; fallback only for unavailable models/errors."""
     if not OPENAI_API_KEY: raise RuntimeError("AI_NOT_CONFIGURED")
     last=None
-    started=time.monotonic()
-    # Cap total synchronous work well below browser and reverse proxy timeouts.
-    for model in FALLBACK_MODELS[:3]:
-        remaining=44-(time.monotonic()-started)
-        if remaining<5: break
-        body={"model":model,"store":False,"input":[
-            {"role":"developer","content":[{"type":"input_text","text":developer_prompt}]},
-            {"role":"user","content":[{"type":"input_text","text":user_text}]}],
-            "max_output_tokens":3200,
-            "text":{"format":{"type":"json_schema","name":schema_name,"strict":True,"schema":schema}}}
-        # GPT-4.x models reject reasoning parameter; GPT-5 supports it.
-        if model.startswith("gpt-5"):
-            body["reasoning"]={"effort":"minimal"}
+    for model in dict.fromkeys(models or FALLBACK_MODELS):
+        # Never silently downgrade to low-cost mini models for phonetic decisions.
+        body={"model":model,"store":False,
+              "input":[
+                 {"role":"developer","content":[{"type":"input_text","text":developer_prompt}]},
+                 {"role":"user","content":[{"type":"input_text","text":user_text}]}],
+              "max_output_tokens":4200,
+              "text":{"format":{"type":"json_schema","name":schema_name,"strict":True,"schema":schema}}}
+        if model.startswith(("gpt-5","gpt-6")):
+            body["reasoning"]={"effort":effort}
         req=urllib.request.Request("https://api.openai.com/v1/responses",
             data=json.dumps(body,ensure_ascii=False).encode("utf-8"),method="POST",
-            headers={"Authorization":"Bearer "+OPENAI_API_KEY,"Content-Type":"application/json","User-Agent":"Reimflow/1.1"})
+            headers={"Authorization":"Bearer "+OPENAI_API_KEY,"Content-Type":"application/json","User-Agent":"Reimflow/quality-v1"})
         try:
-            with urllib.request.urlopen(req,timeout=min(22,remaining)) as resp:
-                raw=json.loads(resp.read(1024*1024).decode("utf-8"))
-            text=extract_output_text(raw)
-            if not text: raise RuntimeError("EMPTY_AI_RESPONSE")
-            parsed=json.loads(text)
-            if not isinstance(parsed,dict): raise RuntimeError("INVALID_AI_RESPONSE")
-            return parsed,model
+            with urllib.request.urlopen(req,timeout=timeout) as resp:
+                raw=json.loads(resp.read(2*1024*1024).decode("utf-8"))
+            content=extract_output_text(raw)
+            if not content: raise RuntimeError("EMPTY_AI_RESPONSE")
+            data=json.loads(content)
+            if not isinstance(data,dict): raise RuntimeError("INVALID_AI_RESPONSE")
+            return data,model
         except urllib.error.HTTPError as e:
-            # Never write the full upstream body (or the user's query) to logs.
             last=RuntimeError("OPENAI_HTTP_"+str(e.code))
-            print("rhyme upstream model:",model,"http:",e.code,flush=True)
-            # Invalid model/config: try next valid model; authorization/billing
-            # errors will not be solved with additional costly calls.
-            if e.code in (400,404,422,429,500,502,503,504): continue
+            print("rhyme upstream:",model,"http:",e.code,flush=True)
+            # Only invalid/unavailable models should cause fallthrough. Do not
+            # retry on rate limits, billing, or auth, and never downgrade quality.
+            if e.code in (400,404,422):
+                continue
             raise last
         except (TimeoutError,urllib.error.URLError) as e:
-            last=RuntimeError("OPENAI_TIMEOUT" if isinstance(e,TimeoutError) else "OPENAI_NETWORK")
-            print("rhyme upstream model:",model,"connectivity:",type(e).__name__,flush=True)
-            continue
+            last=RuntimeError("OPENAI_TIMEOUT")
+            print("rhyme upstream:",model,"timeout or network",flush=True)
+            # Don't cascade costly requests after a timeout.
+            raise last
         except (ValueError,RuntimeError) as e:
             last=RuntimeError("OPENAI_BAD_RESPONSE")
-            print("rhyme upstream model:",model,"response:",type(e).__name__,flush=True)
-            continue
-    raise last or RuntimeError("OPENAI_UNAVAILABLE")
+            print("rhyme upstream:",model,"invalid response",flush=True)
+            raise last
+    raise last or RuntimeError("OPENAI_MODEL_UNAVAILABLE")
 
 def sanitize(data, query):
     analysis=data.get("analysis") or {}
@@ -264,23 +270,31 @@ class Handler(BaseHTTPRequestHandler):
             if not query or len(query)>MAX_QUERY_LEN: self.send_json(400,{"error":"INVALID_QUERY","message":"Bitte ein Wort oder eine kurze Phrase eingeben."}); return
             if category not in {"Alle","Nomen","Adjektiv","Verb","Umgangssprache","Sonstiges"}: category="Alle"
             if syllables not in {"Alle","1","2","3","4+"}: syllables="Alle"
-            key=hashlib.sha256(("rhymes|v8|"+query.casefold()+"|"+category+"|"+syllables).encode()).hexdigest()
+            key=hashlib.sha256(("rhymes|quality-v1|"+query.casefold()+"|"+category+"|"+syllables).encode()).hexdigest()
             cached=cache_get(key)
             if cached: self.send_json(200,cached); return
-            user_text=json.dumps({"query":query,"filters":{"category":category,"syllables":syllables},"instructions":"Erzeuge 8 bis 10 brauchbare Treffer für exakt diese Query. Erweitere oder verkürze Namen niemals. Bei mehrteiligen Namen oder Phrasen zuerst den Gesamtklang prüfen und zusätzlich den dominanten End-Reimanker verwenden, wenn natürliche Vollphrasen-Reime rar sind. Lieber ehrliche Near-, Slant-, Assonanz- oder Phrase-Reime liefern als null Treffer oder erfundene Wörter. Wenn ein Filter gesetzt ist, priorisiere ihn strikt. Bei Alle diversifiziere Wortarten. Bewerte nach realem Klang im Rap. Bei Eigennamen und unsicherer Aussprache konservativ bewerten und keine Betonung erfinden."},ensure_ascii=False)
+            user_text=json.dumps({
+                "query":query,
+                "filters":{"category":category,"syllables":syllables},
+                "instructions":"Finde NUR phonetisch belastbare Reime zur exakten Eingabe. Beurteile zuerst die gesprochene und betonte Endsequenz. 0 Treffer sind besser als Füller. Keine Reime nur wegen ähnlichem Rhythmus oder gleicher Silbenzahl. Bei Phrase nach letzter betonter Endsequenz suchen, keine unmarkierten Vollphrasenbehauptungen. Erklärte Unsicherheit ist erwünscht."
+            },ensure_ascii=False)
             try:
-                data,model=call_openai(user_text,RHYME_SCHEMA,"reimflow_rhymes",DEVELOPER_PROMPT); data=sanitize(data,query)
-                if len(data.get("rhymes",[])) < 4:
-                    retry_text=json.dumps({
-                        "query":query,
-                        "filters":{"category":category,"syllables":syllables},
-                        "instructions":"RETRY: Die erste Suche hatte zu wenige Treffer. Behalte die Query exakt unverändert. Nutze für mehrteilige Namen/Phrasen den letzten betonten Klangblock als Reimanker und liefere natürliche Multi-Silben-, Near-, Slant-, Assonanz- oder Phrase-Reime. Keine Fantasiewörter. Mindestens 8 brauchbare Treffer, Qualität ehrlich bewerten."
-                    },ensure_ascii=False)
-                    retry,model=call_openai(retry_text,RHYME_SCHEMA,"reimflow_rhymes_retry",DEVELOPER_PROMPT)
-                    retry=sanitize(retry,query)
-                    if len(retry.get("rhymes",[])) > len(data.get("rhymes",[])):
-                        data=retry
-                result={"ok":True,"engine":"ai_phonetic","model":model,"cached":False,**data}; cache_put(key,result); self.send_json(200,result)
+                raw,model=call_openai(user_text,RHYME_SCHEMA,"reimflow_quality_candidates",DEVELOPER_PROMPT,effort="medium",timeout=65)
+                raw=sanitize(raw,query)
+                reviewed,review_model=call_openai(
+                    rhyme_quality.review_input(query,raw),
+                    rhyme_quality.QUALITY_SCHEMA,"reimflow_independent_review",
+                    rhyme_quality.QUALITY_PROMPT,
+                    models=[QUALITY_MODEL],effort="medium",timeout=45
+                )
+                data=rhyme_quality.review_and_filter(query,raw,reviewed)
+                # Never cache unchecked suggestions or pretend numerical scores
+                # represent statistically calibrated probabilities.
+                result={"ok":True,"engine":"ai_phonetic","model":model,
+                        "review_model":review_model,"cached":False,**data}
+                print("rhyme quality gate:",len(raw["rhymes"]),"candidates,",len(data["rhymes"]),"accepted",flush=True)
+                cache_put(key,result)
+                self.send_json(200,result)
             except Exception as e:
                 reason=str(e)
                 code="AI_TIMEOUT" if "TIMEOUT" in reason else "AI_CONFIG" if "AI_NOT_CONFIGURED" in reason else "AI_UPSTREAM"
