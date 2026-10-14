@@ -21,10 +21,14 @@ jobs:
           node --check sonic-atelier.js
           node --check tests/comic-variants.test.mjs
           node tests/comic-variants.test.mjs
+          node --check flow-scoring.js
+          node --check flow-challenge.js
+          node --check tests/flow-challenge.test.mjs
+          node tests/flow-challenge.test.mjs
       - name: Verify complete existing prototype bundle
         run: |
           set -euo pipefail
-          for file in index.html app.js api.py styles.css themes.css ai-engine.css sonic-atelier.css comic-flow.css comic-variants.css theme-engine.js sonic-atelier.js; do
+          for file in index.html app.js api.py styles.css themes.css ai-engine.css sonic-atelier.css comic-flow.css comic-variants.css theme-engine.js sonic-atelier.js flow-scoring.js flow-challenge.js flow-challenge.css; do
             test -s "$file"
           done
           grep -q 'Reimflow' index.html
@@ -39,6 +43,9 @@ jobs:
           grep -q 'data-comic-style="graffiti"' comic-variants.css
           grep -q 'data-comic-style="novel"' comic-variants.css
           grep -q 'data-comic-style="clean"' comic-variants.css
+          grep -q 'flow-challenge.js?v=20261014-flow1' index.html
+          grep -q 'flow-scoring.js?v=20261014-flow1' index.html
+          grep -q 'flow-challenge.css?v=20261014-flow1' index.html
           grep -q '/api/health' api.py
           grep -q '/api/rhymes' api.py
           grep -q '/api/validate' api.py
