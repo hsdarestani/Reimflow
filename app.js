@@ -70,6 +70,7 @@ const licenseLabel=license=>({
 
 function go(page){
   window.ReimflowFlowChallenge?.onPageChange(page);
+  window.ReimflowRapFlow?.onPageChange(page);
   $$(".page").forEach(p=>p.classList.toggle("active",p.dataset.page===page));
   $$("[data-go]").forEach(b=>b.classList.toggle("active",b.dataset.go===page));
   window.scrollTo({top:0,behavior:"smooth"});
