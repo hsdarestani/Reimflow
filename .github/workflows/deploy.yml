@@ -22,12 +22,21 @@ jobs:
       - name: Verify complete existing prototype bundle
         run: |
           set -euo pipefail
-          for file in index.html app.js api.py styles.css themes.css ai-engine.css sonic-atelier.css comic-flow.css theme-engine.js sonic-atelier.js; do
+          for file in index.html app.js api.py styles.css themes.css ai-engine.css sonic-atelier.css comic-flow.css comic-variants.css theme-engine.js sonic-atelier.js; do
             test -s "$file"
           done
           grep -q 'Reimflow' index.html
           grep -q 'comic-flow.css?v=20261014-comic1' index.html
           grep -q 'REIMFLOW / COMIC FLOW' comic-flow.css
+          grep -q 'comic-variants.css?v=20261014-styles4' index.html
+          grep -q 'FOUR COMIC EDITIONS' comic-variants.css
+          grep -q 'data-theme-option="comic-graffiti"' index.html
+          grep -q 'data-theme-option="comic-novel"' index.html
+          grep -q 'data-theme-option="comic-clean"' index.html
+          grep -q 'data-theme-pick="sonic-art"' index.html
+          grep -q 'data-comic-style="graffiti"' comic-variants.css
+          grep -q 'data-comic-style="novel"' comic-variants.css
+          grep -q 'data-comic-style="clean"' comic-variants.css
           grep -q '/api/health' api.py
           grep -q '/api/rhymes' api.py
           grep -q '/api/validate' api.py
