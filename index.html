@@ -24,6 +24,7 @@
   <link rel="stylesheet" href="sonic-atelier.css?v=20261013-dark-loader" />
   <link rel="stylesheet" href="comic-flow.css?v=20261014-comic1" />
   <link rel="stylesheet" href="comic-variants.css?v=20261014-styles4" />
+  <link rel="stylesheet" href="flow-challenge.css?v=20261014-flow1" />
 </head>
 <body>
   <div class="theme-atmosphere" aria-hidden="true"><span class="ambient-one"></span><span class="ambient-two"></span><span class="ambient-three"></span></div>
@@ -39,6 +40,7 @@
     <nav class="desktop-nav" aria-label="Hauptnavigation">
       <button class="nav-link active" data-go="home">Start</button>
       <button class="nav-link" data-go="rhymes">Reime</button>
+      <button class="nav-link" data-go="flow">⚡ Flow Game</button>
       <button class="nav-link" data-go="community">Community</button>
       <button class="nav-link" data-go="beats">Beats</button>
       <button class="nav-link" data-go="profile">Profil</button>
@@ -129,6 +131,10 @@
         </div>
       </div>
 
+      <div class="flow-teaser container">
+        <div><span class="flow-teaser-kicker">NEW · REIMFLOW ARCADE</span><strong>CAN YOU CATCH THE BEAT?</strong><p>Das Flow Challenge Minigame: 16 Beats, Live Score, Timing und Combo.</p></div>
+        <button class="candy-btn" data-go="flow" type="button">⚡ Jetzt spielen <span>→</span></button>
+      </div>
       <div class="keyword-marquee" aria-hidden="true">
         <div>AUSSPRACHE / SILBEN / STRESS / SLANG / MULTI SILBEN / ASSONANZ / PHONETIK / BARS / AUSSPRACHE / SILBEN / STRESS / SLANG /</div>
       </div>
@@ -190,6 +196,84 @@
           </div>
         </div>
       </section>
+    </section>
+
+    <section class="page" data-page="flow">
+      <div class="container app-shell flow-shell" data-art-label="FLOW CHALLENGE / MINI GAME">
+        <div class="page-title flow-page-title">
+          <div><span class="kicker">Reimflow Arcade · Live Rhythm Game</span><h1>Hast du den Flow?</h1>
+            <p>16 Beats. Ein Versuch. Triff den Takt und zeig, wie präzise dein Timing ist.</p>
+          </div>
+          <span class="flow-live-badge">● LIVE DEMO</span>
+        </div>
+
+        <div class="flow-layout">
+          <div class="flow-game">
+            <div class="flow-game-top">
+              <div class="flow-selector">
+                <label for="flowBpm">Dein Beat</label>
+                <select id="flowBpm" aria-label="Tempo auswählen">
+                  <option value="80">BOOM BAP · 80 BPM</option>
+                  <option value="92" selected>HIP HOP · 92 BPM</option>
+                  <option value="110">BOUNCE · 110 BPM</option>
+                  <option value="140">TRAP · 140 BPM</option>
+                </select>
+              </div>
+              <div class="flow-modes" role="group" aria-label="Eingabemodus">
+                <button type="button" class="active" data-flow-mode="tap" aria-pressed="true">✦ Tap</button>
+                <button type="button" data-flow-mode="mic" aria-pressed="false">◉ Mic Beta</button>
+              </div>
+            </div>
+            <div class="flow-stage" id="flowStage">
+              <div class="flow-stage-grain" aria-hidden="true"></div>
+              <div class="flow-stage-head">
+                <span id="flowStageLabel">READY TO FLOW?</span>
+                <span id="flowBarCount">4 BARS · 16 BEATS</span>
+              </div>
+              <div class="flow-orbit" id="flowOrbit" aria-hidden="true">
+                <div class="flow-orbit-inner"><span id="flowCount">▶</span></div>
+              </div>
+              <div id="flowJudgement" class="flow-judgement" role="status" aria-live="polite">Drück START und folge dem Beat.</div>
+              <div class="flow-beat-strip" id="flowBeatStrip" aria-label="16 Beats in vier Takten">
+                <span class="flow-beat" data-index="0"></span><span class="flow-beat" data-index="1"></span><span class="flow-beat" data-index="2"></span><span class="flow-beat" data-index="3"></span>
+                <span class="flow-beat" data-index="4"></span><span class="flow-beat" data-index="5"></span><span class="flow-beat" data-index="6"></span><span class="flow-beat" data-index="7"></span>
+                <span class="flow-beat" data-index="8"></span><span class="flow-beat" data-index="9"></span><span class="flow-beat" data-index="10"></span><span class="flow-beat" data-index="11"></span>
+                <span class="flow-beat" data-index="12"></span><span class="flow-beat" data-index="13"></span><span class="flow-beat" data-index="14"></span><span class="flow-beat" data-index="15"></span>
+              </div>
+              <button class="flow-pad" id="flowTap" type="button" disabled aria-label="Im Takt tippen">
+                <span class="flow-pad-icon">✦</span><strong>TAP THE BEAT</strong><small id="flowPadHint">Oder die Leertaste drücken</small>
+              </button>
+              <div class="flow-stage-footer"><span>01 · LISTEN</span><span>02 · FEEL</span><span>03 · TAP</span></div>
+            </div>
+            <div class="flow-game-actions">
+              <button class="candy-btn flow-start" id="flowStart" type="button">⚡ Challenge starten <span>→</span></button>
+              <button class="secondary-btn flow-stop" id="flowStop" type="button" disabled>■ Stop</button>
+              <button class="secondary-btn flow-share" id="flowShare" type="button" hidden>↗ Score teilen</button>
+            </div>
+            <p class="flow-hint" id="flowHint">Audio wird erst nach START aktiviert. Kopfhörer empfohlen, besonders im Mic Modus.</p>
+          </div>
+          <aside class="flow-sidebar">
+            <div class="flow-score-card">
+              <div class="flow-micro-heading">YOUR FLOW LEVEL <span>↗</span></div>
+              <div class="flow-score-number"><strong id="flowScore">--</strong><span>/100</span></div>
+              <div id="flowRank" class="flow-rank">Bist du im Takt?</div>
+              <div class="flow-stats">
+                <div><strong id="flowPerfect">0</strong><span>PERFECT</span></div>
+                <div><strong id="flowGood">0</strong><span>GOOD</span></div>
+                <div><strong id="flowCombo">0</strong><span>COMBO</span></div>
+              </div>
+              <div class="flow-best">🏆 Best Score (dieses Gerät): <strong id="flowBest">--</strong></div>
+            </div>
+            <div class="flow-tip-card">
+              <span class="kicker">Wie funktioniert's?</span>
+              <h3>Timing statt Zufall.</h3>
+              <p>Erst hörst du vier Einzähler. Danach hast du 16 Beats Zeit. Tippe genau auf jeden Schlag oder nutze dein Mikrofon (Beta).</p>
+              <p>Der Score misst die zeitliche Genauigkeit, <strong>nicht</strong> Rap-Qualität, Reime oder musikalische Kreativität.</p>
+              <small>Mic Beta analysiert Lautstärkeimpulse lokal im Browser. Keine Sprachaufnahme und kein Upload. Mit Kopfhörern testen.</small>
+            </div>
+          </aside>
+        </div>
+      </div>
     </section>
 
     <section class="page" data-page="rhymes">
@@ -333,6 +417,7 @@
   <nav class="mobile-nav" aria-label="Mobile Navigation">
     <button class="active" data-go="home"><span>⌂</span>Start</button>
     <button data-go="rhymes"><span>◎</span>Reime</button>
+    <button data-go="flow"><span>⚡</span>Flow</button>
     <button data-go="community"><span>✦</span>Community</button>
     <button data-go="beats"><span>▶</span>Beats</button>
     <button data-go="profile"><span>☺</span>Profil</button>
@@ -372,5 +457,6 @@
   <script src="theme-engine.js?v=20261014-styles4"></script>
   <script src="sonic-atelier.js?v=20261005d"></script>
   <script src="app.js?v=20261006a"></script>
+  <script src="flow-challenge.js?v=20261014-flow1"></script>
 </body>
 </html>
