@@ -16,7 +16,7 @@ _lock=threading.Lock(); _rate=defaultdict(deque)
 RHYME_SCHEMA={"type":"object","additionalProperties":False,"required":["analysis","rhymes"],"properties":{
 "analysis":{"type":"object","additionalProperties":False,"required":["input","interpreted_as","pronunciation","ipa","syllables","language","correction","note"],"properties":{
 "input":{"type":"string"},"interpreted_as":{"type":"string"},"pronunciation":{"type":"string"},"ipa":{"type":"string"},"syllables":{"type":"integer","minimum":1,"maximum":20},"language":{"type":"string"},"correction":{"type":["string","null"]},"note":{"type":"string"}}},
-"rhymes":{"type":"array","minItems":0,"maxItems":8,"items":{"type":"object","additionalProperties":False,"required":["word","pronunciation","ipa","syllables","category","register","score","confidence","kind","explanation"],"properties":{
+"rhymes":{"type":"array","minItems":0,"maxItems":14,"items":{"type":"object","additionalProperties":False,"required":["word","pronunciation","ipa","syllables","category","register","score","confidence","kind","explanation"],"properties":{
 "word":{"type":"string"},"pronunciation":{"type":"string"},"ipa":{"type":"string"},"syllables":{"type":"integer","minimum":1,"maximum":20},
 "category":{"type":"string","enum":["Nomen","Adjektiv","Verb","Umgangssprache","Sonstiges"]},
 "register":{"type":"string","enum":["Standard","Umgangssprache","Slang","Name/Marke","Englisch/Code-Switch"]},
@@ -32,7 +32,7 @@ Priorisiere Lautfolge, betonte Silben, Vokale, Konsonanten, Silbenzahl und Rhyth
 Multi-Silben-Reime, Slant Rhymes, Assonanzen und Reime über Wortgrenzen hinweg sind erlaubt.
 Deutsche Umgangssprache, etablierter Slang, Eigennamen, Marken und englische Code-Switches sind erlaubt, wenn sie im Rap plausibel sind.
 Erfinde KEINE Fantasiewörter. Nutze reale Wörter, gebräuchliche Phrasen, bekannte Namen/Marken oder klar etablierte Umgangssprache.
-Qualität vor Quantität! Gib im Zweifelsfall nur 1 oder 2 oder 0 Vorschläge. Du darfst NULL Treffer liefern. Erzeuge niemals Füller, um eine Anzahl zu erreichen.
+Qualität vor Quantität, aber suche umfassend! Gib zuerst 5 bis 8 reale, korrekt ausgesprochene Wörter oder Namen, die zum letzten betonten REIMANKER passen, selbst wenn sie nicht zur ganzen Phrase reimen. Dann 3 bis 6 sinnvolle mehrteilige kreative Lyrik-Phrasen, die Rhythmus und Klang der ganzen Query treffen. Nicht die Anzahl erzwingen, aber nicht nach nur einem Versuch aufgeben.
 WICHTIG: analysis.input und analysis.interpreted_as müssen exakt der vom Nutzer eingegebenen, getrimmten Query entsprechen.
 Erweitere Eigennamen NIEMALS selbstständig. Aus "Benzema" darf nicht "Karim Benzema" werden. Aus "Ronaldo" darf nicht "Cristiano Ronaldo" werden.
 Verkürze mehrteilige Namen oder Phrasen ebenfalls nicht. Analysiere exakt die Zeichenfolge, die der Nutzer eingegeben hat.
@@ -44,7 +44,18 @@ B) den dominanten Reimanker am Ende der Query, meistens das letzte betonte Wort 
 Wenn für A kaum natürliche Treffer existieren, darfst du starke Treffer für B liefern. Kennzeichne sie ehrlich als Multi-Silben, Near Rhyme, Slant Rhyme, Assonanz oder Phrase und behaupte keinen perfekten Reim.
 Ein mehrteiliger Name wie "Karim Benzema" darf also Treffer bekommen, die stark auf "Benzema" oder den Endklang der gesamten Phrase passen. Die Query selbst bleibt trotzdem exakt "Karim Benzema".
 pronunciation ist eine leicht lesbare Aussprachehilfe für deutsche Nutzer; ipa ist möglichst korrekte IPA.
-Vermeide die häufige Verwechslung von gleicher Silbenzahl/Rhythmus mit einem Reim. Bei "Blue Ferrari" sind Toyota, Karaoke, Marinade, Batterie keine starken Reime. Mögliche Ankerideen wie Safari/Calamari nur prüfen, nicht automatisch akzeptieren. Nicht behaupten, die gesamte Phrase reime sich, wenn nur das Schlusswort ähnlich klingt. Vermeide Duplikate und bloße Flexionsvarianten. Gib 0-6 Kandidaten nur wenn plausibel. Erklärungen kurz und konkret, mit konkret passendem betontem Reimkern. Sei phonetisch ehrlich."""
+Behandle bei mehrteiligen Eingaben drei Reimtypen gleichzeitig:
+1) isolierte Endwort-Reime: für "Blue paper" ist "paper" das Endwort.
+Dazu gehören "caper", "taper", "scraper", "shaper" und je nach Akzent "vapor".
+2) sinnvolle mehrteilige Rap-Phrasen, die den Klangverlauf der ganzen Eingabe
+nachbilden: z.B. "Blue paper" → "blue vapor" oder "true caper".
+3) kreativere Lyric-Phrasen wie "clue shaper" sind nur passend,
+wenn Bedeutung nachvollziehbar und ihre ungewohnte Form transparent ist.
+Alle Varianten gegen tatsächlich plausiblen Klang prüfen. Englisch
+gesprochenes "paper" nicht als deutsch ausgesprochenes "Papier" behandeln.
+Endwort-Reime sind valide Treffer und kein schwacher Full-Phrase-Reim.
+Nutze mehrere semantische Kategorien, wenn das möglich ist.
+Vermeide die häufige Verwechslung von gleicher Silbenzahl/Rhythmus mit einem Reim. Bei "Blue Ferrari" sind Toyota, Karaoke, Marinade, Batterie keine starken Reime. Mögliche Ankerideen wie Safari/Calamari nur prüfen, nicht automatisch akzeptieren. Nicht behaupten, die gesamte Phrase reime sich, wenn nur das Schlusswort ähnlich klingt. Vermeide Duplikate und bloße Flexionsvarianten. Gib bis zu 14 Kandidaten nur wenn plausibel. Erklärungen kurz und konkret, mit konkret passendem betontem Reimkern. Sei phonetisch ehrlich."""
 
 VALIDATE_PROMPT="""Du bist ein strenger Reim-Tester für eine deutschsprachige Rap-Community.
 Prüfe zwei Wörter oder Phrasen nach realer Aussprache, betonten Silben, Vokalen, Konsonanten, Silbenzahl und Rap-Tauglichkeit.
@@ -80,6 +91,11 @@ def client_allowed(ip):
         if len(q)>=RATE_LIMIT: return False
         q.append(now); return True
 
+
+_intent_path=os.path.join(os.path.dirname(os.path.abspath(__file__)),"rhyme-intent.py")
+_intent_spec=importlib.util.spec_from_file_location("reimflow_rhyme_intent",_intent_path)
+rhyme_intent=importlib.util.module_from_spec(_intent_spec)
+_intent_spec.loader.exec_module(rhyme_intent)
 
 # Strict second-pass review, loaded from deployed code without extra dependencies.
 _quality_path=os.path.join(os.path.dirname(os.path.abspath(__file__)),"rhyme-quality.py")
@@ -217,7 +233,7 @@ def sanitize(data, query):
         r["score"]=max(0,min(100,int(r.get("score",0)))); r["confidence"]=max(0,min(100,int(r.get("confidence",0)))); r["syllables"]=max(1,min(20,int(r.get("syllables",1))))
         clean.append(r)
     clean.sort(key=lambda x:(x["score"],x["confidence"]),reverse=True)
-    return {"analysis":analysis,"rhymes":clean[:10]}
+    return {"analysis":analysis,"rhymes":clean[:14]}
 
 class Handler(BaseHTTPRequestHandler):
     server_version="ReimflowAPI/1.0"
@@ -270,27 +286,30 @@ class Handler(BaseHTTPRequestHandler):
             if not query or len(query)>MAX_QUERY_LEN: self.send_json(400,{"error":"INVALID_QUERY","message":"Bitte ein Wort oder eine kurze Phrase eingeben."}); return
             if category not in {"Alle","Nomen","Adjektiv","Verb","Umgangssprache","Sonstiges"}: category="Alle"
             if syllables not in {"Alle","1","2","3","4+"}: syllables="Alle"
-            key=hashlib.sha256(("rhymes|quality-v1|"+query.casefold()+"|"+category+"|"+syllables).encode()).hexdigest()
+            key=hashlib.sha256(("rhymes|phrase-v2|"+query.casefold()+"|"+category+"|"+syllables).encode()).hexdigest()
             cached=cache_get(key)
             if cached: self.send_json(200,cached); return
+            intent=rhyme_intent.search_intent(query)
             user_text=json.dumps({
+                "intent":intent,
                 "query":query,
                 "filters":{"category":category,"syllables":syllables},
-                "instructions":"Finde NUR phonetisch belastbare Reime zur exakten Eingabe. Beurteile zuerst die gesprochene und betonte Endsequenz. 0 Treffer sind besser als Füller. Keine Reime nur wegen ähnlichem Rhythmus oder gleicher Silbenzahl. Bei Phrase nach letzter betonter Endsequenz suchen, keine unmarkierten Vollphrasenbehauptungen. Erklärte Unsicherheit ist erwünscht."
+                "instructions":"Erstelle zuerst mehrere solide Wortreime speziell für intent.end_word, unabhängig davon ob sie die Gesamtphrase treffen. Dann zusätzlich echte mehrteilige, sinnhafte Rap-Lines mit ähnlichem Klang und Rhythmus zur ganzen Phrase; keine ausgedachten Wörter oder ungebräuchliche Scheinphrasen. Jede Kategorie soll beim Review getrennt geprüft werden. Klang der Originalsprache und Betonung beachten."
             },ensure_ascii=False)
             try:
-                raw,model=call_openai(user_text,RHYME_SCHEMA,"reimflow_quality_candidates",DEVELOPER_PROMPT,effort="medium",timeout=65)
+                raw,model=call_openai(user_text,RHYME_SCHEMA,"reimflow_quality_candidates",DEVELOPER_PROMPT,effort="medium",timeout=48)
                 raw=sanitize(raw,query)
                 reviewed,review_model=call_openai(
                     rhyme_quality.review_input(query,raw),
                     rhyme_quality.QUALITY_SCHEMA,"reimflow_independent_review",
                     rhyme_quality.QUALITY_PROMPT,
-                    models=[QUALITY_MODEL],effort="medium",timeout=45
+                    models=[QUALITY_MODEL],effort="medium",timeout=36
                 )
                 data=rhyme_quality.review_and_filter(query,raw,reviewed)
                 # Never cache unchecked suggestions or pretend numerical scores
                 # represent statistically calibrated probabilities.
                 result={"ok":True,"engine":"ai_phonetic","model":model,
+                        "intent":intent,
                         "review_model":review_model,"cached":False,**data}
                 print("rhyme quality gate:",len(raw["rhymes"]),"candidates,",len(data["rhymes"]),"accepted",flush=True)
                 cache_put(key,result)
