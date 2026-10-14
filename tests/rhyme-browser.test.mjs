@@ -14,6 +14,19 @@ try{
     let tries=0;
     await page.route("**/api/rhymes",async route=>{
       tries++;
+      const request=route.request().postDataJSON();
+      if(request.query==="Blue paper"){
+        await new Promise(resolve=>setTimeout(resolve,1100));
+        return route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({
+          ok:true,engine:"ai_phonetic",quality_reviewed:true,
+          analysis:{input:"Blue paper",interpreted_as:"Blue paper",pronunciation:"blue pay-per",ipa:"",syllables:3,language:"Englisch",correction:null,note:""},
+          rhymes:[
+            {word:"true caper",category:"Sonstiges",syllables:3,pronunciation:"",ipa:"",score:0,confidence:0,strength:"brauchbar",scope:"phrase_variation",register:"Englisch/Code-Switch",kind:"Phrase",explanation:"Ähnlicher Klang und Sinn"},
+            {word:"shaper",category:"Nomen",syllables:2,pronunciation:"",ipa:"",score:0,confidence:0,strength:"stark",scope:"end_word",register:"Englisch/Code-Switch",kind:"Near Rhyme",explanation:"Reimt sich auf paper"},
+            {word:"blue vapor",category:"Sonstiges",syllables:3,pronunciation:"",ipa:"",score:0,confidence:0,strength:"brauchbar",scope:"full_phrase",register:"Englisch/Code-Switch",kind:"Phrase",explanation:"Ähnlicher Gesamtklang"}
+          ]
+        })});
+      }
       if(tries===1){
         return route.fulfill({status:502,contentType:"application/json",
           body:JSON.stringify({error:"AI_TIMEOUT",message:"Die KI-Reimsuche ist vorübergehend nicht erreichbar."})});
@@ -44,8 +57,22 @@ try{
     assert.match(await page.locator(".rhyme-card .match-score").first().innerText(),/NAH/);
     assert.doesNotMatch(await page.locator(".rhyme-card").first().innerText(),/% Sicherheit/);
     assert.equal(tries,2);
+
+    // The phrase must immediately show real end-word suggestions while
+    // the longer, independent model review is still processing.
+    await page.locator("#rhymeQuery").fill("Blue paper");
+    await page.locator("#rhymeSearchForm button[type='submit']").click();
+    const preview=page.locator(".rhyme-preview");
+    await preview.waitFor({state:"visible",timeout:1000});
+    assert.match(await preview.innerText(),/caper|scraper/);
+    assert.match(await preview.innerText(),/blue vapor|true caper/i);
+    await page.locator(".rhyme-group-title").first().waitFor({state:"visible",timeout:6500});
+    const headings=await page.locator(".rhyme-group-title").allTextContents();
+    assert.deepEqual(headings,["Ganzer Ausdruck","Kreative mehrteilige Reime","Reime auf das letzte Wort"]);
+    assert.equal(await page.locator(".rhyme-card").count(),3);
+    assert.equal(await preview.count(),0,"Preliminary preview must vanish after validated AI results.");
     assert.deepEqual(errors,[],JSON.stringify({viewport:viewport.width,errors}));
-    console.log(viewport.width+"px Blue Talisman failed API -> honest offline words -> retry AI: PASSED");
+    console.log(viewport.width+"px outage handling and instant Blue paper preview -> reviewed phrase, variation and anchor cards: PASSED");
     await context.close();
   }
 }finally{
