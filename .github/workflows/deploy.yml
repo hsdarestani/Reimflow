@@ -14,14 +14,16 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify Python API syntax
         run: |
-          python3 -m py_compile api.py rap-flow-analysis.py rhyme-quality.py
+          python3 -m py_compile api.py rap-flow-analysis.py rhyme-quality.py rhyme-intent.py
           python3 -m unittest discover -s tests -p "test_rap_flow.py"
           python3 -m unittest discover -s tests -p "test_rhyme_api.py"
           python3 -m unittest discover -s tests -p "test_rhyme_quality.py"
+          python3 -m unittest discover -s tests -p "test_rhyme_intent.py"
       - name: Verify JavaScript syntax
         run: |
           node --check app.js
           node --check rhyme-fallback.js
+          node --check rhyme-previews.js
           node tests/rhyme-fallback.test.mjs
           node --check theme-engine.js
           node --check sonic-atelier.js
@@ -46,14 +48,15 @@ jobs:
       - name: Verify complete existing prototype bundle
         run: |
           set -euo pipefail
-          for file in index.html app.js rhyme-fallback.js api.py styles.css themes.css ai-engine.css sonic-atelier.css comic-flow.css comic-variants.css theme-engine.js sonic-atelier.js flow-scoring.js flow-challenge.js flow-challenge.css rap-audio.js rap-flow.js rap-flow.css rap-flow-analysis.py rhyme-quality.py; do
+          for file in index.html app.js rhyme-fallback.js rhyme-previews.js api.py styles.css themes.css ai-engine.css sonic-atelier.css comic-flow.css comic-variants.css theme-engine.js sonic-atelier.js flow-scoring.js flow-challenge.js flow-challenge.css rap-audio.js rap-flow.js rap-flow.css rap-flow-analysis.py rhyme-quality.py; do
             test -s "$file"
           done
           grep -q 'Reimflow' index.html
           grep -q 'sonic-atelier.css?v=20261014-de1' index.html
-          grep -q 'app.js?v=20261015-quality1' index.html
+          grep -q 'app.js?v=20261015-phrase2' index.html
           grep -q 'rhyme-fallback.js?v=20261015-rhyme1' index.html
-          grep -q 'ai-engine.css?v=20261015-quality1' index.html
+          grep -q 'rhyme-previews.js?v=20261015-phrase2' index.html
+          grep -q 'ai-engine.css?v=20261015-phrase2' index.html
           grep -q 'comic-flow.css?v=20261014-de1' index.html
           grep -q 'REIMFLOW / COMIC FLOW' comic-flow.css
           grep -q 'comic-variants.css?v=20261014-de1' index.html
