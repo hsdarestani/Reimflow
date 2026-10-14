@@ -45,6 +45,7 @@ function boot(savedValue="sonic-art"){
   const opts=["sonic-art","comic-graffiti","comic-novel","comic-clean","playful","linear","minimal-dark","vaporwave","art-deco"].map(name=>element({themeOption:name}));
   const document={
     documentElement:root,
+    getElementById(id){return {"themeToggle":toggle,"themeMenu":menu}[id]||null},
     querySelector(selector){
       return {".theme-switcher":chooser,"#themeToggle":toggle,"#themeMenu":menu,".theme-current":label,'meta[name="theme-color"]':meta}[selector]||null;
     },
