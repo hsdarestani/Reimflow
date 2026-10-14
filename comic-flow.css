@@ -151,13 +151,13 @@ html[data-theme="sonic-art"] .sonic-hero {
   padding-top:88px;padding-bottom:55px;
 }
 html[data-theme="sonic-art"] .sonic-hero::before {
-  content:"ISSUE 001 • THE RHYME MACHINE";
+  content:"AUSGABE 001 • DIE REIMMASCHINE";
   left:clamp(22px,4vw,64px);bottom:16px;
   color:#56575a;letter-spacing:.12em;
   font:800 .66rem "JetBrains Mono",monospace;
 }
 html[data-theme="sonic-art"] .sonic-hero::after {
-  content:"✷  DROP A WORD";
+  content:"✷  WORT EINGEBEN";
   right:clamp(22px,4vw,64px);top:90px;
   padding:8px 12px;border:2px solid var(--cf-ink);
   background:var(--cf-yellow);border-radius:9px;
@@ -275,7 +275,7 @@ html[data-theme="sonic-art"] .sonic-sculpture::before {
   z-index:-2;
 }
 html[data-theme="sonic-art"] .sonic-sculpture::after {
-  content:"BOOM!";position:absolute;right:-5%;top:5%;z-index:10;
+  content:"BUMM!";position:absolute;right:-5%;top:5%;z-index:10;
   display:grid;place-items:center;width:clamp(76px,9vw,112px);
   height:clamp(76px,9vw,112px);
   background:var(--cf-orange);color:#fff;
