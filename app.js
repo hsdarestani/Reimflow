@@ -51,6 +51,23 @@ const toast=msg=>{const el=$("#toast");el.textContent=msg;el.classList.add("show
 const updatePoints=()=>$$("[data-points]").forEach(el=>el.textContent=state.points);
 const syllableBucket=n=>Number(n)>=4?"4+":String(n);
 
+const rhymeKindLabel=kind=>({
+  "Perfect Rhyme":"Perfekter Reim",
+  "Near Rhyme":"Ähnlicher Reim",
+  "Slant Rhyme":"Unreiner Reim",
+  "Multi-Syllabic":"Mehrsilbiger Reim",
+  "Multisyllabic":"Mehrsilbiger Reim",
+  "Multi-Silben":"Mehrsilbig",
+  "Internal Rhyme":"Binnenreim",
+  "Assonance":"Assonanz",
+  "Phrase":"Wortgruppe"
+})[kind]||kind;
+const licenseLabel=license=>({
+  "Free Use":"Kostenlose Nutzung",
+  "Non Commercial":"Nicht kommerziell",
+  "Commercial License":"Kommerzielle Lizenz"
+})[license]||license;
+
 function go(page){
   window.ReimflowFlowChallenge?.onPageChange(page);
   $$(".page").forEach(p=>p.classList.toggle("active",p.dataset.page===page));
@@ -73,9 +90,9 @@ async function checkEngine(){
 function updateEngineState(extra=""){
   const el=$("#engineState");if(!el)return;
   if(state.searchLoading){el.className="engine-state loading";el.innerHTML="<span></span> Klang wird analysiert…";return}
-  if(state.engineOnline===true){el.className="engine-state online";el.innerHTML="<span></span> AI Phonetic Engine"+(extra?" · "+escapeHtml(extra):"");return}
-  if(state.engineOnline===false){el.className="engine-state offline";el.innerHTML="<span></span> Offline Fallback";return}
-  el.className="engine-state";el.innerHTML="<span></span> Engine Check";
+  if(state.engineOnline===true){el.className="engine-state online";el.innerHTML="<span></span> KI Reimsuche"+(extra?" · "+escapeHtml(extra):"");return}
+  if(state.engineOnline===false){el.className="engine-state offline";el.innerHTML="<span></span> Ersatzsuche aktiv";return}
+  el.className="engine-state";el.innerHTML="<span></span> Verbindung wird geprüft";
 }
 
 $$("[data-example]").forEach(btn=>btn.addEventListener("click",()=>{$("#heroQuery").value=btn.dataset.example;runSearch(btn.dataset.example)}));
@@ -137,7 +154,7 @@ async function searchRhymes(force=false){
     if(!response.ok)throw new Error(data.message||"AI Suche nicht verfügbar");
     state.aiResults=Array.isArray(data.rhymes)?data.rhymes:[];
     state.queryAnalysis=data.analysis||null;state.searchSignature=signature;state.engineOnline=true;state.searchLoading=false;
-    renderRhymes();renderQueryInsight(state.queryAnalysis);updateEngineState(data.cached?"Cache":"Live");
+    renderRhymes();renderQueryInsight(state.queryAnalysis);updateEngineState(data.cached?"Zwischenspeicher":"Aktuell");
   }catch(err){
     if(seq!==searchSequence)return;
     if(err.name==="AbortError" && controller!==activeSearchController)return;
@@ -146,13 +163,13 @@ async function searchRhymes(force=false){
     if(fallback){
       state.engineOnline=true;
       state.aiResults=fallback.rhymes;state.queryAnalysis=fallback.analysis;state.searchSignature=signature;
-      renderRhymes();renderQueryInsight(fallback.analysis,true);updateEngineState("Fallback");toast("Die Live Analyse war zu langsam. Kuratierte Ersatztreffer werden gezeigt.");
+      renderRhymes();renderQueryInsight(fallback.analysis,true);updateEngineState("Ersatztreffer");toast("Die Live Analyse war zu langsam. Kuratierte Ersatztreffer werden gezeigt.");
     }else{
       state.aiResults=[];state.queryAnalysis=null;
       if(err.name==="AbortError"){
         state.engineOnline=true;
         renderRhymes("Die Analyse wurde nach längerer Wartezeit abgebrochen. Bitte erneut versuchen.");
-        updateEngineState("Timeout");
+        updateEngineState("Zeitüberschreitung");
       }else{
         state.engineOnline=false;
         renderRhymes(err.message);
@@ -190,7 +207,7 @@ function renderQueryInsight(analysis,fallback=false){
   if(!analysis){el.hidden=true;el.innerHTML="";return}
   const correction=analysis.correction&&normalize(analysis.correction)!==normalize(state.currentQuery)?'<button class="correction-chip" data-correction="'+escapeAttr(analysis.correction)+'">Meintest du „'+escapeHtml(analysis.correction)+'“?</button>':"";
   el.hidden=false;
-  el.innerHTML='<div class="insight-main"><span class="insight-label">'+(fallback?"Fallback Analyse":"Klanganalyse")+'</span><strong>'+escapeHtml(analysis.interpreted_as||state.currentQuery)+'</strong><span class="ipa">'+escapeHtml(analysis.ipa||"")+'</span></div>'+
+  el.innerHTML='<div class="insight-main"><span class="insight-label">'+(fallback?"Ersatzanalyse":"Klanganalyse")+'</span><strong>'+escapeHtml(analysis.interpreted_as||state.currentQuery)+'</strong><span class="ipa">'+escapeHtml(analysis.ipa||"")+'</span></div>'+
   '<div class="insight-meta"><span>'+escapeHtml(analysis.pronunciation||"")+'</span><span>'+(analysis.syllables||"?")+' Silben</span><span>'+escapeHtml(analysis.language||"")+'</span></div>'+correction+(analysis.note?'<p>'+escapeHtml(analysis.note)+'</p>':"");
 }
 $("#queryInsight")?.addEventListener("click",e=>{const b=e.target.closest("[data-correction]");if(!b)return;$("#rhymeQuery").value=b.dataset.correction;runSearch(b.dataset.correction,{stay:true,force:true})});
@@ -213,9 +230,9 @@ function renderRhymes(errorMessage=""){
   list.innerHTML=rows.map(r=>{
     const fav=state.favorites.includes(r.word),score=Math.max(0,Math.min(100,Number(r.score)||0)),confidence=Math.max(0,Math.min(100,Number(r.confidence)||0));
     const tone=score>=90?"elite":score>=80?"strong":score>=70?"good":"loose";
-    return '<article class="rhyme-card ai-rhyme '+tone+'"><div class="match-score" title="Klang Match">'+score+'</div>'+
-    '<div class="rhyme-word"><div class="word-line"><strong>'+escapeHtml(r.word)+'</strong><span class="ai-chip">AI</span></div><small>'+escapeHtml(r.pronunciation||"")+(r.ipa?' · <span class="ipa-inline">'+escapeHtml(r.ipa)+'</span>':"")+'</small></div>'+
-    '<div class="tag-row"><span class="micro-tag">'+escapeHtml(r.category||"Sonstiges")+'</span><span class="micro-tag">'+escapeHtml(String(r.syllables||"?"))+' Silben</span><span class="micro-tag">'+escapeHtml(r.kind||"Klang Reim")+'</span><span class="micro-tag">'+escapeHtml(r.register||"Standard")+'</span></div>'+
+    return '<article class="rhyme-card ai-rhyme '+tone+'"><div class="match-score" title="Klangwert">'+score+'</div>'+
+    '<div class="rhyme-word"><div class="word-line"><strong>'+escapeHtml(r.word)+'</strong><span class="ai-chip">KI</span></div><small>'+escapeHtml(r.pronunciation||"")+(r.ipa?' · <span class="ipa-inline">'+escapeHtml(r.ipa)+'</span>':"")+'</small></div>'+
+    '<div class="tag-row"><span class="micro-tag">'+escapeHtml(r.category||"Sonstiges")+'</span><span class="micro-tag">'+escapeHtml(String(r.syllables||"?"))+' Silben</span><span class="micro-tag">'+escapeHtml(rhymeKindLabel(r.kind||"Klangreim"))+'</span><span class="micro-tag">'+escapeHtml(r.register||"Standard")+'</span></div>'+
     '<div class="result-actions"><button class="icon-btn speak-result" data-word="'+escapeAttr(r.word)+'" aria-label="Aussprache anhören">♫</button><button class="favorite-btn '+(fav?"active":"")+'" data-fav="'+escapeAttr(r.word)+'" aria-label="Favorit">♥</button></div>'+
     '<div class="rhyme-explanation"><span class="confidence-meter"><i style="width:'+confidence+'%"></i></span><span>'+confidence+'% Sicherheit</span><p>'+escapeHtml(r.explanation||"")+'</p></div></article>';
   }).join("");
@@ -259,7 +276,7 @@ $("#openBeatUpload").addEventListener("click",()=>beatDialog.showModal());
 $("#beatUploadForm").addEventListener("submit",e=>{e.preventDefault();const file=$("#beatFile").files[0];state.beats.unshift({id:"u"+Date.now(),title:$("#beatTitle").value.trim(),producer:"Hossein Flow",type:$("#beatType").value,bpm:Number($("#beatBpm").value),license:$("#beatLicense").value,art:"art-violet",plays:"neu",audio:file?URL.createObjectURL(file):null});beatDialog.close();e.target.reset();renderBeats();toast("Upload zur Testansicht hinzugefügt.")});
 $("#beatFilters").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;state.beatFilter=b.dataset.beatFilter;$$("#beatFilters button").forEach(x=>x.classList.toggle("active",x===b));renderBeats()});
 $("#beatSearch").addEventListener("input",renderBeats);
-function renderBeats(){const term=normalize($("#beatSearch")?.value||"");const rows=state.beats.filter(b=>(state.beatFilter==="Alle"||b.type===state.beatFilter)&&(!term||normalize(b.title+" "+b.producer).includes(term)));$("#beatGrid").innerHTML=rows.map(b=>'<article class="sticker-card beat-card"><div class="beat-art '+b.art+'"><button class="play-btn" data-play="'+b.id+'" aria-label="Abspielen">▶</button></div><div class="beat-info"><h3>'+escapeHtml(b.title)+'</h3><div class="beat-meta"><span class="micro-tag">'+b.type+'</span><span class="micro-tag">'+b.bpm+' BPM</span></div><div class="beat-footer"><span>von '+escapeHtml(b.producer)+'</span><span class="license-chip">'+escapeHtml(b.license)+'</span></div></div></article>').join("")}
+function renderBeats(){const term=normalize($("#beatSearch")?.value||"");const rows=state.beats.filter(b=>(state.beatFilter==="Alle"||b.type===state.beatFilter)&&(!term||normalize(b.title+" "+b.producer).includes(term)));$("#beatGrid").innerHTML=rows.map(b=>'<article class="sticker-card beat-card"><div class="beat-art '+b.art+'"><button class="play-btn" data-play="'+b.id+'" aria-label="Abspielen">▶</button></div><div class="beat-info"><h3>'+escapeHtml(b.title)+'</h3><div class="beat-meta"><span class="micro-tag">'+b.type+'</span><span class="micro-tag">'+b.bpm+' BPM</span></div><div class="beat-footer"><span>von '+escapeHtml(b.producer)+'</span><span class="license-chip">'+escapeHtml(licenseLabel(b.license))+'</span></div></div></article>').join("")}
 $("#beatGrid").addEventListener("click",e=>{const b=e.target.closest("[data-play]");if(!b)return;const beat=state.beats.find(x=>x.id===b.dataset.play);if(beat?.audio){if(window.activeAudio)window.activeAudio.pause();window.activeAudio=new Audio(beat.audio);window.activeAudio.play();b.textContent="❚❚";window.activeAudio.onended=()=>b.textContent="▶"}else toast("Für diesen Demo Beat ist noch keine Audiodatei hinterlegt.")});
 
 function renderProfile(){const accepted=state.submissions.filter(s=>s.status==="accepted").length+6;$("#acceptedCount").textContent=accepted;const mine=state.submissions.filter(s=>s.mine).slice(0,5);$("#profileActivity").innerHTML=mine.length?mine.map(s=>'<div class="activity-row"><strong>'+escapeHtml(s.source)+' → '+escapeHtml(s.target)+'</strong><span>'+(s.status==="accepted"?"bestätigt":"im Test")+'</span></div>').join(""):'<div class="empty-state">Noch keine eigenen Beiträge in diesem Browser.</div>'}
