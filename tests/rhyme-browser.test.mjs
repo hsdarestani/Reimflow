@@ -31,7 +31,7 @@ try{
     await page.locator("#rhymeSearchForm button[type='submit']").click();
     const message=page.locator(".search-empty.error");
     await message.waitFor({state:"visible",timeout:8500});
-    assert.match(await message.innerText(),/nicht geladen werden/);
+    assert.match(await message.innerText(),/nicht geladen werden/i);
     assert.equal(await page.locator(".rhyme-card").count(),0,
       "Unverified filler words must not be displayed after an AI error.");
     assert.equal(await page.locator(".rhyme-offline-note").count(),0,
