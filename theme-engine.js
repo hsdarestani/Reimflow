@@ -1,7 +1,10 @@
 
 (() => {
   const themes = {
-    "sonic-art": { label: "Comic Flow", color: "#FF603D" },
+    "sonic-art": { label: "Pop Comic", color: "#FF603D", comic: "pop" },
+    "comic-graffiti": { label: "Street Graffiti", color: "#C5FA38", comic: "graffiti" },
+    "comic-novel": { label: "Graphic Novel", color: "#E34948", comic: "novel" },
+    "comic-clean": { label: "Clean Comic", color: "#EE7358", comic: "clean" },
     playful: { label: "Playful", color: "#8B5CF6" },
     linear: { label: "Linear", color: "#5E6AD2" },
     "minimal-dark": { label: "Minimal Dark", color: "#F59E0B" },
@@ -18,16 +21,23 @@
 
   function setTheme(name, persist = true) {
     if (!themes[name]) name = "sonic-art";
-    root.dataset.theme = name;
+    root.dataset.theme = themes[name].comic ? "sonic-art" : name;
+    if (themes[name].comic) root.dataset.comicStyle = themes[name].comic;
+    else delete root.dataset.comicStyle;
     if (persist) localStorage.setItem("reimflow_theme_v3", name);
     if (currentLabel) currentLabel.textContent = themes[name].label;
     if (themeMeta) themeMeta.setAttribute("content", themes[name].color);
+    document.querySelectorAll("[data-theme-pick]").forEach((button) => {
+      const active = button.dataset.themePick === name;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", String(active));
+    });
     document.querySelectorAll("[data-theme-option]").forEach((button) => {
       const active = button.dataset.themeOption === name;
       button.classList.toggle("active", active);
       button.setAttribute("aria-checked", String(active));
     });
-    window.dispatchEvent(new CustomEvent("reimflow:themechange", { detail: { theme: name } }));
+    window.dispatchEvent(new CustomEvent("reimflow:themechange", { detail: { theme: name, comicStyle: themes[name].comic || null } }));
   }
 
   const stored = localStorage.getItem("reimflow_theme_v3");
@@ -38,6 +48,10 @@
     const open = !switcher.classList.contains("open");
     switcher.classList.toggle("open", open);
     toggle.setAttribute("aria-expanded", String(open));
+  });
+
+  document.querySelectorAll("[data-theme-pick]").forEach(button => {
+    button.addEventListener("click", () => setTheme(button.dataset.themePick));
   });
 
   menu?.addEventListener("click", (event) => {
