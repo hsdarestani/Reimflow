@@ -1,0 +1,241 @@
+/* REIMFLOW / FLOW CHALLENGE ARCADE. Game UI only; adapts to all design themes. */
+html[data-theme="sonic-art"] {--flow-neon:#ffd64d;--flow-hot:#ff603d;--flow-blue:#8290ff;--flow-ink:#12131b}
+html[data-comic-style="graffiti"] {--flow-neon:#c5fa38;--flow-hot:#ff662d;--flow-blue:#b47aff;--flow-ink:#0b0d10}
+html[data-comic-style="novel"] {--flow-neon:#ecded2;--flow-hot:#e34948;--flow-blue:#9daebf;--flow-ink:#101216}
+html[data-comic-style="clean"] {--flow-neon:#aee3d8;--flow-hot:#ee7358;--flow-blue:#ffdb9c;--flow-ink:#1d3437}
+html:not([data-theme="sonic-art"]) {--flow-neon:#c1f59a;--flow-hot:#ff6749;--flow-blue:#a6a5ff;--flow-ink:#121421}
+.flow-teaser {
+  display:flex;justify-content:space-between;align-items:center;gap:25px;
+  padding:23px 28px;margin:15px auto 55px;
+  background:linear-gradient(110deg,#181925,#272535);
+  color:#fff;
+  border:3px solid var(--flow-neon,#ffde6a);border-radius:20px;
+  box-shadow:7px 8px 0 rgba(15,16,21,.43);
+  position:relative;overflow:hidden;
+}
+.flow-teaser::after {
+  content:"✦";position:absolute;right:23%;top:-34px;
+  font:900 160px "Outfit",sans-serif;
+  color:rgba(255,255,255,.06);pointer-events:none;
+}
+.flow-teaser>div {position:relative;z-index:1}
+.flow-teaser-kicker {display:block;color:var(--flow-neon,#ffd64d);font:900 .72rem "Space Grotesk",sans-serif;letter-spacing:.15em}
+.flow-teaser strong {display:block;color:#fff;margin:6px 0;font:900 clamp(1.6rem,2.6vw,2.45rem)/1 "Outfit",sans-serif;letter-spacing:-.04em}
+.flow-teaser p {color:#dad8e1!important;font:500 .9rem/1.55 "Space Grotesk",sans-serif;margin:0;max-width:560px}
+.flow-teaser .candy-btn {flex-shrink:0;position:relative;z-index:1;white-space:nowrap}
+.flow-shell {padding-top:clamp(92px,10vw,135px);padding-bottom:150px}
+.flow-page-title {display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:24px}
+.flow-page-title h1 {margin:6px 0 13px;letter-spacing:-.055em}
+.flow-page-title p {max-width:650px;font-size:1.03rem;line-height:1.65;margin:0}
+.flow-live-badge {
+  flex-shrink:0;align-self:flex-start;background:#ebfbd4;color:#255528;
+  padding:9px 13px;border:2px solid #255528;border-radius:999px;
+  font:900 .74rem "JetBrains Mono",monospace;letter-spacing:.04em;
+}
+.flow-layout {display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.37fr);gap:20px;align-items:start}
+.flow-game {min-width:0}
+.flow-game-top {
+  display:flex;justify-content:space-between;align-items:flex-end;
+  flex-wrap:wrap;gap:12px;margin-bottom:18px
+}
+.flow-selector label {display:block;margin-bottom:8px;font:800 .72rem "Outfit",sans-serif;text-transform:uppercase;letter-spacing:.08em}
+.flow-selector select {
+  width:min(100%,340px);min-height:45px;padding:9px 37px 9px 12px;
+  color:#1b1e23!important;background:#fffaf1!important;
+  border:2px solid #24242a!important;border-radius:11px!important;
+  font:800 .8rem "Space Grotesk",sans-serif;
+}
+.flow-selector select:disabled {opacity:.65}
+.flow-modes {display:flex;gap:5px;padding:4px;background:#252531;border-radius:14px}
+.flow-modes button {
+  min-height:38px;padding:7px 14px;background:transparent;border:0;
+  color:#ececf1;border-radius:10px;font:800 .75rem "Space Grotesk",sans-serif;
+}
+.flow-modes button.active {background:var(--flow-neon,#ffd64d);color:#101015}
+.flow-modes button:disabled {cursor:not-allowed;opacity:.7}
+.flow-stage {
+  --pad-size:clamp(146px,23vw,218px);
+  isolation:isolate;position:relative;overflow:hidden;min-height:500px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:27px 24px 21px;border:3px solid #30323d;border-radius:25px;
+  background:
+    radial-gradient(ellipse 330px 290px at 50% 42%,rgba(87,82,137,.33),transparent 80%),
+    repeating-radial-gradient(circle at 50% 45%,transparent 0 39px,rgba(255,255,255,.055) 39px 40px),
+    linear-gradient(145deg,#1a1c27,#101119 75%);
+  box-shadow:0 24px 45px rgba(10,11,15,.25);
+  color:#fff;
+}
+.flow-stage-grain {
+  position:absolute;inset:0;pointer-events:none;opacity:.18;z-index:-1;
+  background:radial-gradient(#fff .65px,transparent .8px);background-size:14px 14px;
+}
+.flow-stage::after {
+  content:"REIMFLOW / 4×4";position:absolute;top:45%;left:-48px;
+  color:#8c91a4;font:800 .56rem "JetBrains Mono",monospace;
+  letter-spacing:.18em;transform:rotate(-90deg);opacity:.65;
+}
+.flow-stage-head,.flow-stage-footer {
+  width:100%;display:flex;justify-content:space-between;gap:12px;
+  font:800 .68rem "JetBrains Mono",monospace;letter-spacing:.06em;
+  color:#b7b9c7;
+}
+.flow-stage-head {position:absolute;top:22px;left:0;padding:0 23px}
+.flow-stage-head span:first-child {color:var(--flow-neon,#ffd64d)}
+.flow-stage-footer {color:#757b91;margin-top:24px}
+.flow-orbit {
+  width:clamp(125px,20vw,170px);height:clamp(125px,20vw,170px);
+  display:grid;place-items:center;margin:16px auto 14px;
+  border:3px dashed var(--flow-neon,#ffd64d);border-radius:50%;
+  box-shadow:0 0 0 12px rgba(255,255,255,.035),0 0 0 32px rgba(255,255,255,.025);
+  transform-origin:center;
+}
+.flow-orbit.pulse {animation:flowPulse .28s cubic-bezier(.2,1,.7,1)}
+.flow-orbit-inner {
+  width:80%;height:80%;display:grid;place-items:center;border-radius:50%;
+  background:var(--flow-neon,#ffd64d);color:#141418;
+  border:5px solid #141518;
+}
+.flow-orbit-inner span {
+  font:900 clamp(2.2rem,6vw,4rem) "Outfit",sans-serif;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:-.06em;
+}
+@keyframes flowPulse {0%{transform:scale(.92);filter:brightness(1.45)}100%{transform:scale(1)}}
+.flow-judgement {
+  min-height:25px;margin:4px 0 17px;text-align:center;color:#fff;
+  font:800 clamp(.82rem,1.7vw,1.02rem) "Space Grotesk",sans-serif;
+}
+.flow-stage.hit .flow-orbit-inner {box-shadow:0 0 36px rgba(255,255,255,.18)}
+.flow-beat-strip {
+  display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:5px;
+  width:min(100%,560px);margin:4px 0 18px;
+}
+.flow-beat {
+  height:clamp(17px,3.2vw,30px);min-width:0;
+  background:#343949;border:1px solid #4b5061;border-radius:4px;
+  transition:background .1s,transform .1s;
+}
+.flow-beat:nth-child(4n+1) {border-left:3px solid #7c8190}
+.flow-beat.now {
+  background:#fff;box-shadow:0 0 17px #fff7;transform:translateY(-3px)
+}
+.flow-beat.perfect {background:var(--flow-neon,#ffd64d);border-color:var(--flow-neon,#ffd64d)}
+.flow-beat.good {background:#66e2b4;border-color:#66e2b4}
+.flow-beat.okay {background:#819cff;border-color:#819cff}
+.flow-beat.miss {background:#e76465;border-color:#e76465}
+.flow-pad {
+  position:relative;display:flex;align-items:center;flex-direction:column;justify-content:center;
+  gap:5px;touch-action:manipulation;user-select:none;
+  width:min(100%,370px);min-height:105px;padding:19px;
+  border:3px solid var(--flow-neon,#ffd64d);border-radius:22px;
+  background:rgba(255,255,255,.045);color:#fff;
+  box-shadow:0 7px 0 #06070b;cursor:pointer;
+}
+.flow-pad:disabled {opacity:.55;cursor:not-allowed}
+.flow-pad:not(:disabled):active {transform:translateY(5px);box-shadow:0 2px 0 #06070b;background:rgba(255,255,255,.14)}
+.flow-pad-icon {color:var(--flow-neon,#ffd64d);font-size:1.3rem;line-height:1}
+.flow-pad strong {font:900 clamp(1rem,2.5vw,1.6rem)/1 "Outfit",sans-serif;letter-spacing:.02em}
+.flow-pad small {font:600 .72rem "Space Grotesk",sans-serif;color:#bbc0d0}
+.flow-stage.playing .flow-pad {background:rgba(255,255,255,.1)}
+.flow-stage.finished .flow-orbit-inner {background:#77e4ad}
+.flow-stage.finished .flow-pad {opacity:.4}
+.flow-game-actions {display:flex;gap:10px;flex-wrap:wrap;margin:18px 0 11px}
+.flow-game-actions .flow-start {min-height:52px}
+.flow-game-actions .flow-stop,.flow-game-actions .flow-share {min-height:52px}
+.flow-game-actions button[hidden] {display:none}
+.flow-game-actions button:disabled {opacity:.5;cursor:not-allowed;transform:none!important}
+.flow-hint {color:var(--theme-muted,#6b7280);font:.8rem/1.6 "Space Grotesk",sans-serif}
+.flow-sidebar {display:grid;gap:17px;min-width:0}
+.flow-score-card {
+  background:linear-gradient(160deg,#181924,#25212e);color:#fff;
+  border:2px solid #343744;border-radius:23px;
+  padding:23px;box-shadow:0 12px 28px #0002;
+}
+.flow-micro-heading {color:var(--flow-neon,#ffd64d);display:flex;justify-content:space-between;font:900 .72rem "JetBrains Mono",monospace;letter-spacing:.07em}
+.flow-score-number {display:flex;align-items:baseline;gap:4px;margin:22px 0 9px}
+.flow-score-number strong {font:900 clamp(4rem,8vw,6.8rem)/.9 "Outfit",sans-serif;letter-spacing:-.075em;font-variant-numeric:tabular-nums}
+.flow-score-number span {color:#aaaab8;font:800 1.25rem "Outfit",sans-serif}
+.flow-rank {min-height:28px;color:#e9e7ef;font:900 clamp(.95rem,1.8vw,1.2rem) "Outfit",sans-serif;letter-spacing:.02em}
+.flow-stats {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:24px 0 20px}
+.flow-stats>div {background:#353342;border:1px solid #57515e;border-radius:12px;text-align:center;padding:11px 3px}
+.flow-stats strong {display:block;color:var(--flow-neon,#ffd64d);font:900 1.45rem "Outfit",sans-serif;font-variant-numeric:tabular-nums}
+.flow-stats span {display:block;margin-top:3px;color:#dfdce6;font:700 .58rem "JetBrains Mono",monospace}
+.flow-best {padding-top:15px;border-top:1px solid #52505d;color:#c6c2d1;font:700 .76rem/1.5 "Space Grotesk",sans-serif}
+.flow-best strong {color:#fff}
+.flow-tip-card {
+  border:1px solid var(--theme-border,#bfc4d0);
+  background:var(--theme-card,#fff);
+  color:var(--theme-fg,#111);
+  padding:22px;border-radius:20px;
+}
+.flow-tip-card .kicker {color:var(--theme-accent,#ff603d);font-size:.72rem}
+.flow-tip-card h3 {font-size:clamp(1.4rem,2vw,1.85rem);margin:12px 0}
+.flow-tip-card p {font:500 .9rem/1.65 "Space Grotesk",sans-serif;color:var(--theme-muted,#626a70)}
+.flow-tip-card strong {font-weight:800;color:var(--theme-fg,#111)}
+.flow-tip-card small {display:block;padding-top:13px;margin-top:16px;border-top:1px solid var(--theme-border,#ccc);font:.73rem/1.6 "Space Grotesk",sans-serif;color:var(--theme-muted,#666)}
+html[data-theme="sonic-art"] .flow-page-title p {color:var(--sa-muted)}
+html[data-theme="sonic-art"] .flow-teaser .candy-btn {color:#fff;background:var(--flow-hot,#ff603d)}
+html[data-theme="sonic-art"][data-comic-style="graffiti"] .flow-teaser {border-radius:4px;box-shadow:7px 7px 0 #a555d2}
+html[data-theme="sonic-art"][data-comic-style="novel"] .flow-teaser {border-radius:2px;box-shadow:none}
+html[data-theme="sonic-art"][data-comic-style="clean"] .flow-teaser {border-radius:24px;box-shadow:0 15px 30px #0002}
+html[data-theme="sonic-art"] .flow-page-title h1 {font-size:clamp(2.65rem,5vw,5rem)}
+html[data-comic-style="graffiti"] .flow-page-title h1 {font-family:"Permanent Marker","Outfit",sans-serif}
+html[data-comic-style="clean"] .flow-page-title h1,
+html[data-comic-style="novel"] .flow-page-title h1 {font-family:"Marcellus",Georgia,serif}
+@media(max-width:1030px) {
+  .flow-layout {grid-template-columns:minmax(0,1fr) minmax(230px,.38fr)}
+  .flow-score-card {padding:18px}
+  .flow-tip-card {padding:18px}
+}
+@media(max-width:840px) {
+  .flow-layout {grid-template-columns:minmax(0,1fr)}
+  .flow-sidebar {grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .flow-stage {min-height:475px}
+}
+@media(max-width:700px) {
+  .flow-teaser {flex-direction:column;align-items:stretch;gap:13px;padding:18px;margin:10px auto 40px}
+  .flow-teaser .candy-btn {width:100%}
+  .flow-teaser strong {font-size:1.6rem}
+  .flow-shell {padding-top:105px;padding-bottom:145px}
+  .flow-page-title {flex-direction:column;align-items:flex-start;gap:12px}
+  .flow-live-badge {font-size:.69rem}
+  .flow-game-top {flex-direction:column;align-items:stretch;gap:12px}
+  .flow-selector select {width:100%}
+  .flow-modes {width:100%}
+  .flow-modes button {flex:1}
+  .flow-stage {min-height:445px;padding:65px 12px 16px;border-radius:17px}
+  .flow-stage-head {padding-inline:14px;font-size:.58rem}
+  .flow-stage::after {display:none}
+  .flow-orbit {width:135px;height:135px;margin:7px auto 16px}
+  .flow-judgement {font-size:.85rem}
+  .flow-beat-strip {gap:3px;margin:4px 0 20px}
+  .flow-beat {height:21px;border-radius:3px}
+  .flow-pad {width:100%;min-height:102px}
+  .flow-stage-footer {font-size:.57rem}
+  .flow-game-actions button {flex:1 1 auto}
+  .flow-game-actions .flow-start {flex:1 1 100%}
+  .flow-sidebar {grid-template-columns:minmax(0,1fr)}
+  .flow-score-number strong {font-size:5.1rem}
+}
+@media(max-width:390px) {
+  .flow-stage-head {font-size:.53rem}
+  .flow-score-card {padding:17px}
+  .flow-game-actions .flow-stop,.flow-game-actions .flow-share {font-size:.73rem}
+  .flow-orbit {width:112px;height:112px}
+}
+/* New dedicated Flow tab fits the existing mobile navigation without overlap. */
+@media(max-width:900px) {
+  .mobile-nav {gap:1px}
+  .mobile-nav button {min-width:0;padding:6px 4px!important;font-size:.57rem}
+  html[data-theme="sonic-art"] .mobile-nav {
+    grid-template-columns:repeat(6,minmax(0,1fr))!important;
+    gap:1px;
+  }
+  html[data-theme="sonic-art"] .mobile-nav button {
+    padding:4px 1px!important;min-width:0;font-size:.52rem;
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  .flow-orbit.pulse {animation:none!important}
+  .flow-beat,.flow-pad {transition:none!important}
+}
