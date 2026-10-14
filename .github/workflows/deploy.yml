@@ -13,7 +13,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Verify Python API syntax
-        run: python3 -m py_compile api.py
+        run: |
+          python3 -m py_compile api.py rap-flow-analysis.py
+          python3 -m unittest discover -s tests -p "test_rap_flow.py"
       - name: Verify JavaScript syntax
         run: |
           node --check app.js
@@ -25,6 +27,7 @@ jobs:
           node --check flow-challenge.js
           node --check tests/flow-challenge.test.mjs
           node tests/flow-challenge.test.mjs
+          node --check rap-flow.js
       - name: Install browser smoke dependencies
         run: |
           npm install --no-save playwright@1.58.2
@@ -34,7 +37,7 @@ jobs:
       - name: Verify complete existing prototype bundle
         run: |
           set -euo pipefail
-          for file in index.html app.js api.py styles.css themes.css ai-engine.css sonic-atelier.css comic-flow.css comic-variants.css theme-engine.js sonic-atelier.js flow-scoring.js flow-challenge.js flow-challenge.css; do
+          for file in index.html app.js api.py styles.css themes.css ai-engine.css sonic-atelier.css comic-flow.css comic-variants.css theme-engine.js sonic-atelier.js flow-scoring.js flow-challenge.js flow-challenge.css rap-flow.js rap-flow.css rap-flow-analysis.py; do
             test -s "$file"
           done
           grep -q 'Reimflow' index.html
@@ -57,4 +60,9 @@ jobs:
           grep -q '/api/health' api.py
           grep -q '/api/rhymes' api.py
           grep -q '/api/validate' api.py
+          grep -q '/api/flow/analyze' api.py
+          grep -q 'rap-flow.js?v=20261014-rap1' index.html
+          grep -q 'rap-flow.css?v=20261014-rap1' index.html
+          grep -q 'data-page="flow"' index.html
+          grep -q 'id="rapPanel"' index.html
           echo "Source is valid. STRATO deployment lives in hsdarestani/publisher under .github/workflows/reimflow-strato-deploy.yml."
