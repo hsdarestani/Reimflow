@@ -25,6 +25,7 @@
   <link rel="stylesheet" href="comic-flow.css?v=20261014-de1" />
   <link rel="stylesheet" href="comic-variants.css?v=20261014-de1" />
   <link rel="stylesheet" href="flow-challenge.css?v=20261014-flow1" />
+  <link rel="stylesheet" href="rap-flow.css?v=20261014-rap1" />
 </head>
 <body>
   <div class="theme-atmosphere" aria-hidden="true"><span class="ambient-one"></span><span class="ambient-two"></span><span class="ambient-three"></span></div>
@@ -208,6 +209,11 @@
           <span class="flow-live-badge">● SPIELDEMO</span>
         </div>
 
+        <div class="rap-game-switch" role="tablist" aria-label="Flow Spielmodus">
+          <button id="flowShowTap" class="active" role="tab" aria-selected="true" aria-controls="tapGamePanel" type="button">⚡ Rhythmusspiel</button>
+          <button id="flowShowRap" role="tab" aria-selected="false" aria-controls="rapPanel" type="button">🎙 Rap Analyse <span class="rap-beta">BETA</span></button>
+        </div>
+        <div id="tapGamePanel" role="tabpanel">
         <div class="flow-layout">
           <div class="flow-game">
             <div class="flow-game-top">
@@ -273,6 +279,76 @@
               <small>Der Mikrofontest erkennt Lautstärkeimpulse nur im Browser. Es wird nichts aufgenommen oder hochgeladen. Bitte Kopfhörer verwenden.</small>
             </div>
           </aside>
+        </div>
+
+        </div>
+        <div id="rapPanel" class="rap-panel" role="tabpanel" hidden>
+          <div class="rap-intro">
+            <div><span class="kicker">Reimflow Rap Analyse · Beta</span>
+              <h2>Rap auf den Beat. Sieh deinen Flow.</h2>
+              <p>Wähle ein Tempo, rappe 4 oder 8 Takte ins Mikrofon und erhalte eine Auswertung der erkannten Worteinsätze, Sprechpausen und geschätzten Silbendichte.</p>
+            </div>
+            <span class="rap-badge">🎙 ECHTE SPRACHANALYSE</span>
+          </div>
+          <div class="rap-grid">
+            <div class="rap-record-card">
+              <div class="rap-controls">
+                <label>Tempo
+                  <select id="rapBpm"><option value="80">Boom Bap · 80 BPM</option><option value="92" selected>Hip Hop · 92 BPM</option><option value="110">Bounce · 110 BPM</option><option value="140">Trap · 140 BPM</option></select>
+                </label>
+                <label>Länge
+                  <select id="rapBars"><option value="4">4 Takte</option><option value="8" selected>8 Takte</option></select>
+                </label>
+              </div>
+              <div class="rap-studio" id="rapStudio" aria-live="polite">
+                <div class="rap-studio-header"><span>● REIMFLOW STUDIO</span><span id="rapClock">00:00</span></div>
+                <div class="rap-vinyl" id="rapVinyl" aria-hidden="true"><span id="rapCounter">🎙</span></div>
+                <div class="rap-progress-track"><div id="rapProgress"></div></div>
+                <div class="rap-wave" id="rapWave" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+                <strong id="rapStatus">Bereit für deine Aufnahme</strong>
+                <p id="rapSubStatus">Vier Schläge zum Einzählen, danach startet dein Part.</p>
+              </div>
+              <label class="rap-consent"><input id="rapConsent" type="checkbox"/>
+                <span>Ich bin mit der Verarbeitung meiner Sprachaufnahme durch OpenAI zur Transkription einverstanden. Die Aufnahme wird nicht dauerhaft auf dem Reimflow Server gespeichert.</span>
+              </label>
+              <div class="rap-actions">
+                <button id="rapStart" class="candy-btn" type="button">🎙 Aufnahme starten</button>
+                <button id="rapStop" class="secondary-btn" type="button" disabled>■ Aufnahme beenden</button>
+                <button id="rapDiscard" class="secondary-btn" type="button" hidden>Aufnahme löschen</button>
+              </div>
+              <div class="rap-preview" id="rapPreview" hidden>
+                <label for="rapAudioPreview">Deine Aufnahme nur auf diesem Gerät</label>
+                <audio id="rapAudioPreview" controls preload="none"></audio>
+                <button id="rapAnalyze" class="candy-btn" type="button">✦ Mit KI auswerten</button>
+              </div>
+              <p class="rap-disclaimer">Kopfhörer erforderlich, damit der Beat nicht mit aufgenommen wird. Die Aufnahme wird erst beim Drücken auf „Mit KI auswerten“ übertragen. Diese Beta bewertet keine Rapqualität und hat keine amtliche oder professionelle Genauigkeit.</p>
+            </div>
+            <aside class="rap-info-card">
+              <div class="flow-micro-heading">WAS WIRD AUSGEWERTET? <span>✦</span></div>
+              <div class="rap-info-item"><strong>01 · Rhythmus</strong><p>Position der erkannten Worteinsätze im Viertel- und Achtelraster des Beats.</p></div>
+              <div class="rap-info-item"><strong>02 · Pausen</strong><p>Dauer hörbarer Wortabstände in deinem Rap.</p></div>
+              <div class="rap-info-item"><strong>03 · Dichte & Wechsel</strong><p>Geschätzte Silben pro Takt und Unterschiede zwischen den Takten.</p></div>
+              <div class="rap-info-item"><strong>04 · Worte</strong><p>Spracherkennung mit Zeitmarken. Umgangssprache und Rap können Fehler verursachen.</p></div>
+              <p class="rap-info-bottom">Die KI liefert Zeitmarken. Die Rhythmuswerte werden daraus berechnet. Keine Talentnote und keine Bewertung von Reimen oder Stimme.</p>
+            </aside>
+          </div>
+          <section class="rap-results" id="rapResults" hidden aria-live="polite">
+            <div class="rap-results-top"><div><span class="kicker">DEINE ANALYSE</span><h3 id="rapResultTitle">Zeitliche Auswertung</h3></div><span class="rap-beta">BETA · SCHÄTZWERTE</span></div>
+            <div class="rap-metrics">
+              <div><span>Worteinsätze am Raster</span><strong id="rapGrid">–</strong><small>Viertel- oder Achtelschlag</small></div>
+              <div><span>Längste Sprechpause</span><strong id="rapPause">–</strong><small>Sekunden</small></div>
+              <div><span>Geschätzte Silben</span><strong id="rapSyllables">–</strong><small>über alle Takte</small></div>
+              <div><span>Änderung der Silbendichte</span><strong id="rapDensity">–</strong><small>geschätzte Silben pro Sekunde</small></div>
+            </div>
+            <div class="rap-results-bottom">
+              <div><h4>Dichte nach Takt</h4><div class="rap-bars-visual" id="rapBarsVisual" aria-label="Silbendichte pro Takt"></div></div>
+              <div><h4>Erkanntes Timing</h4><div class="rap-word-timeline" id="rapWordTimeline"></div></div>
+            </div>
+            <div class="rap-feedback"><h4>Beobachtungen</h4><ul id="rapFeedback"></ul></div>
+            <details class="rap-transcript"><summary>Erkannten Text anzeigen</summary><p id="rapTranscript"></p></details>
+            <p id="rapLimitNote" class="rap-limit-note"></p>
+            <button class="secondary-btn" id="rapShare" type="button">↗ Ergebnisse teilen</button>
+          </section>
         </div>
       </div>
     </section>
@@ -460,5 +536,6 @@
   <script src="app.js?v=20261014-de1"></script>
   <script src="flow-scoring.js?v=20261014-de1"></script>
   <script src="flow-challenge.js?v=20261014-de1"></script>
+  <script src="rap-flow.js?v=20261014-rap1"></script>
 </body>
 </html>
