@@ -4,7 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#FF603D" />
-  <script>try{document.documentElement.dataset.theme=localStorage.getItem("reimflow_theme_v3")||"sonic-art"}catch(e){document.documentElement.dataset.theme="sonic-art"}</script>
+  <script>
+    try {
+      const saved = localStorage.getItem("reimflow_theme_v3") || "sonic-art";
+      const variants = {"sonic-art":"pop","comic-graffiti":"graffiti","comic-novel":"novel","comic-clean":"clean"};
+      document.documentElement.dataset.theme = variants[saved] ? "sonic-art" : saved;
+      if (variants[saved]) document.documentElement.dataset.comicStyle = variants[saved];
+    } catch (e) { document.documentElement.dataset.theme = "sonic-art"; document.documentElement.dataset.comicStyle = "pop"; }
+  </script>
   <meta name="description" content="Reimflow findet Reime nach Klang, Silben und Aussprache. Für Rapper, Producer und die Community." />
   <title>Reimflow · Reime, Beats und Samples</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,6 +22,7 @@
   <link rel="stylesheet" href="ai-engine.css?v=20261005a" />
   <link rel="stylesheet" href="sonic-atelier.css?v=20261013-dark-loader" />
   <link rel="stylesheet" href="comic-flow.css?v=20261014-comic1" />
+  <link rel="stylesheet" href="comic-variants.css?v=20261014-styles4" />
 </head>
 <body>
   <div class="theme-atmosphere" aria-hidden="true"><span class="ambient-one"></span><span class="ambient-two"></span><span class="ambient-three"></span></div>
@@ -45,6 +53,16 @@
         <button class="theme-option" type="button" role="radio" data-theme-option="sonic-art" aria-checked="true">
           <span class="theme-preview sonic" aria-hidden="true"></span><span><strong>Comic Flow</strong><small>Bold Comic · Rap Kultur</small></span><span class="theme-check">✓</span>
         </button>
+        <button class="theme-option" type="button" role="radio" data-theme-option="comic-graffiti" aria-checked="false">
+          <span class="theme-preview comic-graffiti" aria-hidden="true"></span><span><strong>Street Graffiti</strong><small>Spraypaint · Neon · Urban</small></span><span class="theme-check">✓</span>
+        </button>
+        <button class="theme-option" type="button" role="radio" data-theme-option="comic-novel" aria-checked="false">
+          <span class="theme-preview comic-novel" aria-hidden="true"></span><span><strong>Graphic Novel</strong><small>Dark Ink · Editorial · Dramatisch</small></span><span class="theme-check">✓</span>
+        </button>
+        <button class="theme-option" type="button" role="radio" data-theme-option="comic-clean" aria-checked="false">
+          <span class="theme-preview comic-clean" aria-hidden="true"></span><span><strong>Clean Comic</strong><small>Illustrativ · Elegant · Leicht</small></span><span class="theme-check">✓</span>
+        </button>
+        <div class="theme-menu-subtitle">Weitere Designs</div>
         <button class="theme-option" type="button" role="radio" data-theme-option="playful" aria-checked="false">
           <span class="theme-preview playful" aria-hidden="true"></span><span><strong>Playful</strong><small>Original · hell & geometrisch</small></span><span class="theme-check">✓</span>
         </button>
@@ -85,6 +103,13 @@
             <button data-example="Jude Bellingham">Jude Bellingham</button>
             <button data-example="Taycan Turbo">Taycan Turbo</button>
             <button data-example="Berlin">Berlin</button>
+          </div>
+          <div class="comic-quick-switch" role="group" aria-label="Vier Comic Designs vergleichen">
+            <span>Comic Styles</span>
+            <button type="button" data-theme-pick="sonic-art" aria-pressed="true">01 Pop</button>
+            <button type="button" data-theme-pick="comic-graffiti" aria-pressed="false">02 Graffiti</button>
+            <button type="button" data-theme-pick="comic-novel" aria-pressed="false">03 Novel</button>
+            <button type="button" data-theme-pick="comic-clean" aria-pressed="false">04 Clean</button>
           </div>
         </div>
 
@@ -343,7 +368,7 @@
   </dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script src="theme-engine.js?v=20261014-comic1"></script>
+  <script src="theme-engine.js?v=20261014-styles4"></script>
   <script src="sonic-atelier.js?v=20261005d"></script>
   <script src="app.js?v=20261006a"></script>
 </body>
