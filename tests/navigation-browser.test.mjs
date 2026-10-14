@@ -11,10 +11,13 @@ try{
   for(const size of [{width:1366,height:850},{width:390,height:844}]){
     const context=await browser.newContext({viewport:size,isMobile:size.width<500,deviceScaleFactor:1});
     const page=await context.newPage();
-    page.on("pageerror",e=>errors.push({viewport:size.width,message:e.message}));
+    page.on("pageerror",e=>{errors.push({viewport:size.width,message:e.message});console.log("PAGEERROR",size.width,e.message,e.stack)});
+    page.on("console",m=>{if(m.type()==="error")console.log("CONSOLE ERROR",size.width,m.text())});
+    page.on("requestfailed",request=>console.log("REQUEST FAILED",size.width,request.url(),request.failure()?.errorText));
     const response=await page.goto("http://127.0.0.1:8179/",{waitUntil:"domcontentloaded"});
     assert.equal(response.status(),200);
     await page.waitForTimeout(1000);
+    console.log("BOOT",size.width,await page.evaluate(()=>({scripts:[...document.scripts].map(s=>s.src.split("/").at(-1)),active:document.querySelector(".page.active")?.dataset.page,appState:typeof state, errors:window.__reimflow_errors||[]})));
     const selector=size.width<500?".mobile-nav [data-go]":".desktop-nav [data-go]";
     for(const name of ["home","rhymes","flow","community","beats","profile"]){
       const button=page.locator(selector+'[data-go="'+name+'"]');
@@ -23,7 +26,7 @@ try{
       await button.click({timeout:5000});
       await page.waitForTimeout(190);
       const active=await page.locator(".page.active").getAttribute("data-page");
-      console.log(size.width+"px click="+name+" active="+active);
+      console.log(size.width+"px click="+name+" active="+active+" errors="+JSON.stringify(errors));
       assert.equal(active,name,"navigation failed on "+size.width+"px for "+name);
     }
     if(size.width<500){
