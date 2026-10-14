@@ -149,3 +149,35 @@ html[data-comic-style="novel"] .rap-intro h2,html[data-comic-style="clean"] .rap
  .rap-vinyl,.rap-vinyl span {animation:none!important}
  .rap-wave span,#rapProgress {transition:none!important}
 }
+
+
+/* Readable feedback: the full dark information card needs consistent light text. */
+html[data-theme="sonic-art"] .rap-info-card .rap-info-item p,
+html[data-theme="sonic-art"] .rap-info-card .rap-info-bottom,
+html[data-theme="sonic-art"] .rap-info-card .flow-micro-heading {
+ color:#e3e0ed!important;opacity:1!important;
+}
+html[data-theme="sonic-art"] .rap-info-card .rap-info-item strong {color:#fff!important}
+html[data-theme="sonic-art"] .rap-info-card .flow-micro-heading {color:var(--flow-neon,#ffd64d)!important}
+.rap-analysis-state {
+ margin-top:13px;border:2px solid #98a3aa;border-radius:12px;padding:14px 16px;
+ background:#edf0f5;color:#202733;
+ font:700 .85rem/1.6 "Space Grotesk",sans-serif;scroll-margin-top:115px;
+}
+.rap-analysis-state[hidden] {display:none!important}
+.rap-analysis-state.loading {background:#fff2cf;color:#604100;border-color:#d9a32c}
+.rap-analysis-state.ready {background:#e6f1fd;color:#193851;border-color:#6c9dd4}
+.rap-analysis-state.success {background:#e4f7e9;color:#1b512e;border-color:#4d9c63}
+.rap-analysis-state.warning {background:#fff1db;color:#5b3b12;border-color:#caa05a}
+.rap-analysis-state.error {background:#ffe7e2;color:#752819;border-color:#cf674e}
+.rap-record-card .rap-results {
+ margin-top:24px;
+ box-shadow:none;
+ background:var(--theme-card,#fffaf0);
+ border:2px solid var(--theme-border,#222);
+ scroll-margin-top:110px;
+}
+@media(max-width:700px){
+ .rap-analysis-state {scroll-margin-top:96px;padding:12px}
+ .rap-record-card .rap-results {margin-top:18px;padding:12px;scroll-margin-top:94px}
+}
