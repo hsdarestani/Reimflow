@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import hashlib, json, os, sqlite3, threading, time, urllib.error, urllib.request
+import hashlib, json, os, sqlite3, threading, time, urllib.error, urllib.request, importlib.util, email.parser, email.policy
 from collections import defaultdict, deque
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -78,6 +78,67 @@ def client_allowed(ip):
         if len(q)>=RATE_LIMIT: return False
         q.append(now); return True
 
+
+# Voice analysis is isolated from the rhyme cache and never persisted.
+_module_path=os.path.join(os.path.dirname(os.path.abspath(__file__)),"rap-flow-analysis.py")
+_spec=importlib.util.spec_from_file_location("reimflow_rap_flow",_module_path)
+rap_flow=importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(rap_flow)
+_flow_rate=defaultdict(deque)
+FLOW_RATE_WINDOW=600
+FLOW_RATE_LIMIT=4
+
+def flow_allowed(ip):
+    now=time.time()
+    with _lock:
+        q=_flow_rate[ip]
+        while q and now-q[0]>FLOW_RATE_WINDOW: q.popleft()
+        if len(q)>=FLOW_RATE_LIMIT: return False
+        q.append(now)
+        return True
+
+def parse_voice_form(headers, stream):
+    """Bounded multipart parsing. Audio remains ephemeral in memory only."""
+    try:
+        length=int(headers.get("Content-Length","0"))
+    except (ValueError,TypeError):
+        raise ValueError("INVALID_SIZE")
+    if length<=0 or length>rap_flow.MAX_AUDIO_BYTES+8192:
+        raise ValueError("INVALID_SIZE")
+    ctype=headers.get("Content-Type","")
+    if not ctype.startswith("multipart/form-data;") or "boundary=" not in ctype:
+        raise ValueError("INVALID_MULTIPART")
+    wire=stream.read(length)
+    if len(wire)!=length:
+        raise ValueError("INCOMPLETE_UPLOAD")
+    message=email.parser.BytesParser(policy=email.policy.default).parsebytes(
+        b"MIME-Version: 1.0\r\nContent-Type: "+ctype.encode("ascii","ignore")+b"\r\n\r\n"+wire
+    )
+    if not message.is_multipart():
+        raise ValueError("INVALID_MULTIPART")
+    fields={}
+    audio=None; mime=None
+    for part in message.iter_parts():
+        name=part.get_param("name",header="content-disposition")
+        if name=="audio":
+            if audio is not None: raise ValueError("DUPLICATE_AUDIO")
+            audio=part.get_payload(decode=True)
+            mime=part.get_content_type()
+        elif name in ("bpm","bars","beat_offset") and name not in fields:
+            data=part.get_payload(decode=True)
+            if len(data)>64: raise ValueError("INVALID_FIELD")
+            fields[name]=data.decode("ascii","strict")
+    if not audio or len(audio)>rap_flow.MAX_AUDIO_BYTES:
+        raise ValueError("INVALID_AUDIO")
+    if mime not in rap_flow.MIMES:
+        raise ValueError("AUDIO_FORMAT")
+    bpm=int(fields["bpm"])
+    bars=int(fields["bars"])
+    beat_offset=float(fields["beat_offset"])
+    if bpm not in (80,92,110,140) or bars not in (4,8) or not 0<=beat_offset<=8:
+        raise ValueError("INVALID_PARAMETERS")
+    return audio,mime,bpm,bars,beat_offset
+
 def extract_output_text(response):
     for item in response.get("output",[]):
         if item.get("type")!="message": continue
@@ -150,6 +211,32 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         ip=self.headers.get("X-Real-IP") or self.client_address[0]
         if not client_allowed(ip): self.send_json(429,{"error":"RATE_LIMIT","message":"Zu viele Anfragen. Bitte kurz warten."}); return
+        if self.path=="/api/flow/analyze":
+            # Explicit voice-upload endpoint: no saving of audio, transcript or derived metrics.
+            if not OPENAI_API_KEY:
+                self.send_json(503,{"error":"AI_UNAVAILABLE","message":"Die Sprachanalyse ist derzeit nicht verfügbar."}); return
+            if not flow_allowed(ip):
+                self.send_json(429,{"error":"VOICE_LIMIT","message":"Bitte warte einige Minuten vor der nächsten Analyse."}); return
+            try:
+                audio,mime,bpm,bars,beat_offset=parse_voice_form(self.headers,self.rfile)
+            except (KeyError,TypeError,ValueError,UnicodeError) as e:
+                self.send_json(400,{"error":"INVALID_AUDIO","message":"Ungültige oder zu große Tonaufnahme. Bitte erneut versuchen."}); return
+            try:
+                transcript=rap_flow.transcribe_audio(audio,mime,OPENAI_API_KEY)
+                del audio
+                result=rap_flow.analyze_rap_words(transcript,bpm,bars,beat_offset)
+                self.send_json(200,result)
+            except urllib.error.HTTPError as e:
+                # Never expose upstream error bodies or sensitive audio in logs.
+                print("flow transcription upstream code:",e.code,flush=True)
+                self.send_json(502,{"error":"TRANSCRIPTION_FAILED","message":"Die Spracherkennung ist gerade nicht erreichbar."})
+            except (urllib.error.URLError,TimeoutError) as e:
+                print("flow transcription timeout",flush=True)
+                self.send_json(504,{"error":"TRANSCRIPTION_TIMEOUT","message":"Die Analyse dauert zu lange. Bitte erneut versuchen."})
+            except Exception as e:
+                print("flow transcription failed:",type(e).__name__,flush=True)
+                self.send_json(502,{"error":"ANALYSIS_FAILED","message":"Die Sprachanalyse ist fehlgeschlagen. Bitte erneut versuchen."})
+            return
         try: body=self.read_json()
         except Exception: self.send_json(400,{"error":"BAD_REQUEST","message":"Ungültige Anfrage."}); return
         if self.path=="/api/rhymes":
