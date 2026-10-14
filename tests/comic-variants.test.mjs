@@ -96,7 +96,7 @@ assert.equal(ui.root.dataset.comicStyle,undefined);
 assert.equal(ui.store.get("reimflow_theme_v3"),"playful");
 assert.equal(ui.btns.filter(x=>x.getAttribute("aria-pressed")==="true").length,0);
 
-assert.ok(html.includes("comic-variants.css?v=20261014-styles4"));
+assert.ok(html.includes("comic-variants.css?v=20261014-de1"));
 for(const name of ['data-comic-style="graffiti"','data-comic-style="novel"','data-comic-style="clean"']){
   assert.ok(variants.includes(name),"missing visual override "+name);
 }
