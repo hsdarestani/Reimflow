@@ -200,8 +200,12 @@ function filteredRhymes(){
 function renderLoading(){
   $("#resultsCount").textContent="Analysiere…";$("#resultsFor").textContent=" „"+state.currentQuery+"“";
   const preview=window.ReimflowRhymePreviews?.find(state.currentQuery);
+  const phraseWords=state.currentQuery.trim().match(/[^\\W\\d_]+(?:['’\\-][^\\W\\d_]+)*/gu)||state.currentQuery.trim().split(/\\s+/);
+  const anchorWord=phraseWords.at(-1)||"";
+  const phraseHint=phraseWords.length>1?'<div class="rhyme-anchor-chooser">Ganze Phrase: <strong>'+escapeHtml(state.currentQuery)+'</strong> · Endwort: <strong>'+escapeHtml(anchorWord)+'</strong><button type="button" class="secondary-btn compact" id="onlyRhymeAnchor">Nur „'+escapeHtml(anchorWord)+'“ suchen</button></div>':"";
   const first=(preview?'<div class="rhyme-preview"><strong>Sofort-Ideen fürs Endwort „'+escapeHtml(preview.anchor)+'“</strong><span class="rhyme-preview-note">Wörterbuchbeispiele, noch nicht durch die KI geprüft</span><div class="rhyme-preview-tags">'+preview.words.map(x=>'<span>'+escapeHtml(x)+'</span>').join('')+'</div>'+(preview.phrases.length?'<p>Mehrteilige Rap-Ideen: <b>'+preview.phrases.map(escapeHtml).join(' · ')+'</b></p>':'')+'<small>'+escapeHtml(preview.note)+'</small></div>':'');
-  $("#rhymeResults").innerHTML=first+'<div class="search-progress-copy"><strong>KI prüft gerade Aussprache und Reimqualität</strong><span id="searchProgressText">Endwort und ganze Phrase werden getrennt analysiert. Du kannst die Seite weiter nutzen.</span><button class="secondary-btn compact" type="button" id="cancelRhymeSearch">Abbrechen</button></div>'+Array.from({length:3},(_,i)=>'<div class="rhyme-skeleton" style="--i:'+i+'"><span></span><div><b></b><small></small></div><i></i></div>').join("");
+  $("#rhymeResults").innerHTML=phraseHint+first+'<div class="search-progress-copy"><strong>KI prüft gerade Aussprache und Reimqualität</strong><span id="searchProgressText">Endwort und ganze Phrase werden getrennt analysiert. Du kannst die Seite weiter nutzen.</span><button class="secondary-btn compact" type="button" id="cancelRhymeSearch">Abbrechen</button></div>'+Array.from({length:3},(_,i)=>'<div class="rhyme-skeleton" style="--i:'+i+'"><span></span><div><b></b><small></small></div><i></i></div>').join("");
+  $("#onlyRhymeAnchor")?.addEventListener("click",()=>runSearch(anchorWord,{stay:true,force:true}));
   $("#cancelRhymeSearch")?.addEventListener("click",()=>{
     if(activeSearchController)activeSearchController.abort();
     searchSequence++;state.searchLoading=false;setSearchBusy(false);
@@ -234,8 +238,15 @@ function renderRhymes(errorMessage=""){
     $("#retrySearch")?.addEventListener("click",()=>searchRhymes(true));return;
   }
   if(!rows.length){
-    list.innerHTML='<div class="search-empty"><div class="empty-glyph">∿</div><strong>Keine bestätigten Reime für diesen Suchversuch.</strong><p>Das bedeutet nicht, dass es keine Reime gibt. Versuche die Suche erneut oder gib das letzte Wort alleine ein. Bei mehrteiligen Eingaben werden Endwort und Gesamtphrase getrennt geprüft.</p><button class="secondary-btn compact" id="refineSearch">Neu analysieren</button></div>';
-    $("#refineSearch")?.addEventListener("click",()=>searchRhymes(true));return;
+    list.innerHTML='<div class="search-empty"><div class="empty-glyph">∿</div><strong>Keine bestätigten Reime für diesen Suchversuch.</strong><p>Das bedeutet nicht, dass es keine Reime gibt. Versuche die Suche erneut oder gib das letzte Wort alleine ein. Bei mehrteiligen Eingaben werden Endwort und Gesamtphrase getrennt geprüft.</p><button class="secondary-btn compact" id="refineSearch">Neu analysieren</button><button class="secondary-btn compact" id="findAnchorOnly" hidden>Nur letztes Wort suchen</button></div>';
+    $("#refineSearch")?.addEventListener("click",()=>searchRhymes(true));
+    const words=state.currentQuery.trim().split(/\s+/);
+    if(words.length>1){
+      const anchor=words.at(-1),b=$("#findAnchorOnly");
+      b.hidden=false;b.textContent="Nur „"+anchor+"“ suchen";
+      b.addEventListener("click",()=>runSearch(anchor,{stay:true,force:true}));
+    }
+    return;
   }
   const offline=state.resultSource!=="ai";
   const hasPhrase=state.currentQuery.trim().split(/\s+/).length>1;
