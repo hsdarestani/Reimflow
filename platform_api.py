@@ -9,7 +9,9 @@ import json
 import os
 import re
 import secrets
+import smtplib
 import sqlite3
+from email.message import EmailMessage
 import threading
 import time
 from contextlib import contextmanager
@@ -24,6 +26,12 @@ MEDIA_DIR = Path(os.getenv("REIMFLOW_MEDIA_DIR", str(Path(DATABASE).parent / "me
 MAX_AUDIO = 12 * 1024 * 1024
 MAX_BODY = MAX_AUDIO + 1024 * 1024
 SESSION_AGE = 30 * 24 * 3600
+SMTP_HOST=os.getenv("REIMFLOW_SMTP_HOST","").strip()
+SMTP_PORT=int(os.getenv("REIMFLOW_SMTP_PORT","587"))
+SMTP_USER=os.getenv("REIMFLOW_SMTP_USER","").strip()
+SMTP_PASSWORD=os.getenv("REIMFLOW_SMTP_PASSWORD","")
+SMTP_FROM=os.getenv("REIMFLOW_SMTP_FROM","").strip()
+PUBLIC_URL="https://reimflow.smarbiz.sbs"
 USERNAME = re.compile(r"^[a-z0-9_.]{3,24}$")
 EMAIL = re.compile(r"^[^@\s]{1,64}@[^@\s]{1,190}\.[^@\s]{2,}$")
 limiter = {}
@@ -60,9 +68,16 @@ def initialize():
             bio TEXT NOT NULL DEFAULT '',
             persona TEXT NOT NULL DEFAULT 'rapper',
             role TEXT NOT NULL DEFAULT 'member',
+            email_verified INTEGER NOT NULL DEFAULT 0,
             password_hash TEXT NOT NULL,
             points INTEGER NOT NULL DEFAULT 0,
             created_at INTEGER NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS rf_tokens (
+            token_hash TEXT PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES rf_users(id) ON DELETE CASCADE,
+            kind TEXT NOT NULL,
+            expires_at INTEGER NOT NULL
         );
         CREATE TABLE IF NOT EXISTS rf_sessions (
             token_hash TEXT PRIMARY KEY,
@@ -125,9 +140,13 @@ def initialize():
             blocked_id INTEGER NOT NULL REFERENCES rf_users(id) ON DELETE CASCADE,
             PRIMARY KEY(blocker_id,blocked_id)
         );
+        CREATE INDEX IF NOT EXISTS rf_tokens_user ON rf_tokens(user_id);
         CREATE INDEX IF NOT EXISTS rf_submissions_created ON rf_submissions(created_at DESC);
         CREATE INDEX IF NOT EXISTS rf_beats_created ON rf_beats(created_at DESC);
         """)
+        columns=[r["name"] for r in c.execute("PRAGMA table_info(rf_users)")]
+        if "email_verified" not in columns:
+            c.execute("ALTER TABLE rf_users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 0")
 
 
 def password_hash(password, salt=None):
@@ -189,7 +208,7 @@ def current_user(h):
         token_hash = hashlib.sha256(token.encode("ascii")).hexdigest()
         with connection() as c:
             row = c.execute("""SELECT u.id,u.username,u.email,u.display_name,u.bio,
-                u.persona,u.role,u.points FROM rf_sessions s
+                u.persona,u.role,u.points,u.email_verified FROM rf_sessions s
                 JOIN rf_users u ON u.id=s.user_id
                 WHERE s.token_hash=? AND s.expires_at>?""",
                 (token_hash, int(time.time()))).fetchone()
@@ -236,7 +255,7 @@ def view_user(user):
     if not user:
         return None
     return {k: user[k] for k in
-            ("id", "username", "display_name", "bio", "persona", "role", "points")}
+            ("id", "username", "display_name", "bio", "persona", "role", "points", "email_verified")}
 
 
 def bootstrap(h):
@@ -294,8 +313,64 @@ def bootstrap(h):
                      "favorites": favorites, "scores": scores, "mine": mine,
                      "blocked":blocked, "reports":reports, "pending_beats":pending_beats,
                      "members":members, "total_accepted":total_accepted,
-                     "total_beats":total_beats,"payments_enabled": False})
+                     "total_beats":total_beats,"payments_enabled": False,
+                     "email_enabled":bool(SMTP_HOST and SMTP_FROM)})
 
+
+
+def mail_enabled():
+    return bool(SMTP_HOST and SMTP_FROM)
+
+def send_mail(to, subject, content):
+    if not mail_enabled():
+        return False
+    message=EmailMessage()
+    message["From"]=SMTP_FROM
+    message["To"]=to
+    message["Subject"]=subject
+    message.set_content(content)
+    try:
+        if SMTP_PORT==465:
+            client=smtplib.SMTP_SSL(SMTP_HOST,SMTP_PORT,timeout=12)
+        else:
+            client=smtplib.SMTP(SMTP_HOST,SMTP_PORT,timeout=12)
+        with client:
+            if SMTP_PORT!=465: client.starttls()
+            if SMTP_USER:client.login(SMTP_USER,SMTP_PASSWORD)
+            client.send_message(message)
+        return True
+    except Exception as exc:
+        print("Reimflow email delivery failed:",type(exc).__name__,flush=True)
+        return False
+
+def issue_mail_token(user_id, kind, email):
+    token=secrets.token_urlsafe(32)
+    ttl=24*3600 if kind=="verify" else 3600
+    with connection() as c:
+        c.execute("DELETE FROM rf_tokens WHERE user_id=? AND kind=?",(user_id,kind))
+        c.execute("INSERT INTO rf_tokens(token_hash,user_id,kind,expires_at) VALUES(?,?,?,?)",
+                  (hashlib.sha256(token.encode()).hexdigest(),user_id,kind,int(time.time())+ttl))
+    link=PUBLIC_URL+"/?"+("verify" if kind=="verify" else "reset")+"="+token
+    title="Reimflow E-Mail bestätigen" if kind=="verify" else "Reimflow Passwort zurücksetzen"
+    description="Bestätige deine E-Mail" if kind=="verify" else "Setze dein Passwort zurück"
+    return send_mail(email,title,description+": "+link+"\n\nWenn du das nicht angefordert hast, ignoriere diese Nachricht.")
+
+def consume_mail_token(token, kind, new_password=None):
+    if not isinstance(token,str) or len(token)>100 or len(token)<32:
+        return False
+    hashed=hashlib.sha256(token.encode()).hexdigest()
+    with connection() as c:
+        row=c.execute("SELECT user_id FROM rf_tokens WHERE token_hash=? AND kind=? AND expires_at>?",
+                      (hashed,kind,int(time.time()))).fetchone()
+        if not row:return False
+        uid=row["user_id"]
+        c.execute("DELETE FROM rf_tokens WHERE token_hash=?",(hashed,))
+        if kind=="verify":c.execute("UPDATE rf_users SET email_verified=1 WHERE id=?",(uid,))
+        else:
+            c.execute("UPDATE rf_users SET password_hash=? WHERE id=?",
+                      (password_hash(new_password),uid))
+            c.execute("DELETE FROM rf_sessions WHERE user_id=?",(uid,))
+    return True
 
 def read_audio(h):
     typ = h.headers.get("Content-Type", "")
@@ -463,7 +538,9 @@ def handle(h):
                     respond(h, 409, {"error": "ACCOUNT_EXISTS",
                                      "message": "Nutzername oder E-Mail ist bereits vergeben."})
                     return True
-            respond(h, 201, {"ok": True}, cookie_header(new_session(uid)))
+            if mail_enabled():
+                issue_mail_token(uid,"verify",email)
+            respond(h, 201, {"ok": True,"verification_required":mail_enabled()}, cookie_header(new_session(uid)))
             return True
         if kind == "login":
             if not request_allowed(h, "login", 15, 900):
@@ -481,6 +558,38 @@ def handle(h):
                 return True
             respond(h, 200, {"ok": True}, cookie_header(new_session(row["id"])))
             return True
+        if kind == "request-reset":
+            if not request_allowed(h,"reset-request",5,3600):
+                respond(h,429,{"error":"RATE_LIMIT"})
+                return True
+            d=read_json(h)
+            identity=trim(d.get("identity"),254).lower()
+            if mail_enabled():
+                with connection() as c:
+                    row=c.execute("SELECT id,email FROM rf_users WHERE username=? OR email=?",(identity,identity)).fetchone()
+                if row:issue_mail_token(row["id"],"reset",row["email"])
+            respond(h,200,{"ok":True,"message":"Falls ein Konto existiert, erhält es eine Nachricht."})
+            return True
+        if kind == "reset-password":
+            if not request_allowed(h,"reset",8,3600):
+                respond(h,429,{"error":"RATE_LIMIT"})
+                return True
+            d=read_json(h)
+            password=str(d.get("new_password") or "")
+            if len(password)<12 or len(password)>128:
+                raise ValueError("Ungültiges Passwort.")
+            if not consume_mail_token(d.get("token"),"reset",password):
+                respond(h,400,{"error":"INVALID_OR_EXPIRED_TOKEN"})
+                return True
+            respond(h,200,{"ok":True})
+            return True
+        if kind == "verify-email":
+            d=read_json(h)
+            if not consume_mail_token(d.get("token"),"verify"):
+                respond(h,400,{"error":"INVALID_OR_EXPIRED_TOKEN"})
+                return True
+            respond(h,200,{"ok":True})
+            return True
         if kind == "logout":
             try:
                 cookie = SimpleCookie()
@@ -497,6 +606,19 @@ def handle(h):
         if not user:
             return True
         uid = user["id"]
+        if kind=="request-verify":
+            if not mail_enabled():
+                respond(h,503,{"error":"EMAIL_NOT_CONFIGURED"})
+                return True
+            with connection() as c:
+                row=c.execute("SELECT email,email_verified FROM rf_users WHERE id=?",(uid,)).fetchone()
+            if not row["email_verified"] and request_allowed(h,"verify-"+str(uid),3,3600):
+                issue_mail_token(uid,"verify",row["email"])
+            respond(h,200,{"ok":True})
+            return True
+        if mail_enabled() and not user["email_verified"] and kind not in ("profile","password","delete-account"):
+            respond(h,403,{"error":"EMAIL_NOT_VERIFIED","message":"Bitte zuerst deine E-Mail bestätigen."})
+            return True
         if kind == "profile":
             data = read_json(h)
             name = trim(data.get("display_name"), 48)
