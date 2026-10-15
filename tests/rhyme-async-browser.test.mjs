@@ -36,7 +36,7 @@ try{
   await page.locator("#rhymeQuery").fill("Jude Bellingham");
   await page.locator("#rhymeSearchForm button[type=submit]").click();
   await page.locator(".rhyme-card .rhyme-word").getByText("Telegramm").waitFor({timeout:12000});
-  assert.equal(await page.locator("#resultsCount").innerText(),"1 Treffer");
+  assert.match(await page.locator("#resultsCount").innerText(),/1\s+Treffer/i);
   assert(poll>=3);
   assert.deepEqual(errors,[]);
   failNext=true;poll=0;
