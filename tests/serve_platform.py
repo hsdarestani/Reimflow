@@ -2,6 +2,8 @@
 import os
 import tempfile
 from pathlib import Path
+import sys
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 import platform_api
 import api
