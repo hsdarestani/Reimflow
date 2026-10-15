@@ -84,7 +84,7 @@
         </button>
       </div>
     </div>
-    <button class="pill-btn small" data-go="premium">Premium <span class="button-dot">↗</span></button>
+    <button class="pill-btn small" data-go="premium">Premium <span class="button-dot">↗</span></button><button class="pill-btn small" data-go="profile" id="accountStatus">Anmelden</button>
   </header>
 
   <main>
@@ -206,7 +206,7 @@
           <div><span class="kicker">Reimflow Spiel · Rhythmus im Test</span><h1>Hast du den Flow?</h1>
             <p>16 Schläge. Ein Versuch. Triff den Takt und zeig, wie gut dein Zeitgefühl ist.</p>
           </div>
-          <span class="flow-live-badge">● SPIELDEMO</span>
+          <span class="flow-live-badge">● SPIEL</span>
         </div>
 
         <div class="rap-game-switch" role="tablist" aria-label="Flow Spielmodus">
@@ -421,11 +421,7 @@
             <div class="leader-icon">♛</div>
             <span class="kicker">Diese Woche</span>
             <h3>Aktivste Mitglieder</h3>
-            <ol>
-              <li><span class="avatar violet-bg">MK</span><div><strong>MicKönig</strong><small>48 Beiträge</small></div><b>1.240</b></li>
-              <li><span class="avatar pink-bg">LF</span><div><strong>LineFactory</strong><small>36 Beiträge</small></div><b>980</b></li>
-              <li><span class="avatar mint-bg">NS</span><div><strong>Nachtstudio</strong><small>29 Beiträge</small></div><b>760</b></li>
-            </ol>
+            <ol><li>Hier erscheinen echte Community Punkte.</li></ol>
             <p class="tiny-note">Punkte gibt es für bestätigte Reime und hilfreiche Tests.</p>
           </aside>
         </div>
@@ -449,20 +445,20 @@
     <section class="page" data-page="profile">
       <div class="container app-shell" data-art-label="05 / PROFIL">
         <div class="profile-hero sticker-card">
-          <div class="profile-avatar">HF</div>
-          <div class="profile-copy"><span class="status-pill violet-bg">Rapper</span><h1>Hossein</h1><p>@hossein · Frankfurt</p></div>
-          <button class="secondary-btn compact">Profil bearbeiten</button>
+          <div class="profile-avatar">RF</div>
+          <div class="profile-copy"><span class="status-pill violet-bg">Gast</span><h1>Dein Reimflow Profil</h1><p>Melde dich an und gestalte dein Profil.</p></div>
+          <button class="secondary-btn compact" id="profileEditButton">Anmelden</button>
         </div>
         <div class="stats-grid">
           <div class="sticker-card stat-card"><span>✦</span><strong data-points>120</strong><small>Punkte</small></div>
-          <div class="sticker-card stat-card"><span>✓</span><strong id="acceptedCount">8</strong><small>Bestätigte Reime</small></div>
-          <div class="sticker-card stat-card"><span>♫</span><strong>4</strong><small>Gespeicherte Beats</small></div>
-          <div class="sticker-card stat-card"><span>♛</span><strong>#42</strong><small>Community Rang</small></div>
+          <div class="sticker-card stat-card"><span>✓</span><strong id="acceptedCount">0</strong><small>Bestätigte Reime</small></div>
+          <div class="sticker-card stat-card"><span>♫</span><strong>0</strong><small>Eigene Uploads</small></div>
+          <div class="sticker-card stat-card"><span>♛</span><strong>–</strong><small>Community Rang</small></div>
         </div>
         <div class="profile-grid">
           <div class="sticker-card">
             <span class="kicker">Deine Aktivität</span><h3>Letzte Beiträge</h3>
-            <div id="profileActivity" class="activity-list"></div>
+            <div id="profileActivity" class="activity-list"></div><h3>Favoriten</h3><p id="myFavoriteList" class="tiny-note">Noch keine Favoriten.</p><h3>Deine Flow Ergebnisse</h3><p id="myScoreList" class="tiny-note">Noch kein gespeichertes Spiel.</p><div class="platform-actions"><button class="secondary-btn compact" id="profileLogout" hidden>Abmelden</button><button class="secondary-btn compact" id="profileDelete" hidden>Konto löschen</button></div>
           </div>
           <div class="sticker-card premium-mini">
             <div class="burst small-burst">PRO</div><span class="kicker">Mehr Möglichkeiten</span><h3>Reimflow Premium</h3>
@@ -484,9 +480,9 @@
           </article>
           <article class="sticker-card price-card featured">
             <div class="popular-star">SEHR<br>BELIEBT</div>
-            <span class="status-pill violet-bg">PREMIUM</span><h2>4,99 € <small>/ Monat</small></h2><p>Für Rapper, die tiefer suchen wollen.</p>
+            <span class="status-pill violet-bg">PREMIUM</span><h2>In Planung</h2><p>Für Rapper, die tiefer suchen wollen.</p>
             <ul><li>✓ Erweiterte Klang Suche</li><li>✓ Multi Silben Filter</li><li>✓ Unbegrenzte Favoriten</li><li>✓ Keine Werbung</li><li>✓ Producer Extras</li></ul>
-            <button class="candy-btn full">Premium testen <span>→</span></button>
+            <button class="candy-btn full" id="premiumTestButton" type="button" disabled>Bald verfügbar</button>
           </article>
         </div>
         <p class="prototype-note">Preis und Leistungsumfang sind in dieser Testversion Platzhalter und können nach Feedback angepasst werden.</p>
@@ -527,9 +523,58 @@
         <label>BPM<input id="beatBpm" type="number" min="40" max="240" value="92"></label>
       </div>
       <label>Lizenz<select id="beatLicense"><option value="Free Use">Kostenlose Nutzung</option><option value="Non Commercial">Nicht kommerziell</option><option value="Commercial License">Kommerzielle Lizenz</option></select></label>
-      <label>Audio Datei<input id="beatFile" type="file" accept="audio/*"></label>
-      <p class="form-note">Für den Prototyp bleibt eine ausgewählte Datei nur bis zum Neuladen der Seite abspielbar.</p>
-      <button class="candy-btn full" type="submit" value="default">Datei hinzufügen <span>↑</span></button>
+      <label>Audio Datei<input id="beatFile" type="file" accept=".mp3,.wav,.ogg,.flac,.m4a,audio/*" required></label><label class="platform-legal"><input id="beatRights" type="checkbox" required> Ich besitze die notwendigen Rechte für den Upload und die gewählte Lizenz.</label>
+      <p class="form-note">Dauerhafter Upload · maximal 12 MB · MP3, WAV, OGG, FLAC oder M4A.</p>
+      <button class="candy-btn full" type="submit" value="default">Audio veröffentlichen <span>↑</span></button>
+    </form>
+  </dialog>
+
+
+  <dialog id="authDialog" class="modal platform-modal">
+    <div class="modal-card">
+      <div class="modal-head"><h2>Dein Reimflow Konto</h2><button class="close-btn" type="button" onclick="document.getElementById('authDialog').close()" aria-label="Schließen">×</button></div>
+      <div class="subtabs"><button class="active" data-auth-tab="login" type="button">Anmelden</button><button data-auth-tab="register" type="button">Registrieren</button></div>
+      <form id="loginForm">
+        <label>Nutzername oder E-Mail<input name="identity" autocomplete="username" required maxlength="254"></label>
+        <label>Passwort<input name="password" type="password" autocomplete="current-password" required></label>
+        <button class="candy-btn full" type="submit">Anmelden</button>
+      </form>
+      <form id="registerForm" hidden>
+        <label>Nutzername<input name="username" minlength="3" maxlength="24" autocomplete="username" pattern="[a-zA-Z0-9_.]{3,24}" required></label>
+        <label>E-Mail<input name="email" type="email" autocomplete="email" required></label>
+        <label>Passwort (mindestens 12 Zeichen)<input name="password" type="password" autocomplete="new-password" minlength="12" maxlength="128" required></label>
+        <label>Mein Profil<select name="persona"><option value="rapper">Rapper</option><option value="producer">Producer</option></select></label>
+        <p class="form-note">Die E-Mail dient aktuell zur Kontozuordnung. E-Mail Bestätigung und Wiederherstellung werden vor dem App Store Start eingerichtet.</p>
+        <button class="candy-btn full" type="submit">Konto erstellen</button>
+      </form>
+      <p id="authMessage" role="alert" aria-live="polite"></p>
+    </div>
+  </dialog>
+
+  <dialog id="profileDialog" class="modal platform-modal">
+    <div class="modal-card">
+      <div class="modal-head"><h2>Profil & Konto</h2><button class="close-btn" type="button" onclick="document.getElementById('profileDialog').close()" aria-label="Schließen">×</button></div>
+      <form id="profileForm">
+        <label>Anzeigename<input id="editDisplayName" maxlength="48" required></label>
+        <label>Über mich<textarea id="editBio" maxlength="500" rows="3"></textarea></label>
+        <label>Ich bin<select id="editPersona"><option value="rapper">Rapper</option><option value="producer">Producer</option></select></label>
+        <button class="candy-btn full" type="submit">Profil speichern</button>
+      </form>
+      <form id="changePasswordForm">
+        <h3>Passwort ändern</h3>
+        <label>Aktuelles Passwort<input type="password" name="current_password" autocomplete="current-password" required></label>
+        <label>Neues Passwort (mindestens 12 Zeichen)<input type="password" name="new_password" autocomplete="new-password" minlength="12" required></label>
+        <button class="secondary-btn" type="submit">Passwort ändern</button>
+      </form>
+    </div>
+  </dialog>
+
+  <dialog id="reportDialog" class="modal platform-modal">
+    <form id="reportForm" class="modal-card">
+      <div class="modal-head"><h2>Inhalt melden</h2><button class="close-btn" type="button" onclick="document.getElementById('reportDialog').close()" aria-label="Schließen">×</button></div>
+      <input type="hidden" id="reportKind"><input type="hidden" id="reportId">
+      <label>Warum möchtest du den Inhalt melden?<textarea id="reportReason" rows="3" maxlength="500" required></textarea></label>
+      <button class="candy-btn full" type="submit">Meldung absenden</button>
     </form>
   </dialog>
 
@@ -539,6 +584,7 @@
   <script src="rhyme-fallback.js?v=20261015-rhyme1"></script>
   <script src="rhyme-previews.js?v=20261015-phrase2"></script>
   <script src="app.js?v=20261015-phrase3"></script>
+  <script src="platform.js?v=20261015-real1"></script>
   <script src="flow-scoring.js?v=20261014-de1"></script>
   <script src="flow-challenge.js?v=20261014-de1"></script>
   <script src="rap-audio.js?v=20261015-wav1"></script>
