@@ -120,6 +120,11 @@ def initialize():
             reason TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'open',
             created_at INTEGER NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS rf_blocks (
+            blocker_id INTEGER NOT NULL REFERENCES rf_users(id) ON DELETE CASCADE,
+            blocked_id INTEGER NOT NULL REFERENCES rf_users(id) ON DELETE CASCADE,
+            PRIMARY KEY(blocker_id,blocked_id)
+        );
         CREATE INDEX IF NOT EXISTS rf_submissions_created ON rf_submissions(created_at DESC);
         CREATE INDEX IF NOT EXISTS rf_beats_created ON rf_beats(created_at DESC);
         """)
@@ -237,20 +242,26 @@ def view_user(user):
 def bootstrap(h):
     user = current_user(h)
     with connection() as c:
+        uid = user["id"] if user else -1
         feed = [dict(row) for row in c.execute("""
           SELECT s.id,s.source,s.target,s.category,s.syllables,s.pronunciation,
                  s.status,s.created_at,u.username,u.display_name,u.id AS author_id
           FROM rf_submissions s JOIN rf_users u ON u.id=s.user_id
-          WHERE s.status<>'rejected' ORDER BY s.created_at DESC LIMIT 60""")]
+          WHERE (s.status='accepted' OR s.user_id=?)
+            AND NOT EXISTS (SELECT 1 FROM rf_blocks bl WHERE bl.blocker_id=? AND bl.blocked_id=s.user_id)
+            ORDER BY s.created_at DESC LIMIT 60""", (uid,uid))]
         beats = [dict(row) for row in c.execute("""
-          SELECT b.id,b.title,b.kind,b.bpm,b.license,b.bytes,b.created_at,
+          SELECT b.id,b.title,b.kind,b.bpm,b.license,b.bytes,b.created_at,b.hidden,
                  u.username,u.display_name,u.id AS author_id
           FROM rf_beats b JOIN rf_users u ON u.id=b.user_id
-          WHERE b.hidden=0 ORDER BY b.created_at DESC LIMIT 60""")]
+          WHERE (b.hidden=0 OR b.user_id=?)
+           AND NOT EXISTS (SELECT 1 FROM rf_blocks bl WHERE bl.blocker_id=? AND bl.blocked_id=b.user_id)
+           ORDER BY b.created_at DESC LIMIT 60""", (uid,uid))]
         leaders = [dict(row) for row in c.execute("""
           SELECT id,username,display_name,points FROM rf_users
-          WHERE points>0 ORDER BY points DESC,id ASC LIMIT 10""")]
-        favorites, scores, mine, queue = [], [], [], []
+          WHERE points>0 AND id NOT IN (SELECT blocked_id FROM rf_blocks WHERE blocker_id=?)
+           ORDER BY points DESC,id ASC LIMIT 10""", (uid,))]
+        favorites, scores, mine, queue, blocked, reports, pending_beats, members = [], [], [], [], [], [], [], []
         if user:
             uid = user["id"]
             favorites = [r["word"] for r in c.execute(
@@ -259,6 +270,16 @@ def bootstrap(h):
                 "SELECT bpm,mode,best FROM rf_scores WHERE user_id=?", (uid,))]
             mine = [dict(r) for r in c.execute(
                 "SELECT id,source,target,status FROM rf_submissions WHERE user_id=? ORDER BY id DESC LIMIT 10",(uid,))]
+            blocked = [dict(r) for r in c.execute("""SELECT u.id,u.username,u.display_name FROM rf_blocks b
+                JOIN rf_users u ON u.id=b.blocked_id WHERE b.blocker_id=?""",(uid,))]
+            if user["role"] == "admin":
+                reports = [dict(r) for r in c.execute("""SELECT r.id,r.kind,r.content_id,r.reason,r.status,u.username
+                    FROM rf_reports r JOIN rf_users u ON u.id=r.user_id WHERE r.status='open' ORDER BY r.id DESC LIMIT 100""")]
+                pending_beats = [dict(r) for r in c.execute("""SELECT b.id,b.title,b.kind,b.license,b.bpm,
+                    u.username,u.display_name FROM rf_beats b JOIN rf_users u ON u.id=b.user_id
+                    WHERE b.hidden=1 ORDER BY b.id DESC LIMIT 100""")]
+                members = [dict(r) for r in c.execute("""SELECT id,username,display_name,role FROM rf_users
+                    ORDER BY id DESC LIMIT 100""")]
             if user["role"] in ("tester", "admin"):
                 queue = [dict(r) for r in c.execute("""
                    SELECT s.id,s.source,s.target,s.category,s.syllables,
@@ -268,7 +289,8 @@ def bootstrap(h):
     respond(h, 200, {"ok": True, "user": view_user(user), "feed": feed,
                      "queue": queue, "beats": beats, "leaders": leaders,
                      "favorites": favorites, "scores": scores, "mine": mine,
-                     "payments_enabled": False})
+                     "blocked":blocked, "reports":reports, "pending_beats":pending_beats,
+                     "members":members, "payments_enabled": False})
 
 
 def read_audio(h):
@@ -314,9 +336,11 @@ def read_audio(h):
 
 
 def send_audio(h, beat_id):
+    actor = current_user(h)
     with connection() as c:
-        beat = c.execute("SELECT stored_name,mime,bytes FROM rf_beats WHERE id=? AND hidden=0",
-                         (beat_id,)).fetchone()
+        beat = c.execute("""SELECT stored_name,mime,bytes FROM rf_beats
+            WHERE id=? AND (hidden=0 OR user_id=? OR ?='admin')""",
+                         (beat_id, actor["id"] if actor else -1, actor["role"] if actor else "")).fetchone()
     if not beat:
         respond(h, 404, {"error": "NOT_FOUND"})
         return
@@ -373,6 +397,16 @@ def handle(h):
     if h.command == "GET":
         if path == "/api/platform/bootstrap":
             bootstrap(h)
+        elif path == "/api/platform/export":
+            user = require_user(h)
+            if user:
+                with connection() as c:
+                    personal = dict(c.execute("SELECT username,email,display_name,bio,persona,points,created_at FROM rf_users WHERE id=?", (user["id"],)).fetchone())
+                    personal["submissions"]=[dict(row) for row in c.execute("SELECT source,target,category,syllables,pronunciation,status,created_at FROM rf_submissions WHERE user_id=?", (user["id"],))]
+                    personal["beats"]=[dict(row) for row in c.execute("SELECT id,title,kind,bpm,license,created_at FROM rf_beats WHERE user_id=?", (user["id"],))]
+                    personal["favorites"]=[row["word"] for row in c.execute("SELECT word FROM rf_favorites WHERE user_id=?", (user["id"],))]
+                    personal["scores"]=[dict(row) for row in c.execute("SELECT bpm,mode,best FROM rf_scores WHERE user_id=?", (user["id"],))]
+                respond(h,200,{"ok":True,"export":personal})
         elif re.fullmatch(r"/api/platform/media/\d+", path):
             send_audio(h, int(path.rsplit("/", 1)[1]))
         else:
@@ -589,6 +623,7 @@ def handle(h):
                         (user_id,title,kind,bpm,license,stored_name,mime,bytes,created_at)
                         VALUES(?,?,?,?,?,?,?,?,?)""",
                         (uid,title,kind_value,bpm,license_value,stored,mime,len(audio),int(time.time())))
+                    c.execute("UPDATE rf_beats SET hidden=1 WHERE stored_name=?", (stored,))
             except Exception:
                 file.unlink(missing_ok=True)
                 raise
@@ -604,6 +639,36 @@ def handle(h):
                 c.execute("DELETE FROM rf_beats WHERE id=?", (bid,))
             (MEDIA_DIR / row["stored_name"]).unlink(missing_ok=True)
             respond(h, 200, {"ok": True})
+        elif kind == "block-user":
+            d = read_json(h)
+            target = int(d.get("user_id",0))
+            if target <= 0 or target == uid:
+                raise ValueError("Ungültiges Konto.")
+            with connection() as c:
+                found = c.execute("SELECT 1 FROM rf_users WHERE id=?", (target,)).fetchone()
+                if not found:
+                    respond(h,404,{"error":"NOT_FOUND"})
+                    return True
+                if d.get("remove"):
+                    c.execute("DELETE FROM rf_blocks WHERE blocker_id=? AND blocked_id=?", (uid,target))
+                else:
+                    c.execute("INSERT OR IGNORE INTO rf_blocks(blocker_id,blocked_id) VALUES(?,?)",(uid,target))
+            respond(h,200,{"ok":True})
+        elif kind == "set-tester":
+            if user["role"] != "admin":
+                respond(h,403,{"error":"ADMIN_REQUIRED"})
+                return True
+            d=read_json(h)
+            target=int(d.get("user_id",0))
+            role=d.get("role")
+            if role not in ("member","tester") or target<=0 or target==uid:
+                raise ValueError("Ungültige Rollenzuweisung.")
+            with connection() as c:
+                changed=c.execute("UPDATE rf_users SET role=? WHERE id=? AND role IN ('member','tester')",(role,target)).rowcount
+            if not changed:
+                respond(h,404,{"error":"NOT_FOUND"})
+                return True
+            respond(h,200,{"ok":True})
         elif kind == "report":
             d = read_json(h)
             category, reason = d.get("kind"), trim(d.get("reason"), 500)
@@ -621,12 +686,16 @@ def handle(h):
             d = read_json(h)
             category, object_id = d.get("kind"), int(d.get("id", 0))
             with connection() as c:
+                decision=d.get("decision","hide")
+                if decision not in ("hide","approve"):
+                    raise ValueError("Ungültige Moderation.")
                 if category == "beat":
-                    c.execute("UPDATE rf_beats SET hidden=1 WHERE id=?", (object_id,))
+                    c.execute("UPDATE rf_beats SET hidden=? WHERE id=?", (0 if decision=="approve" else 1,object_id))
                 elif category == "submission":
-                    c.execute("UPDATE rf_submissions SET status='rejected' WHERE id=?", (object_id,))
+                    c.execute("UPDATE rf_submissions SET status=? WHERE id=?", ("accepted" if decision=="approve" else "rejected",object_id))
                 else:
                     raise ValueError("Unbekannter Inhalt.")
+                c.execute("UPDATE rf_reports SET status='resolved' WHERE kind=? AND content_id=?", (category,object_id))
             respond(h, 200, {"ok": True})
         else:
             respond(h, 404, {"error": "NOT_FOUND"})
