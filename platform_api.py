@@ -283,11 +283,12 @@ def bootstrap(h):
           WHERE points>0 AND id NOT IN (SELECT blocked_id FROM rf_blocks WHERE blocker_id=?)
            ORDER BY points DESC,id ASC LIMIT 10""", (uid,))]
         favorites, scores, mine, queue, blocked, reports, pending_beats, members = [], [], [], [], [], [], [], []
-        total_accepted, total_beats = 0, 0
+        total_accepted, total_beats, rank = 0, 0, None
         if user:
             uid = user["id"]
             total_accepted=c.execute("SELECT COUNT(*) FROM rf_submissions WHERE user_id=? AND status='accepted'",(uid,)).fetchone()[0]
             total_beats=c.execute("SELECT COUNT(*) FROM rf_beats WHERE user_id=?",(uid,)).fetchone()[0]
+            rank=c.execute("SELECT COUNT(*)+1 FROM rf_users WHERE points>? OR (points=? AND id<?)",(user["points"],user["points"],uid)).fetchone()[0]
             favorites = [r["word"] for r in c.execute(
                 "SELECT word FROM rf_favorites WHERE user_id=? LIMIT 400", (uid,))]
             scores = [dict(r) for r in c.execute(
@@ -315,7 +316,7 @@ def bootstrap(h):
                      "favorites": favorites, "scores": scores, "mine": mine,
                      "blocked":blocked, "reports":reports, "pending_beats":pending_beats,
                      "members":members, "total_accepted":total_accepted,
-                     "total_beats":total_beats,"payments_enabled": False,
+                     "total_beats":total_beats,"rank":rank,"payments_enabled": False,
                      "email_enabled":bool(SMTP_HOST and SMTP_FROM)})
 
 
