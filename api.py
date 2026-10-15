@@ -191,7 +191,7 @@ def call_openai(user_text,schema,schema_name,developer_prompt,models=None,effort
             data=json.dumps(body,ensure_ascii=False).encode("utf-8"),method="POST",
             headers={"Authorization":"Bearer "+OPENAI_API_KEY,"Content-Type":"application/json","User-Agent":"Reimflow/quality-v1"})
         try:
-            with urllib.request.urlopen(req,timeout=timeout) as resp:
+            with urllib.request.urlopen(req,timeout=timeout if model==(list(dict.fromkeys(models or FALLBACK_MODELS))[0]) else min(timeout,45)) as resp:
                 raw=json.loads(resp.read(2*1024*1024).decode("utf-8"))
             content=extract_output_text(raw)
             if not content: raise RuntimeError("EMPTY_AI_RESPONSE")
@@ -211,7 +211,7 @@ def call_openai(user_text,schema,schema_name,developer_prompt,models=None,effort
             print("rhyme upstream:",model,"timeout or network",flush=True)
             # A single retry using another full-quality model is allowed on a
             # generation timeout. Never silently substitute cheap mini models.
-            if "timeout" in str(e).lower() and model != list(dict.fromkeys(models or FALLBACK_MODELS))[-1]:
+            if (isinstance(e,TimeoutError) or "timed out" in str(e).lower() or "timeout" in str(e).lower()) and model != list(dict.fromkeys(models or FALLBACK_MODELS))[-1]:
                 continue
             raise last
         except (ValueError,RuntimeError) as e:
