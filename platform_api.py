@@ -194,7 +194,9 @@ def respond(h, status, payload, cookie=None):
 
 
 def cookie_header(token, max_age=SESSION_AGE):
-    return ("rf_session=" + token + "; Path=/api/platform; HttpOnly; Secure; "
+    dev_origin=os.getenv("REIMFLOW_DEV_ORIGIN","")
+    secure="" if dev_origin.startswith(("http://127.0.0.1:","http://localhost:")) else "Secure; "
+    return ("rf_session=" + token + "; Path=/api/platform; HttpOnly; "+secure+
             "SameSite=Lax; Max-Age=" + str(max_age))
 
 
