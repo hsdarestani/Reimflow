@@ -4,7 +4,7 @@ from xml.etree import ElementTree as ET
 project = Path("android")
 gradle = project / "app" / "build.gradle"
 data = gradle.read_text()
-assert "signingConfigs {" in data and "buildTypes {" in data, "Unsupported Capacitor Gradle template"
+assert "buildTypes {" in data and "android {" in data, "Unsupported Capacitor Gradle template"
 # Publisher places android/key.properties and a separate upload keystore.
 assert (project / "key.properties").is_file(), "Publisher Android signing not provisioned"
 assert (project / "upload-keystore.jks").is_file(), "Publisher keystore not provisioned"
@@ -14,17 +14,7 @@ rfPropFile.withInputStream { rfProps.load(it) }
 """
 if "def rfProps" not in data:
     data = prefix + data
-    signing = """signingConfigs {
-        release {
-            storeFile file("../upload-keystore.jks")
-            storePassword rfProps['storePassword']
-            keyAlias rfProps['keyAlias']
-            keyPassword rfProps['keyPassword']
-        }
-    """
-    data = data.replace("signingConfigs {", signing, 1) if "signingConfigs {" in data else data
-# Capacitor's Gradle template already defines signingConfigs only on some versions.
-if "signingConfigs {" in data and "rfProps['storePassword']" not in data:
+if "rfProps['storePassword']" not in data:
     data = data.replace("android {", """android {
     signingConfigs {
         release {
@@ -34,7 +24,7 @@ if "signingConfigs {" in data and "rfProps['storePassword']" not in data:
             keyPassword rfProps['keyPassword']
         }
     }
-""", 1)
+""",1)
 if "signingConfig signingConfigs.release" not in data:
     data = re.sub(r"(buildTypes\s*\{\s*release\s*\{)", r"\1\n            signingConfig signingConfigs.release",data,count=1)
 assert "signingConfig signingConfigs.release" in data
