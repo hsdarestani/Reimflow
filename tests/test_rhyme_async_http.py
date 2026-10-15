@@ -88,6 +88,23 @@ class AsyncRhymeTests(unittest.TestCase):
             self.assertEqual(result["error"],"AI_TIMEOUT")
             self.assertNotIn("rhymes",result)
 
+    def test_failed_job_can_retry_immediately(self):
+        manager=rhyme_jobs.Manager(max_jobs=2,max_workers=1)
+        def bad(_):
+            raise rhyme_jobs.JobError("AI_TIMEOUT","Timed out",504)
+        first=manager.submit("retry",bad)
+        for _ in range(80):
+            if manager.get(first)[0]!=202:break
+            time.sleep(.025)
+        self.assertEqual(manager.get(first)[0],504)
+        second=manager.submit("retry",lambda _:{"ok":True})
+        self.assertNotEqual(first,second)
+        for _ in range(80):
+            if manager.get(second)[0]==200:break
+            time.sleep(.025)
+        self.assertEqual(manager.get(second)[0],200)
+        manager.pool.shutdown(wait=True)
+
     def test_jobs_cannot_be_enumerated(self):
         self.assertEqual(self.request("/api/rhymes/jobs/invalid")[0],404)
 
