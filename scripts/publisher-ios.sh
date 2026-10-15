@@ -12,7 +12,7 @@ npx @capacitor/assets generate --ios --iconBackgroundColor '#1A132B' --iconBackg
 /usr/libexec/PlistBuddy -c "Add :NSMicrophoneUsageDescription string 'Reimflow benötigt dein Mikrofon nur für freiwillige Rap und Rhythmus Aufnahmen.'" ios/App/App/Info.plist 2>/dev/null || /usr/libexec/PlistBuddy -c "Set :NSMicrophoneUsageDescription 'Reimflow benötigt dein Mikrofon nur für freiwillige Rap und Rhythmus Aufnahmen.'" ios/App/App/Info.plist
 mkdir -p artifacts
 python3 scripts/prepare-ios-export.py
-xcodebuild -workspace ios/App/App.xcworkspace -scheme App -configuration Release -sdk iphoneos \
+xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release -sdk iphoneos \
   -archivePath "$PWD/artifacts/Reimflow.xcarchive" \
   -destination 'generic/platform=iOS' \
   "DEVELOPMENT_TEAM=$IOS_TEAM_ID" CODE_SIGN_STYLE=Manual \
