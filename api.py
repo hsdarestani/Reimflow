@@ -2,6 +2,7 @@
 import hashlib, json, os, sqlite3, threading, time, urllib.error, urllib.request, importlib.util, email.parser, email.policy
 from collections import defaultdict, deque
 import platform_api
+import rhyme_jobs
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 HOST="127.0.0.1"; PORT=int(os.getenv("PORT","8787"))
@@ -11,6 +12,7 @@ PRIMARY_MODEL=os.getenv("OPENAI_MODEL","gpt-5.6-sol").strip()
 FALLBACK_MODELS=list(dict.fromkeys([PRIMARY_MODEL,"gpt-5.5","gpt-5.4"]))
 QUALITY_MODEL=os.getenv("RHYME_REVIEW_MODEL","gpt-5.6-terra").strip()
 DB_PATH=os.getenv("REIMFLOW_DB","/var/lib/reimflow/reimflow.sqlite3")
+_rhyme_jobs=rhyme_jobs.Manager(max_jobs=12,max_workers=3,ttl=900)
 CACHE_TTL=60*60*24*7; MAX_QUERY_LEN=120; RATE_LIMIT=24; RATE_WINDOW=60
 _lock=threading.Lock(); _rate=defaultdict(deque)
 
@@ -207,7 +209,10 @@ def call_openai(user_text,schema,schema_name,developer_prompt,models=None,effort
         except (TimeoutError,urllib.error.URLError) as e:
             last=RuntimeError("OPENAI_TIMEOUT")
             print("rhyme upstream:",model,"timeout or network",flush=True)
-            # Don't cascade costly requests after a timeout.
+            # A single retry using another full-quality model is allowed on a
+            # generation timeout. Never silently substitute cheap mini models.
+            if "timeout" in str(e).lower() and model != list(dict.fromkeys(models or FALLBACK_MODELS))[-1]:
+                continue
             raise last
         except (ValueError,RuntimeError) as e:
             last=RuntimeError("OPENAI_BAD_RESPONSE")
@@ -251,6 +256,14 @@ class Handler(BaseHTTPRequestHandler):
         if platform_api.handle(self): return
         if self.path=="/api/health":
             self.send_json(200,{"ok":True,"ai":bool(OPENAI_API_KEY),"model":PRIMARY_MODEL if OPENAI_API_KEY else None,"service":"reimflow-rhyme-engine"}); return
+        if self.path.startswith("/api/rhymes/jobs/"):
+            job_id=self.path[len("/api/rhymes/jobs/"):]
+            if not job_id or len(job_id)>80 or not all(ch.isalnum() or ch in "-_" for ch in job_id):
+                self.send_json(404,{"error":"NOT_FOUND"}); return
+            response=_rhyme_jobs.get(job_id)
+            if not response:
+                self.send_json(404,{"error":"JOB_EXPIRED","message":"Diese Suche ist abgelaufen. Bitte erneut suchen."}); return
+            self.send_json(*response); return
         self.send_json(404,{"error":"NOT_FOUND"})
     def do_POST(self):
         if platform_api.handle(self): return
@@ -292,6 +305,8 @@ class Handler(BaseHTTPRequestHandler):
             key=hashlib.sha256(("rhymes|phrase-v2|"+query.casefold()+"|"+category+"|"+syllables).encode()).hexdigest()
             cached=cache_get(key)
             if cached: self.send_json(200,cached); return
+            if not OPENAI_API_KEY:
+                self.send_json(503,{"error":"AI_CONFIG","message":"Die KI-Suche ist derzeit nicht eingerichtet."}); return
             intent=rhyme_intent.search_intent(query)
             user_text=json.dumps({
                 "intent":intent,
@@ -299,30 +314,46 @@ class Handler(BaseHTTPRequestHandler):
                 "filters":{"category":category,"syllables":syllables},
                 "instructions":"Erstelle zuerst mehrere solide Wortreime speziell für intent.end_word, unabhängig davon ob sie die Gesamtphrase treffen. Dann zusätzlich echte mehrteilige, sinnhafte Rap-Lines mit ähnlichem Klang und Rhythmus zur ganzen Phrase; keine ausgedachten Wörter oder ungebräuchliche Scheinphrasen. Jede Kategorie soll beim Review getrennt geprüft werden. Klang der Originalsprache und Betonung beachten."
             },ensure_ascii=False)
+
+            def generate(job_id):
+                try:
+                    raw,model=call_openai(user_text,RHYME_SCHEMA,
+                        "reimflow_quality_candidates",DEVELOPER_PROMPT,
+                        effort="medium",timeout=65)
+                    raw=sanitize(raw,query)
+                    _rhyme_jobs.stage(job_id,"review")
+                    reviewed,review_model=call_openai(
+                        rhyme_quality.review_input(query,raw),
+                        rhyme_quality.QUALITY_SCHEMA,"reimflow_independent_review",
+                        rhyme_quality.QUALITY_PROMPT,models=[QUALITY_MODEL],
+                        effort="medium",timeout=65)
+                    data=rhyme_quality.review_and_filter(query,raw,reviewed)
+                    # Never cache suggestions without independent phonetic review.
+                    result={"ok":True,"engine":"ai_phonetic","model":model,
+                        "intent":intent,"review_model":review_model,"cached":False,**data}
+                    print("rhyme quality gate:",len(raw["rhymes"]),
+                          "candidates,",len(data["rhymes"]),"accepted",flush=True)
+                    cache_put(key,result)
+                    return result
+                except Exception as exc:
+                    reason=str(exc)
+                    code=("AI_TIMEOUT" if "TIMEOUT" in reason else
+                          "AI_CONFIG" if "NOT_CONFIGURED" in reason else "AI_UPSTREAM")
+                    print("rhyme request failed:",code,flush=True)
+                    message=("Die KI benötigt gerade länger. Bitte versuche die Suche erneut."
+                             if code=="AI_TIMEOUT" else
+                             "Die KI-Reimsuche ist vorübergehend nicht erreichbar. Bitte erneut versuchen.")
+                    raise rhyme_jobs.JobError(code,message,
+                        504 if code=="AI_TIMEOUT" else 503 if code=="AI_CONFIG" else 502) from None
+
             try:
-                raw,model=call_openai(user_text,RHYME_SCHEMA,"reimflow_quality_candidates",DEVELOPER_PROMPT,effort="medium",timeout=48)
-                raw=sanitize(raw,query)
-                reviewed,review_model=call_openai(
-                    rhyme_quality.review_input(query,raw),
-                    rhyme_quality.QUALITY_SCHEMA,"reimflow_independent_review",
-                    rhyme_quality.QUALITY_PROMPT,
-                    models=[QUALITY_MODEL],effort="medium",timeout=36
-                )
-                data=rhyme_quality.review_and_filter(query,raw,reviewed)
-                # Never cache unchecked suggestions or pretend numerical scores
-                # represent statistically calibrated probabilities.
-                result={"ok":True,"engine":"ai_phonetic","model":model,
-                        "intent":intent,
-                        "review_model":review_model,"cached":False,**data}
-                print("rhyme quality gate:",len(raw["rhymes"]),"candidates,",len(data["rhymes"]),"accepted",flush=True)
-                cache_put(key,result)
-                self.send_json(200,result)
-            except Exception as e:
-                reason=str(e)
-                code="AI_TIMEOUT" if "TIMEOUT" in reason else "AI_CONFIG" if "AI_NOT_CONFIGURED" in reason else "AI_UPSTREAM"
-                print("rhyme request failed:",code,flush=True)
-                self.send_json(504 if code=="AI_TIMEOUT" else 503 if code=="AI_CONFIG" else 502,
-                    {"error":code,"message":"Die KI-Reimsuche ist vorübergehend nicht erreichbar. Du kannst es erneut versuchen."})
+                job_id=_rhyme_jobs.submit(key,generate)
+            except rhyme_jobs.BusyError:
+                self.send_json(503,{"error":"AI_BUSY",
+                    "message":"Die KI bearbeitet gerade viele Suchen. Bitte in Kürze erneut versuchen."})
+                return
+            self.send_json(202,{"ok":True,"pending":True,"stage":"queued",
+                                "job_id":job_id,"poll_after_ms":1800})
             return
         if self.path=="/api/validate":
             source=str(body.get("source","")).strip(); target=str(body.get("target","")).strip()
