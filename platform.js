@@ -5,6 +5,7 @@ const $=(s,root=document)=>root.querySelector(s);
 const $$=(s,root=document)=>[...root.querySelectorAll(s)];
 const esc=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const app={user:null,feed:[],queue:[],beats:[],leaders:[],scores:[],mine:[],favorites:[],ready:false,filter:"Alle"};
+let passwordResetToken=null;
 const msg=x=>{const el=$("#toast");if(!el)return;el.textContent=x;el.classList.add("show");clearTimeout(window.platformToast);window.platformToast=setTimeout(()=>el.classList.remove("show"),4000)};
 async function request(path,payload){
  const multipart=payload instanceof FormData;
@@ -25,7 +26,7 @@ async function refresh(){
 }
 function authNeeded(){if(app.user)return false;openAuth();msg("Bitte zuerst anmelden.");return true}
 function openAuth(register=false){const el=$("#authDialog");if(el&&!el.open)el.showModal();selectTab(register?"register":"login")}
-function selectTab(tab){$$("#authDialog [data-auth-tab]").forEach(el=>el.classList.toggle("active",el.dataset.authTab===tab));$("#loginForm").hidden=tab!=="login";$("#registerForm").hidden=tab!=="register";$("#authMessage").textContent=""}
+function selectTab(tab){$$("#authDialog [data-auth-tab]").forEach(el=>el.classList.toggle("active",el.dataset.authTab===tab));$("#loginForm").hidden=tab!=="login";$("#registerForm").hidden=tab!=="register";$("#authMessage").textContent="";$("#forgotForm").hidden=true;$("#resetForm").hidden=true;}
 function renderLoginState(){
  const status=$("#accountStatus");if(status)status.textContent=app.user?"@"+app.user.username:"Anmelden";
  const button=$("#profileEditButton");if(button)button.textContent=app.user?"Profil bearbeiten":"Anmelden";
@@ -62,6 +63,7 @@ function renderProfile(){
  $("#myScoreList").textContent=app.scores.map(s=>s.bpm+" BPM ("+s.mode+"): "+s.best+"/100").join(" · ")||"Noch kein gespeichertes Spiel.";
  $("#profileLogout").hidden=!u;$("#profileDelete").hidden=!u;
  $("#accountExport").hidden=!u;
+ $("#emailVerificationPanel").hidden=!u || !app.email_enabled || Boolean(u.email_verified);
  $("#blockedMembers").innerHTML=(app.blocked||[]).map(m=>'<div class="activity-row"><strong>@'+esc(m.username)+'</strong><button class="secondary-btn compact" data-unblock="'+m.id+'">Freigeben</button></div>').join("")||'<p class="tiny-note">Keine blockierten Mitglieder.</p>';
  renderAdmin();
 }
@@ -82,10 +84,14 @@ async function toggleFavorite(word){if(authNeeded())return;try{await request("fa
 async function saveScore(result){if(!app.user||!result)return;try{await request("scores",{score:result.score,bpm:result.bpm,mode:result.mode});await refresh()}catch(e){msg("Ergebnis nur lokal gespeichert: "+e.message)}}
 $$("#authDialog [data-auth-tab]").forEach(b=>b.addEventListener("click",()=>selectTab(b.dataset.authTab)));
 $("#loginForm")?.addEventListener("submit",async e=>{e.preventDefault();const f=e.currentTarget,b=f.querySelector('button[type="submit"]');b.disabled=true;try{await request("login",{identity:f.elements.identity.value,password:f.elements.password.value});await refresh();$("#authDialog").close();f.reset();msg("Willkommen zurück!")}catch(err){$("#authMessage").textContent=err.message}finally{b.disabled=false}});
-$("#registerForm")?.addEventListener("submit",async e=>{e.preventDefault();const f=e.currentTarget,b=f.querySelector('button[type="submit"]');b.disabled=true;try{await request("register",{username:f.elements.username.value,email:f.elements.email.value,password:f.elements.password.value,persona:f.elements.persona.value});await refresh();$("#authDialog").close();f.reset();msg("Konto erstellt!")}catch(err){$("#authMessage").textContent=err.message}finally{b.disabled=false}});
+$("#registerForm")?.addEventListener("submit",async e=>{e.preventDefault();const f=e.currentTarget,b=f.querySelector('button[type="submit"]');b.disabled=true;try{const created=await request("register",{username:f.elements.username.value,email:f.elements.email.value,password:f.elements.password.value,persona:f.elements.persona.value});await refresh();$("#authDialog").close();f.reset();msg(created.verification_required?"Konto erstellt. Bitte bestätige die E-Mail.":"Konto erstellt!")}catch(err){$("#authMessage").textContent=err.message}finally{b.disabled=false}});
 $("#profileEditButton")?.addEventListener("click",()=>{if(authNeeded())return;$("#editDisplayName").value=app.user.display_name;$("#editBio").value=app.user.bio;$("#editPersona").value=app.user.persona;$("#profileDialog").showModal()});
 $("#profileForm")?.addEventListener("submit",async e=>{e.preventDefault();try{await request("profile",{display_name:$("#editDisplayName").value,bio:$("#editBio").value,persona:$("#editPersona").value});$("#profileDialog").close();await refresh();msg("Profil gespeichert.")}catch(err){msg(err.message)}});
 $("#changePasswordForm")?.addEventListener("submit",async e=>{e.preventDefault();const f=e.currentTarget;try{await request("password",{current_password:f.elements.current_password.value,new_password:f.elements.new_password.value});f.reset();$("#profileDialog").close();await refresh();msg("Passwort geändert. Bitte erneut anmelden.")}catch(err){msg(err.message)}});
+$("#resendVerification")?.addEventListener("click",async()=>{try{await request("request-verify",{});msg("Falls möglich, wurde ein Bestätigungslink gesendet.")}catch(e){msg(e.message)}});
+$("#forgotToggle")?.addEventListener("click",()=>{if(!app.email_enabled){$("#authMessage").textContent="E-Mail Wiederherstellung ist noch nicht konfiguriert.";return}$("#loginForm").hidden=true;$("#registerForm").hidden=true;$("#forgotForm").hidden=false;$("#authMessage").textContent=""});
+$("#forgotForm")?.addEventListener("submit",async e=>{e.preventDefault();try{await request("request-reset",{identity:e.currentTarget.elements.identity.value});$("#forgotForm").hidden=true;$("#authMessage").textContent="Wenn ein Konto existiert, wurde ein Link gesendet."}catch(err){$("#authMessage").textContent=err.message}});
+$("#resetForm")?.addEventListener("submit",async e=>{e.preventDefault();try{await request("reset-password",{token:passwordResetToken,new_password:e.currentTarget.elements.new_password.value});passwordResetToken=null;$("#resetForm").hidden=true;selectTab("login");$("#authMessage").textContent="Passwort geändert. Bitte anmelden."}catch(err){$("#authMessage").textContent=err.message}});
 $("#profileLogout")?.addEventListener("click",async()=>{try{await request("logout",{});await refresh();msg("Abgemeldet.")}catch(err){msg(err.message)}});
 $("#profileDelete")?.addEventListener("click",async()=>{if(!app.user||!confirm("Konto und alle Beiträge und Uploads endgültig löschen?"))return;const password=prompt("Passwort zur Bestätigung eingeben:");if(password===null)return;try{await request("delete-account",{password});await refresh();msg("Konto gelöscht.")}catch(e){msg(e.message)}});
 $("#openSubmit")?.addEventListener("click",()=>{if(!authNeeded())$("#submitDialog").showModal()});
@@ -106,5 +112,10 @@ const premium=$("#premiumTestButton");if(premium){premium.disabled=true;premium.
 $$("#communityFeed [data-community-tab]").forEach(b=>b.addEventListener("click",()=>{}));
 $$("[data-community-tab]").forEach(b=>b.addEventListener("click",()=>{$$("[data-community-tab]").forEach(x=>x.classList.toggle("active",x===b));$$(".community-tab").forEach(x=>x.classList.toggle("active",x.id===(b.dataset.communityTab==="feed"?"communityFeed":"testerQueue")))}));
 window.ReimflowPlatform={renderCommunity,renderBeats,renderProfile,toggleFavorite,saveScore,openAuth,refresh};
+const params=new URLSearchParams(location.search);
+const verification=params.get("verify");passwordResetToken=params.get("reset");
+if(verification||passwordResetToken){history.replaceState(null,"",location.pathname+location.hash)}
+if(verification){request("verify-email",{token:verification}).then(()=>{msg("E-Mail erfolgreich bestätigt.");return refresh()}).catch(err=>msg(err.message))}
+if(passwordResetToken){openAuth();$("#loginForm").hidden=true;$("#registerForm").hidden=true;$("#resetForm").hidden=false}
 refresh().catch(err=>msg(err.message));
 })();
