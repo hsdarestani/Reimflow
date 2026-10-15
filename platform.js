@@ -35,7 +35,7 @@ function renderLoginState(){
 function renderCommunity(){
  const container=$("#communityFeed");if(!container)return;
  if(!app.ready){container.textContent="Community wird geladen ...";return}
- container.innerHTML=app.feed.length?app.feed.map(x=>'<article class="sticker-card submission-card"><div><div class="submission-pair"><span>'+esc(x.source)+'</span><span class="arrow-pill">→</span><span>'+esc(x.target)+'</span></div><div class="submission-meta"><span class="micro-tag">'+esc(x.category)+'</span><span class="micro-tag">'+esc(x.syllables)+' Silben</span><span class="micro-tag">'+esc(x.pronunciation)+'</span><span class="micro-tag">@'+esc(x.username)+'</span></div></div><div><span class="status-pill '+(x.status==="accepted"?"mint-bg":"")+'">'+(x.status==="accepted"?"BESTÄTIGT":"IN PRÜFUNG")+'</span><button class="text-link" data-report-kind="submission" data-report-id="'+x.id+'">Melden</button></div></article>').join(""):'<div class="empty-state">Noch keine Community Beiträge. Sei der Erste!</div>';
+ container.innerHTML=app.feed.length?app.feed.map(x=>'<article class="sticker-card submission-card"><div><div class="submission-pair"><span>'+esc(x.source)+'</span><span class="arrow-pill">→</span><span>'+esc(x.target)+'</span></div><div class="submission-meta"><span class="micro-tag">'+esc(x.category)+'</span><span class="micro-tag">'+esc(x.syllables)+' Silben</span><span class="micro-tag">'+esc(x.pronunciation)+'</span><span class="micro-tag">@'+esc(x.username)+'</span></div></div><div><span class="status-pill '+(x.status==="accepted"?"mint-bg":"")+'">'+(x.status==="accepted"?"BESTÄTIGT":"IN PRÜFUNG")+'</span><button class="text-link" data-report-kind="submission" data-report-id="'+x.id+'">Melden</button>'+(app.user&&app.user.id!==x.author_id?'<button class="text-link" data-block-user="'+x.author_id+'">Blockieren</button>':"")+'</div></article>').join(""):'<div class="empty-state">Noch keine Community Beiträge. Sei der Erste!</div>';
  const queue=$("#testerQueue");
  if(queue)queue.innerHTML=["tester","admin"].includes(app.user?.role)?app.queue.map(x=>'<article class="sticker-card submission-card"><div><div class="submission-pair"><span>'+esc(x.source)+'</span> → <span>'+esc(x.target)+'</span></div><div class="submission-meta"><span class="micro-tag">@'+esc(x.username)+'</span></div></div>'+(x.author_id===app.user.id?'<small>Eigener Beitrag</small>':'<div class="review-actions"><button class="ai-check-btn" data-ai-review="'+x.id+'">✦ KI Prüfung</button><button class="approve-btn" data-decision="accepted" data-id="'+x.id+'">✓ Passt</button><button class="reject-btn" data-decision="rejected" data-id="'+x.id+'">× Nein</button></div>')+'<div class="ai-review-slot" data-ai-result="'+x.id+'"></div></article>').join("")||'<div class="empty-state">Keine offenen Reime.</div>':'<div class="empty-state">Nur für bestätigte Tester.</div>';
  const leaders=$(".leaderboard ol");
@@ -45,7 +45,7 @@ function renderBeats(){
  const grid=$("#beatGrid");if(!grid)return;
  const text=($("#beatSearch")?.value||"").toLowerCase().trim();
  const items=app.beats.filter(b=>(app.filter==="Alle"||b.kind===app.filter)&&(!text||(b.title+" "+b.display_name).toLowerCase().includes(text)));
- grid.innerHTML=items.length?items.map(b=>'<article class="sticker-card beat-card"><div class="beat-art art-violet"><button class="play-btn" data-play="'+b.id+'" type="button" aria-label="Audio abspielen">▶</button></div><div class="beat-info"><h3>'+esc(b.title)+'</h3><div class="beat-meta"><span class="micro-tag">'+esc(b.kind)+'</span><span class="micro-tag">'+b.bpm+' BPM</span></div><div class="beat-footer"><span>von '+esc(b.display_name)+'</span><span class="license-chip">'+esc(b.license)+'</span></div><div class="platform-actions"><button class="text-link" data-report-kind="beat" data-report-id="'+b.id+'">Melden</button>'+(app.user&&(app.user.id===b.author_id||app.user.role==="admin")?'<button class="text-link" data-delete-beat="'+b.id+'">Löschen</button>':"")+'</div></div></article>').join(""):'<div class="empty-state">Noch keine Audiodateien. Lade den ersten Beat hoch.</div>';
+ grid.innerHTML=items.length?items.map(b=>'<article class="sticker-card beat-card"><div class="beat-art art-violet"><button class="play-btn" data-play="'+b.id+'" type="button" aria-label="Audio abspielen">▶</button></div><div class="beat-info"><h3>'+esc(b.title)+'</h3><div class="beat-meta"><span class="micro-tag">'+esc(b.kind)+'</span><span class="micro-tag">'+b.bpm+' BPM</span></div><div class="beat-footer"><span>von '+esc(b.display_name)+'</span><span class="license-chip">'+esc(b.license)+'</span></div>'+(b.hidden?'<small>Wartet auf Freigabe</small>':"")+'<div class="platform-actions"><button class="text-link" data-report-kind="beat" data-report-id="'+b.id+'">Melden</button>'+(app.user&&app.user.id!==b.author_id?'<button class="text-link" data-block-user="'+b.author_id+'">Blockieren</button>':"")+(app.user&&(app.user.id===b.author_id||app.user.role==="admin")?'<button class="text-link" data-delete-beat="'+b.id+'">Löschen</button>':"")+'</div></div></article>').join(""):'<div class="empty-state">Noch keine Audiodateien. Lade den ersten Beat hoch.</div>';
 }
 function renderProfile(){
  if(!app.ready)return;const u=app.user,profile=$(".profile-copy");if(!profile)return;
@@ -53,15 +53,31 @@ function renderProfile(){
  profile.querySelector("p").textContent=u?"@"+u.username+(u.bio?" · "+u.bio:""):"Melde dich an und gestalte dein Profil.";
  profile.querySelector(".status-pill").textContent=u?.persona==="producer"?"Producer":u?"Rapper":"Gast";
  $(".profile-avatar").textContent=u?.display_name.slice(0,2).toUpperCase()||"RF";
- $("#acceptedCount").textContent=app.mine.filter(s=>s.status==="accepted").length;
+ $("#acceptedCount").textContent=app.total_accepted||0;
  const stats=$$(".stats-grid .stat-card strong");
- if(stats[2])stats[2].textContent=app.beats.filter(b=>b.author_id===u?.id).length;
+ if(stats[2])stats[2].textContent=app.total_beats||0;
  if(stats[3])stats[3].textContent="–";
  $("#profileActivity").innerHTML=app.mine.length?app.mine.map(s=>'<div class="activity-row"><strong>'+esc(s.source)+' → '+esc(s.target)+'</strong><span>'+esc(s.status)+'</span></div>').join(""):'<div class="empty-state">Noch keine eigenen Beiträge.</div>';
  $("#myFavoriteList").textContent=app.favorites.join(" · ")||"Noch keine Favoriten.";
  $("#myScoreList").textContent=app.scores.map(s=>s.bpm+" BPM ("+s.mode+"): "+s.best+"/100").join(" · ")||"Noch kein gespeichertes Spiel.";
  $("#profileLogout").hidden=!u;$("#profileDelete").hidden=!u;
+ $("#accountExport").hidden=!u;
+ $("#blockedMembers").innerHTML=(app.blocked||[]).map(m=>'<div class="activity-row"><strong>@'+esc(m.username)+'</strong><button class="secondary-btn compact" data-unblock="'+m.id+'">Freigeben</button></div>').join("")||'<p class="tiny-note">Keine blockierten Mitglieder.</p>';
+ renderAdmin();
 }
+
+function renderAdmin(){
+ const panel=$("#moderationPanel");if(!panel)return;
+ panel.hidden=app.user?.role!=="admin";
+ if(panel.hidden)return;
+ $("#adminPendingAudio").innerHTML="<h4>Audio Freigaben</h4>"+((app.pending_beats||[]).map(b=>
+  '<div class="activity-row"><strong>'+esc(b.title)+' · @'+esc(b.username)+'</strong><audio controls preload="none" src="/api/platform/media/'+b.id+'"></audio><button class="secondary-btn compact" data-admin-kind="beat" data-admin-id="'+b.id+'" data-admin-decision="approve">Freigeben</button><button class="secondary-btn compact" data-admin-kind="beat" data-admin-id="'+b.id+'" data-admin-decision="hide">Ablehnen</button></div>').join("")||"<p>Keine offenen Uploads.</p>");
+ $("#adminReports").innerHTML="<h4>Offene Meldungen</h4>"+((app.reports||[]).map(r=>
+  '<div class="activity-row"><span>'+esc(r.kind)+" #"+r.content_id+": "+esc(r.reason)+'</span><button class="secondary-btn compact" data-admin-kind="'+esc(r.kind)+'" data-admin-id="'+r.content_id+'" data-admin-decision="hide">Ausblenden & schließen</button></div>').join("")||"<p>Keine offenen Meldungen.</p>");
+ $("#adminMembers").innerHTML="<h4>Tester verwalten</h4>"+((app.members||[]).map(m=>
+  '<div class="activity-row"><span>@'+esc(m.username)+" ("+esc(m.role)+')</span>'+(m.role==="admin"?"":'<button class="secondary-btn compact" data-role-user="'+m.id+'" data-role="'+(m.role==="tester"?"member":"tester")+'">'+(m.role==="tester"?"Tester entfernen":"Als Tester freigeben")+'</button>')+'</div>').join("")||"<p>Keine Mitglieder.</p>");
+}
+
 async function toggleFavorite(word){if(authNeeded())return;try{await request("favorites",{word,remove:app.favorites.includes(word)});await refresh()}catch(e){msg(e.message)}}
 async function saveScore(result){if(!app.user||!result)return;try{await request("scores",{score:result.score,bpm:result.bpm,mode:result.mode});await refresh()}catch(e){msg("Ergebnis nur lokal gespeichert: "+e.message)}}
 $$("#authDialog [data-auth-tab]").forEach(b=>b.addEventListener("click",()=>selectTab(b.dataset.authTab)));
@@ -81,8 +97,10 @@ $("#beatFilters")?.addEventListener("click",e=>{const b=e.target.closest("[data-
 $("#beatSearch")?.addEventListener("input",renderBeats);
 let audio=null,playButton=null;
 $("#beatGrid")?.addEventListener("click",async e=>{const b=e.target.closest("[data-play]");if(b){if(audio)audio.pause();if(playButton)playButton.textContent="▶";audio=new Audio("/api/platform/media/"+Number(b.dataset.play));playButton=b;audio.onended=()=>{b.textContent="▶";audio=null};audio.onerror=()=>msg("Audio nicht verfügbar.");try{await audio.play();b.textContent="❚❚"}catch{msg("Audio kann nicht abgespielt werden.")}return}const del=e.target.closest("[data-delete-beat]");if(del&&confirm("Diesen Upload endgültig löschen?"))try{await request("delete-beat",{id:Number(del.dataset.deleteBeat)});await refresh();msg("Upload gelöscht.")}catch(err){msg(err.message)}});
+$("#blockedMembers")?.addEventListener("click",async e=>{const b=e.target.closest("[data-unblock]");if(!b)return;try{await request("block-user",{user_id:Number(b.dataset.unblock),remove:true});await refresh();msg("Mitglied freigegeben.")}catch(err){msg(err.message)}});
+$("#moderationPanel")?.addEventListener("click",async e=>{const role=e.target.closest("[data-role-user]");const action=e.target.closest("[data-admin-kind]");if(!role&&!action)return;try{if(role)await request("set-tester",{user_id:Number(role.dataset.roleUser),role:role.dataset.role});else await request("moderate",{kind:action.dataset.adminKind,id:Number(action.dataset.adminId),decision:action.dataset.adminDecision});await refresh();msg("Moderation gespeichert.")}catch(err){msg(err.message)}});
 function report(kind,id){if(authNeeded())return;$("#reportKind").value=kind;$("#reportId").value=id;$("#reportDialog").showModal()}
-["#communityFeed","#beatGrid"].forEach(s=>$(s)?.addEventListener("click",e=>{const el=e.target.closest("[data-report-kind]");if(el)report(el.dataset.reportKind,el.dataset.reportId)}));
+["#communityFeed","#beatGrid"].forEach(s=>$(s)?.addEventListener("click",async e=>{const block=e.target.closest("[data-block-user]");if(block){if(authNeeded())return;if(!confirm("Inhalte dieses Mitglieds für dich ausblenden?"))return;try{await request("block-user",{user_id:Number(block.dataset.blockUser)});await refresh();msg("Mitglied blockiert.")}catch(err){msg(err.message)}return;}const el=e.target.closest("[data-report-kind]");if(el)report(el.dataset.reportKind,el.dataset.reportId)}));
 $("#reportForm")?.addEventListener("submit",async e=>{e.preventDefault();try{await request("report",{kind:$("#reportKind").value,id:Number($("#reportId").value),reason:$("#reportReason").value});$("#reportDialog").close();e.currentTarget.reset();msg("Meldung gesendet.")}catch(err){msg(err.message)}});
 const premium=$("#premiumTestButton");if(premium){premium.disabled=true;premium.textContent="Bald verfügbar";}
 $$("#communityFeed [data-community-tab]").forEach(b=>b.addEventListener("click",()=>{}));
