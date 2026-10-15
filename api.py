@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import hashlib, json, os, sqlite3, threading, time, urllib.error, urllib.request, importlib.util, email.parser, email.policy
 from collections import defaultdict, deque
+import platform_api
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 HOST="127.0.0.1"; PORT=int(os.getenv("PORT","8787"))
@@ -247,10 +248,12 @@ class Handler(BaseHTTPRequestHandler):
         if length<=0 or length>32768: raise ValueError()
         return json.loads(self.rfile.read(length).decode())
     def do_GET(self):
+        if platform_api.handle(self): return
         if self.path=="/api/health":
             self.send_json(200,{"ok":True,"ai":bool(OPENAI_API_KEY),"model":PRIMARY_MODEL if OPENAI_API_KEY else None,"service":"reimflow-rhyme-engine"}); return
         self.send_json(404,{"error":"NOT_FOUND"})
     def do_POST(self):
+        if platform_api.handle(self): return
         ip=self.headers.get("X-Real-IP") or self.client_address[0]
         if not client_allowed(ip): self.send_json(429,{"error":"RATE_LIMIT","message":"Zu viele Anfragen. Bitte kurz warten."}); return
         if self.path=="/api/flow/analyze":
@@ -336,5 +339,6 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__=="__main__":
     db().close()
+    platform_api.initialize()
     print(f"Reimflow API listening on {HOST}:{PORT}; AI={'on' if OPENAI_API_KEY else 'off'}; model={PRIMARY_MODEL}",flush=True)
     ThreadingHTTPServer((HOST,PORT),Handler).serve_forever()

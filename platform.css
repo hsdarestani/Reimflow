@@ -1,0 +1,26 @@
+/* Account, moderation and uploads: mobile-first follow-through. */
+.platform-modal .modal-card{max-height:min(90vh,900px);overflow-y:auto;overscroll-behavior:contain}
+.platform-modal label{display:flex;flex-direction:column;gap:7px;margin-bottom:12px}
+.platform-modal textarea{max-width:100%;resize:vertical}
+.platform-modal .subtabs{margin-bottom:18px}
+.platform-modal form>button[type=submit]{margin-top:8px}
+.platform-modal [hidden],#moderationPanel[hidden],#profileLogout[hidden],#profileDelete[hidden],#emailVerificationPanel[hidden]{display:none!important}
+#authMessage{min-height:1.3em;line-height:1.45}
+.platform-legal{display:flex!important;flex-direction:row!important;align-items:flex-start;gap:8px}
+.platform-legal input{width:auto!important;margin-top:4px}
+.platform-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px}
+.platform-actions .text-link{font-size:.8rem}
+#moderationPanel{min-width:0}
+#moderationPanel h4{margin:22px 0 12px}
+#moderationPanel .activity-row,#blockedMembers .activity-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 0;border-bottom:1px solid rgba(127,127,127,.18)}
+#moderationPanel .activity-row strong{min-width:140px;overflow-wrap:anywhere}
+#moderationPanel .activity-row audio{width:220px;max-width:100%;height:40px}
+#moderationPanel .secondary-btn{white-space:normal}
+#accountExport{display:inline-block;margin:12px 0}
+.submission-actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+@media(max-width:600px){
+ .platform-modal .modal-card{max-height:90dvh;padding:20px;width:calc(100vw - 24px)}
+ #moderationPanel .activity-row{flex-direction:column;align-items:flex-start}
+ #moderationPanel .activity-row audio{width:100%}
+ .platform-actions{gap:8px}
+}

@@ -1,0 +1,15 @@
+{
+  "appId": "sbs.smarbiz.reimflow",
+  "appName": "Reimflow",
+  "webDir": "www",
+  "server": {
+    "url": "https://reimflow.smarbiz.sbs",
+    "cleartext": false
+  },
+  "ios": {
+    "contentInset": "automatic"
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}

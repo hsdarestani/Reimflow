@@ -1,0 +1,19 @@
+{
+  "name": "reimflow-mobile",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "mobile:prepare": "node mobile-build.mjs",
+    "mobile:android": "npm run mobile:prepare && npx cap sync android",
+    "mobile:ios": "npm run mobile:prepare && npx cap sync ios"
+  },
+  "dependencies": {
+    "@capacitor/core": "8.5.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.5.1",
+    "@capacitor/android": "8.5.1",
+    "@capacitor/ios": "8.5.1"
+  }
+}
