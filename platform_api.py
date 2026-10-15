@@ -453,6 +453,9 @@ def send_audio(h, beat_id):
     h.send_header("Content-Length", str(end - start + 1))
     h.send_header("Accept-Ranges", "bytes")
     h.send_header("Cache-Control", "public, max-age=3600")
+    if "download=1" in urlparse(h.path).query.split("&"):
+        suffix=Path(beat["stored_name"]).suffix
+        h.send_header("Content-Disposition", 'attachment; filename="reimflow-beat-'+str(beat_id)+suffix+'"')
     h.send_header("X-Content-Type-Options", "nosniff")
     if range_header:
         h.send_header("Content-Range", f"bytes {start}-{end}/{size}")
@@ -741,6 +744,11 @@ def handle(h):
                     or license_value not in ("Free Use","Non Commercial","Commercial License")
                     or not 40 <= bpm <= 240 or fields.get("rights") != "yes"):
                 raise ValueError("Titel, BPM, Lizenz und Rechtebestätigung sind erforderlich.")
+            with connection() as c:
+                used=c.execute("SELECT COUNT(*),COALESCE(SUM(bytes),0) FROM rf_beats WHERE user_id=?",(uid,)).fetchone()
+            if used[0]>=25 or used[1]+len(audio)>200*1024*1024:
+                respond(h,409,{"error":"STORAGE_QUOTA","message":"Uploadlimit erreicht (25 Dateien, 200 MB). Bitte alte Dateien löschen."})
+                return True
             stored = secrets.token_hex(24) + ext
             file = MEDIA_DIR / stored
             try:
