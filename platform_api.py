@@ -262,8 +262,11 @@ def bootstrap(h):
           WHERE points>0 AND id NOT IN (SELECT blocked_id FROM rf_blocks WHERE blocker_id=?)
            ORDER BY points DESC,id ASC LIMIT 10""", (uid,))]
         favorites, scores, mine, queue, blocked, reports, pending_beats, members = [], [], [], [], [], [], [], []
+        total_accepted, total_beats = 0, 0
         if user:
             uid = user["id"]
+            total_accepted=c.execute("SELECT COUNT(*) FROM rf_submissions WHERE user_id=? AND status='accepted'",(uid,)).fetchone()[0]
+            total_beats=c.execute("SELECT COUNT(*) FROM rf_beats WHERE user_id=?",(uid,)).fetchone()[0]
             favorites = [r["word"] for r in c.execute(
                 "SELECT word FROM rf_favorites WHERE user_id=? LIMIT 400", (uid,))]
             scores = [dict(r) for r in c.execute(
@@ -290,7 +293,8 @@ def bootstrap(h):
                      "queue": queue, "beats": beats, "leaders": leaders,
                      "favorites": favorites, "scores": scores, "mine": mine,
                      "blocked":blocked, "reports":reports, "pending_beats":pending_beats,
-                     "members":members, "payments_enabled": False})
+                     "members":members, "total_accepted":total_accepted,
+                     "total_beats":total_beats,"payments_enabled": False})
 
 
 def read_audio(h):
