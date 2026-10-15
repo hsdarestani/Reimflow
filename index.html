@@ -458,9 +458,16 @@
         <div class="profile-grid">
           <div class="sticker-card">
             <span class="kicker">Deine Aktivität</span><h3>Letzte Beiträge</h3>
-            <div id="profileActivity" class="activity-list"></div><h3>Favoriten</h3><p id="myFavoriteList" class="tiny-note">Noch keine Favoriten.</p><h3>Deine Flow Ergebnisse</h3><p id="myScoreList" class="tiny-note">Noch kein gespeichertes Spiel.</p><div class="platform-actions"><button class="secondary-btn compact" id="profileLogout" hidden>Abmelden</button><button class="secondary-btn compact" id="profileDelete" hidden>Konto löschen</button></div>
+            <div id="profileActivity" class="activity-list"></div><h3>Favoriten</h3><p id="myFavoriteList" class="tiny-note">Noch keine Favoriten.</p><h3>Deine Flow Ergebnisse</h3><p id="myScoreList" class="tiny-note">Noch kein gespeichertes Spiel.</p><h3>Blockierte Mitglieder</h3><div id="blockedMembers" class="activity-list"></div><p><a href="/api/platform/export" id="accountExport" download="reimflow-data.json" hidden>Meine Daten exportieren (JSON)</a></p><div class="platform-actions"><button class="secondary-btn compact" id="profileLogout" hidden>Abmelden</button><button class="secondary-btn compact" id="profileDelete" hidden>Konto löschen</button></div>
           </div>
-          <div class="sticker-card premium-mini">
+          <div id="moderationPanel" class="sticker-card" hidden>
+  <h3>Community Moderation</h3>
+  <p class="tiny-note">Uploads vor Veröffentlichung prüfen, gemeldete Inhalte bearbeiten und Tester freischalten.</p>
+  <div id="adminPendingAudio"></div>
+  <div id="adminReports"></div>
+  <div id="adminMembers"></div>
+</div>
+<div class="sticker-card premium-mini">
             <div class="burst small-burst">PRO</div><span class="kicker">Mehr Möglichkeiten</span><h3>Reimflow Premium</h3>
             <p>Mehr Suchfilter, tiefere Klang Treffer, keine Limits und Extras für Rapper und Producer.</p>
             <button class="candy-btn full" data-go="premium">Premium ansehen <span>→</span></button>
