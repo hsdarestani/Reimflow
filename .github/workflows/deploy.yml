@@ -16,10 +16,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify Python API syntax
         run: |
-          python3 -m py_compile api.py platform_api.py rap-flow-analysis.py rhyme-quality.py rhyme-intent.py
+          python3 -m py_compile api.py rhyme_jobs.py platform_api.py rap-flow-analysis.py rhyme-quality.py rhyme-intent.py
           python3 -m unittest discover -s tests -p "test_platform_api.py"
           python3 -m unittest discover -s tests -p "test_rap_flow.py"
           python3 -m unittest discover -s tests -p "test_rhyme_api.py"
+          python3 -m unittest discover -s tests -p "test_rhyme_async_http.py"
           python3 -m unittest discover -s tests -p "test_rhyme_quality.py"
           python3 -m unittest discover -s tests -p "test_rhyme_intent.py"
       - name: Verify JavaScript syntax
@@ -52,19 +53,20 @@ jobs:
         run: |
           node tests/navigation-browser.test.mjs
           node tests/rhyme-browser.test.mjs
+          node tests/rhyme-async-browser.test.mjs
           node tests/rap-browser.test.mjs
           node tests/rap-result-browser.test.mjs
       - name: Verify complete existing prototype bundle
         run: |
           set -euo pipefail
-          for file in index.html app.js platform.js platform.css platform_api.py role_admin.py rhyme-fallback.js rhyme-previews.js api.py styles.css themes.css ai-engine.css sonic-atelier.css comic-flow.css comic-variants.css theme-engine.js sonic-atelier.js flow-scoring.js flow-challenge.js flow-challenge.css rap-audio.js rap-flow.js rap-flow.css rap-flow-analysis.py rhyme-quality.py rhyme-intent.py; do
+          for file in index.html app.js platform.js platform.css platform_api.py rhyme_jobs.py role_admin.py rhyme-fallback.js rhyme-previews.js api.py styles.css themes.css ai-engine.css sonic-atelier.css comic-flow.css comic-variants.css theme-engine.js sonic-atelier.js flow-scoring.js flow-challenge.js flow-challenge.css rap-audio.js rap-flow.js rap-flow.css rap-flow-analysis.py rhyme-quality.py rhyme-intent.py; do
             test -s "$file"
           done
           grep -q 'Reimflow' index.html
           grep -q 'platform.js?v=20261015-real1' index.html
           grep -q 'platform.css?v=20261015-real1' index.html
           grep -q 'sonic-atelier.css?v=20261014-de1' index.html
-          grep -q 'app.js?v=20261015-phrase3' index.html
+          grep -q 'app.js?v=20261016-async1' index.html
           grep -q 'rhyme-fallback.js?v=20261015-rhyme1' index.html
           grep -q 'rhyme-previews.js?v=20261015-phrase2' index.html
           grep -q 'ai-engine.css?v=20261015-phrase3' index.html
