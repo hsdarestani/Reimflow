@@ -1,7 +1,7 @@
 name: Verify Reimflow source (STRATO deployment managed by Publisher)
 on:
   push:
-    branches: [main, "feature/real-community-mobile-foundation"]
+    branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -26,6 +26,11 @@ jobs:
         run: |
           node --check app.js
           node --check platform.js
+          node --check mobile-build.mjs
+          node mobile-build.mjs
+          test -s www/index.html
+          test -s www/platform.js
+          test -s www/platform.css
           node --check rhyme-fallback.js
           node --check rhyme-previews.js
           node tests/rhyme-fallback.test.mjs
@@ -52,11 +57,12 @@ jobs:
       - name: Verify complete existing prototype bundle
         run: |
           set -euo pipefail
-          for file in index.html app.js platform.js platform_api.py rhyme-fallback.js rhyme-previews.js api.py styles.css themes.css ai-engine.css sonic-atelier.css comic-flow.css comic-variants.css theme-engine.js sonic-atelier.js flow-scoring.js flow-challenge.js flow-challenge.css rap-audio.js rap-flow.js rap-flow.css rap-flow-analysis.py rhyme-quality.py rhyme-intent.py; do
+          for file in index.html app.js platform.js platform.css platform_api.py role_admin.py rhyme-fallback.js rhyme-previews.js api.py styles.css themes.css ai-engine.css sonic-atelier.css comic-flow.css comic-variants.css theme-engine.js sonic-atelier.js flow-scoring.js flow-challenge.js flow-challenge.css rap-audio.js rap-flow.js rap-flow.css rap-flow-analysis.py rhyme-quality.py rhyme-intent.py; do
             test -s "$file"
           done
           grep -q 'Reimflow' index.html
           grep -q 'platform.js?v=20261015-real1' index.html
+          grep -q 'platform.css?v=20261015-real1' index.html
           grep -q 'sonic-atelier.css?v=20261014-de1' index.html
           grep -q 'app.js?v=20261015-phrase3' index.html
           grep -q 'rhyme-fallback.js?v=20261015-rhyme1' index.html
