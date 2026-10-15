@@ -36,10 +36,10 @@ let activeSearchController=null;
 let searchSequence=0;
 
 const state={
-points:Number(localStorage.getItem("reimflow_points")||120),
-favorites:JSON.parse(localStorage.getItem("reimflow_favorites")||"[]"),
-submissions:JSON.parse(localStorage.getItem("reimflow_submissions")||"null")||starterSubmissions,
-beats:[...starterBeats],category:"Alle",syllables:"Alle",beatFilter:"Alle",currentQuery:"",
+points:0,
+favorites:[],
+submissions:[],
+beats:[],category:"Alle",syllables:"Alle",beatFilter:"Alle",currentQuery:"",
 aiResults:[],queryAnalysis:null,searchSignature:"",engineOnline:null,searchLoading:false,resultSource:"ai"
 };
 
@@ -276,47 +276,14 @@ function renderRhymes(errorMessage=""){
 
 $("#rhymeResults").addEventListener("click",e=>{
   const speak=e.target.closest(".speak-result");if(speak)speakWord(speak.dataset.word);
-  const fav=e.target.closest("[data-fav]");if(fav){const w=fav.dataset.fav;state.favorites=state.favorites.includes(w)?state.favorites.filter(x=>x!==w):[...state.favorites,w];save();renderRhymes();toast(state.favorites.includes(w)?"Zu Favoriten hinzugefügt":"Aus Favoriten entfernt")}
+  const fav=e.target.closest("[data-fav]");if(fav)window.ReimflowPlatform?.toggleFavorite(fav.dataset.fav);
 });
 $("#speakQuery").addEventListener("click",()=>state.currentQuery&&speakWord(state.currentQuery));
 $$(".speak-btn").forEach(b=>b.addEventListener("click",()=>speakWord(b.dataset.speak)));
 function speakWord(text){if(!("speechSynthesis" in window)){toast("Aussprache wird von diesem Browser nicht unterstützt.");return}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="de-DE";u.rate=.86;speechSynthesis.speak(u)}
 
-const submitDialog=$("#submitDialog");
-$("#openSubmit").addEventListener("click",()=>submitDialog.showModal());
-$("#submitRhymeForm").addEventListener("submit",e=>{e.preventDefault();const source=$("#submitSource").value.trim(),target=$("#submitTarget").value.trim();if(!source||!target)return;state.submissions.unshift({id:"u"+Date.now(),source,target,category:$("#submitCategory").value,syllables:$("#submitSyllables").value,pronunciation:$("#submitPronunciation").value.trim()||"Noch nicht angegeben",status:"pending",user:"@hosseinflow",age:"gerade eben",mine:true});state.points+=3;save();updatePoints();submitDialog.close();e.target.reset();renderCommunity();toast("+3 Punkte. Dein Reim wartet auf einen Test.")});
-
-$$("[data-community-tab]").forEach(b=>b.addEventListener("click",()=>{const tab=b.dataset.communityTab;$$("[data-community-tab]").forEach(x=>x.classList.toggle("active",x===b));$$(".community-tab").forEach(x=>x.classList.toggle("active",x.id===(tab==="feed"?"communityFeed":"testerQueue")))}));
-
-function submissionMarkup(s,tester=false){
-  return '<article class="sticker-card submission-card" data-submission-card="'+s.id+'"><div><div class="submission-pair"><span>'+escapeHtml(s.source)+'</span><span class="arrow-pill">→</span><span>'+escapeHtml(s.target)+'</span></div>'+
-  '<div class="submission-meta"><span class="micro-tag">'+escapeHtml(s.category)+'</span><span class="micro-tag">'+escapeHtml(String(s.syllables))+' Silben</span><span class="micro-tag">'+escapeHtml(s.pronunciation)+'</span><span class="micro-tag">'+escapeHtml(s.user)+' · '+escapeHtml(s.age)+'</span></div><div class="ai-review-slot"></div></div>'+
-  (tester?'<div class="review-actions"><button class="ai-check-btn" data-ai-review="'+s.id+'">✦ KI Prüfung</button><button class="approve-btn" data-review="accept" data-id="'+s.id+'">✓ Passt</button><button class="reject-btn" data-review="reject" data-id="'+s.id+'">× Nein</button></div>':'<span class="status-pill '+(s.status==="accepted"?"mint-bg":"")+'">'+(s.status==="accepted"?"BESTÄTIGT":"IM TEST")+'</span>')+'</article>';
-}
-function renderCommunity(){$("#communityFeed").innerHTML=state.submissions.filter(s=>s.status!=="rejected").slice(0,10).map(s=>submissionMarkup(s,false)).join("");const pending=state.submissions.filter(s=>s.status==="pending");$("#testerQueue").innerHTML=pending.length?pending.map(s=>submissionMarkup(s,true)).join(""):'<div class="empty-state">Aktuell gibt es keine offenen Reime zum Testen.</div>'}
-$("#testerQueue").addEventListener("click",async e=>{
-  const ai=e.target.closest("[data-ai-review]");
-  if(ai){
-    const s=state.submissions.find(x=>x.id===ai.dataset.aiReview);if(!s)return;ai.disabled=true;ai.textContent="KI prüft…";
-    try{
-      const r=await fetch("/api/validate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({source:s.source,target:s.target})});const data=await r.json();if(!r.ok)throw new Error(data.message||"AI Check nicht verfügbar");
-      const card=document.querySelector('[data-submission-card="'+s.id+'"]'),slot=$(".ai-review-slot",card),verdict=data.verdict==="passt"?"Passt":data.verdict==="grenzwertig"?"Grenzwertig":"Passt nicht";
-      slot.innerHTML='<div class="ai-review '+data.verdict+'"><strong>✦ AI: '+verdict+' · '+data.score+'/100</strong><span>'+escapeHtml(data.explanation||"")+'</span></div>';ai.textContent="✦ KI geprüft";
-    }catch(err){ai.disabled=false;ai.textContent="✦ AI Check";toast(err.message)}return;
-  }
-  const b=e.target.closest("[data-review]");if(!b)return;const s=state.submissions.find(x=>x.id===b.dataset.id);if(!s)return;s.status=b.dataset.review==="accept"?"accepted":"rejected";state.points+=b.dataset.review==="accept"?5:2;save();updatePoints();renderCommunity();toast(b.dataset.review==="accept"?"+5 Punkte für den Test":"+2 Punkte für den Test");
-});
-
-const beatDialog=$("#beatDialog");
-$("#openBeatUpload").addEventListener("click",()=>beatDialog.showModal());
-$("#beatUploadForm").addEventListener("submit",e=>{e.preventDefault();const file=$("#beatFile").files[0];state.beats.unshift({id:"u"+Date.now(),title:$("#beatTitle").value.trim(),producer:"Hossein Flow",type:$("#beatType").value,bpm:Number($("#beatBpm").value),license:$("#beatLicense").value,art:"art-violet",plays:"neu",audio:file?URL.createObjectURL(file):null});beatDialog.close();e.target.reset();renderBeats();toast("Datei zur Testansicht hinzugefügt.")});
-$("#beatFilters").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;state.beatFilter=b.dataset.beatFilter;$$("#beatFilters button").forEach(x=>x.classList.toggle("active",x===b));renderBeats()});
-$("#beatSearch").addEventListener("input",renderBeats);
-function renderBeats(){const term=normalize($("#beatSearch")?.value||"");const rows=state.beats.filter(b=>(state.beatFilter==="Alle"||b.type===state.beatFilter)&&(!term||normalize(b.title+" "+b.producer).includes(term)));$("#beatGrid").innerHTML=rows.map(b=>'<article class="sticker-card beat-card"><div class="beat-art '+b.art+'"><button class="play-btn" data-play="'+b.id+'" aria-label="Abspielen">▶</button></div><div class="beat-info"><h3>'+escapeHtml(b.title)+'</h3><div class="beat-meta"><span class="micro-tag">'+b.type+'</span><span class="micro-tag">'+b.bpm+' BPM</span></div><div class="beat-footer"><span>von '+escapeHtml(b.producer)+'</span><span class="license-chip">'+escapeHtml(licenseLabel(b.license))+'</span></div></div></article>').join("")}
-$("#beatGrid").addEventListener("click",e=>{const b=e.target.closest("[data-play]");if(!b)return;const beat=state.beats.find(x=>x.id===b.dataset.play);if(beat?.audio){if(window.activeAudio)window.activeAudio.pause();window.activeAudio=new Audio(beat.audio);window.activeAudio.play();b.textContent="❚❚";window.activeAudio.onended=()=>b.textContent="▶"}else toast("Für diesen Demo Beat ist noch keine Audiodatei hinterlegt.")});
-
-function renderProfile(){const accepted=state.submissions.filter(s=>s.status==="accepted").length+6;$("#acceptedCount").textContent=accepted;const mine=state.submissions.filter(s=>s.mine).slice(0,5);$("#profileActivity").innerHTML=mine.length?mine.map(s=>'<div class="activity-row"><strong>'+escapeHtml(s.source)+' → '+escapeHtml(s.target)+'</strong><span>'+(s.status==="accepted"?"bestätigt":"im Test")+'</span></div>').join(""):'<div class="empty-state">Noch keine eigenen Beiträge in diesem Browser.</div>'}
-function escapeHtml(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-function escapeAttr(s){return escapeHtml(s).replace(/"/g,"&quot;")}
-
-updatePoints();renderCommunity();renderBeats();renderProfile();renderRhymes();checkEngine();
+// Real user content is rendered and persisted by platform.js.
+function renderCommunity(){window.ReimflowPlatform?.renderCommunity();}
+function renderBeats(){window.ReimflowPlatform?.renderBeats();}
+function renderProfile(){window.ReimflowPlatform?.renderProfile();}
+updatePoints();renderRhymes();checkEngine();
