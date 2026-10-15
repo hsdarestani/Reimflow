@@ -75,7 +75,7 @@ jobs:
       - name: Compile iOS simulator application without signing
         run: |
           set -euo pipefail
-          xcodebuild -workspace ios/App/App.xcworkspace -scheme App -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath "$PWD/ios-debug" CODE_SIGNING_ALLOWED=NO build
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath "$PWD/ios-debug" CODE_SIGNING_ALLOWED=NO build
           test -d ios-debug/Build/Products/Debug-iphonesimulator/App.app
       - name: Archive simulator app for internal QA
         run: |
