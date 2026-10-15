@@ -57,7 +57,7 @@ function renderProfile(){
  $("#acceptedCount").textContent=app.total_accepted||0;
  const stats=$$(".stats-grid .stat-card strong");
  if(stats[2])stats[2].textContent=app.total_beats||0;
- if(stats[3])stats[3].textContent="–";
+ if(stats[3])stats[3].textContent=app.rank?"#"+app.rank:"–";
  $("#profileActivity").innerHTML=app.mine.length?app.mine.map(s=>'<div class="activity-row"><strong>'+esc(s.source)+' → '+esc(s.target)+'</strong><span>'+esc(s.status)+'</span></div>').join(""):'<div class="empty-state">Noch keine eigenen Beiträge.</div>';
  $("#myFavoriteList").textContent=app.favorites.join(" · ")||"Noch keine Favoriten.";
  $("#myScoreList").textContent=app.scores.map(s=>s.bpm+" BPM ("+s.mode+"): "+s.best+"/100").join(" · ")||"Noch kein gespeichertes Spiel.";
