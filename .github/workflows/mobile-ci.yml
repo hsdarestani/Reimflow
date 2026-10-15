@@ -1,0 +1,89 @@
+name: Reimflow native beta CI
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'package.json'
+      - 'capacitor.config.json'
+      - 'mobile-build.mjs'
+      - 'assets/**'
+      - 'scripts/publisher-*.sh'
+      - 'scripts/prepare-*.py'
+      - '.github/workflows/mobile-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'package.json'
+      - 'capacitor.config.json'
+      - 'mobile-build.mjs'
+      - 'assets/**'
+      - 'scripts/publisher-*.sh'
+      - 'scripts/prepare-*.py'
+      - '.github/workflows/mobile-ci.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: reimflow-native-beta-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  android-debug:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - uses: actions/setup-java@v5
+        with: {distribution: 'temurin', java-version: '21'}
+      - name: Generate Android native project and app artwork
+        run: |
+          set -euo pipefail
+          npm install --no-audit --no-fund
+          node mobile-build.mjs
+          npx cap add android
+          npx cap sync android
+          npx @capacitor/assets generate --android --iconBackgroundColor '#1A132B' --iconBackgroundColorDark '#1A132B' --splashBackgroundColor '#1A132B' --splashBackgroundColorDark '#1A132B'
+      - name: Build installable Android debug APK for QA
+        run: |
+          set -euo pipefail
+          cd android
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reimflow-android-qa-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
+  ios-simulator:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Generate iOS native project and assets
+        run: |
+          set -euo pipefail
+          npm install --no-audit --no-fund
+          node mobile-build.mjs
+          npx cap add ios
+          npx cap sync ios
+          npx @capacitor/assets generate --ios --iconBackgroundColor '#1A132B' --iconBackgroundColorDark '#1A132B' --splashBackgroundColor '#1A132B' --splashBackgroundColorDark '#1A132B'
+          /usr/libexec/PlistBuddy -c "Add :NSMicrophoneUsageDescription string 'Mikrofonzugriff für freiwillige Rap und Rhythmus Aufnahmen.'" ios/App/App/Info.plist || true
+      - name: Compile iOS simulator application without signing
+        run: |
+          set -euo pipefail
+          xcodebuild -workspace ios/App/App.xcworkspace -scheme App -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath "$PWD/ios-debug" CODE_SIGNING_ALLOWED=NO build
+          test -d ios-debug/Build/Products/Debug-iphonesimulator/App.app
+      - name: Archive simulator app for internal QA
+        run: |
+          cd ios-debug/Build/Products/Debug-iphonesimulator
+          zip -qr "$GITHUB_WORKSPACE/reimflow-ios-simulator-app.zip" App.app
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reimflow-ios-simulator
+          path: reimflow-ios-simulator-app.zip
+          if-no-files-found: error
+          retention-days: 14
