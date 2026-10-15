@@ -171,6 +171,7 @@ function finish(){
   const key=keyFor(selectedBpm,selectedMode),prior=Number(store.get(key)||0);
   if(result.score>prior)store.set(key,result.score);
   showBest();
+  window.ReimflowPlatform?.saveScore?.(latestScore);
 }
 function animate(){
   if(!running)return;
