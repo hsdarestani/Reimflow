@@ -92,7 +92,7 @@ function updateEngineState(extra=""){
   const el=$("#engineState");if(!el)return;
   if(state.searchLoading){el.className="engine-state loading";el.innerHTML="<span></span> Klang wird analysiert…";return}
   if(state.engineOnline===true){el.className="engine-state online";el.innerHTML="<span></span> KI Reimsuche"+(extra?" · "+escapeHtml(extra):"");return}
-  if(state.engineOnline===false){el.className="engine-state offline";el.innerHTML="<span></span> Ersatzsuche aktiv";return}
+  if(state.engineOnline===false){el.className="engine-state offline";el.innerHTML="<span></span> KI gerade nicht erreichbar";return}
   el.className="engine-state";el.innerHTML="<span></span> Verbindung wird geprüft";
 }
 
@@ -147,12 +147,31 @@ async function searchRhymes(force=false){
   const seq=++searchSequence;
 
   state.searchLoading=true;setSearchBusy(true);updateEngineState();renderLoading();renderQueryInsight(null);
-  const timer=setTimeout(()=>controller.abort(),102000);
+  const timer=setTimeout(()=>controller.abort(),255000);
   try{
     const response=await fetch("/api/rhymes",{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify({query:state.currentQuery,category:state.category,syllables:state.syllables}),signal:controller.signal});
-    const data=await response.json().catch(()=>({}));
+    let data=await response.json().catch(()=>({}));
     if(seq!==searchSequence)return;
     if(!response.ok)throw new Error(data.message||"KI Suche nicht verfügbar");
+    // Long-running, independently reviewed model requests stay on the server.
+    // Each poll is a short HTTP request, avoiding mobile/proxy timeouts.
+    let polling=0;
+    while(data.pending===true){
+      if(!data.job_id || !/^[a-zA-Z0-9_-]{20,80}$/.test(data.job_id))throw new Error("Ungültige KI Suchanfrage.");
+      if(++polling>135)throw new Error("Die KI braucht ungewöhnlich lange. Bitte später erneut versuchen.");
+      const stage=data.stage;
+      const progress=$("#searchProgressText");
+      if(progress)progress.textContent=stage==="review"
+        ?"Die zweite KI prüft jetzt Aussprache und Reimqualität…"
+        :"Wir suchen echte Wortreime und passende mehrteilige Rap Phrasen…";
+      await new Promise(resolve=>setTimeout(resolve,Math.min(4000,Math.max(1200,data.poll_after_ms||2200))));
+      if(seq!==searchSequence || controller.signal.aborted)return;
+      const poll=await fetch("/api/rhymes/jobs/"+encodeURIComponent(data.job_id),{
+        headers:{"Accept":"application/json"},signal:controller.signal,cache:"no-store"});
+      data=await poll.json().catch(()=>({}));
+      if(!poll.ok)throw new Error(data.message||"KI Suche nicht verfügbar");
+      if(poll.status!==202&&data.pending!==true)break;
+    }
     if(data.ok!==true || data.quality_reviewed!==true)throw new Error("Die unabhängige Klangprüfung konnte nicht abgeschlossen werden.");
     state.aiResults=Array.isArray(data.rhymes)?data.rhymes:[];
     state.queryAnalysis=data.analysis||null;state.searchSignature=signature;state.engineOnline=true;state.searchLoading=false;state.resultSource=data.engine==="offline_suffix"?"offline_suffix":"ai";
@@ -232,7 +251,7 @@ function renderRhymes(errorMessage=""){
     $("#resultsCount").textContent="Bereit";$("#resultsFor").textContent="";
     list.innerHTML='<div class="search-empty"><div class="empty-glyph">R</div><strong>Schreib ein Wort. Wir hören auf den Klang.</strong><p>Die Suche berücksichtigt Aussprache, Silben, Betonung, Umgangssprache und Multi Silben Reime.</p></div>';return;
   }
-  const rows=filteredRhymes();$("#resultsCount").textContent=rows.length+" "+(rows.length===1?"Treffer":"Treffer");$("#resultsFor").textContent=' für „'+state.currentQuery+'“';
+  const rows=filteredRhymes();$("#resultsCount").textContent=errorMessage?"Suche fehlgeschlagen":rows.length+" "+(rows.length===1?"Treffer":"Treffer");$("#resultsFor").textContent=' für „'+state.currentQuery+'“';
   if(errorMessage){
     list.innerHTML='<div class="search-empty error"><div class="empty-glyph">!</div><strong>Die Reimsuche konnte nicht geladen werden.</strong><p>'+escapeHtml(errorMessage)+'</p><button class="secondary-btn compact" id="retrySearch">Erneut versuchen</button></div>';
     $("#retrySearch")?.addEventListener("click",()=>searchRhymes(true));return;
