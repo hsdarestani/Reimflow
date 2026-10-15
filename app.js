@@ -156,7 +156,7 @@ async function searchRhymes(force=false){
     // Long-running, independently reviewed model requests stay on the server.
     // Each poll is a short HTTP request, avoiding mobile/proxy timeouts.
     let polling=0;
-    while(response.status===202 || data.pending===true){
+    while(data.pending===true){
       if(!data.job_id || !/^[a-zA-Z0-9_-]{20,80}$/.test(data.job_id))throw new Error("Ungültige KI Suchanfrage.");
       if(++polling>135)throw new Error("Die KI braucht ungewöhnlich lange. Bitte später erneut versuchen.");
       const stage=data.stage;
