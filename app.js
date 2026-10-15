@@ -282,6 +282,8 @@ $("#speakQuery").addEventListener("click",()=>state.currentQuery&&speakWord(stat
 $$(".speak-btn").forEach(b=>b.addEventListener("click",()=>speakWord(b.dataset.speak)));
 function speakWord(text){if(!("speechSynthesis" in window)){toast("Aussprache wird von diesem Browser nicht unterstützt.");return}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="de-DE";u.rate=.86;speechSynthesis.speak(u)}
 
+function escapeHtml(value){return String(value??"").replace(/[&<>"\x27]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","\x27":"&#39;"}[c]));}
+function escapeAttr(value){return escapeHtml(value).replace(/"/g,"&quot;");}
 // Real user content is rendered and persisted by platform.js.
 function renderCommunity(){window.ReimflowPlatform?.renderCommunity();}
 function renderBeats(){window.ReimflowPlatform?.renderBeats();}
