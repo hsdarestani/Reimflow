@@ -458,7 +458,7 @@
         <div class="profile-grid">
           <div class="sticker-card">
             <span class="kicker">Deine Aktivität</span><h3>Letzte Beiträge</h3>
-            <div id="profileActivity" class="activity-list"></div><h3>Favoriten</h3><p id="myFavoriteList" class="tiny-note">Noch keine Favoriten.</p><h3>Deine Flow Ergebnisse</h3><p id="myScoreList" class="tiny-note">Noch kein gespeichertes Spiel.</p><h3>Blockierte Mitglieder</h3><div id="blockedMembers" class="activity-list"></div><p><a href="/api/platform/export" id="accountExport" download="reimflow-data.json" hidden>Meine Daten exportieren (JSON)</a></p><div class="platform-actions"><button class="secondary-btn compact" id="profileLogout" hidden>Abmelden</button><button class="secondary-btn compact" id="profileDelete" hidden>Konto löschen</button></div>
+            <div id="profileActivity" class="activity-list"></div><h3>Favoriten</h3><p id="myFavoriteList" class="tiny-note">Noch keine Favoriten.</p><h3>Deine Flow Ergebnisse</h3><p id="myScoreList" class="tiny-note">Noch kein gespeichertes Spiel.</p><h3>Blockierte Mitglieder</h3><div id="blockedMembers" class="activity-list"></div><p><a href="/api/platform/export" id="accountExport" download="reimflow-data.json" hidden>Meine Daten exportieren (JSON)</a></p><div id="emailVerificationPanel" hidden><p class="tiny-note">Bitte E-Mail bestätigen, um Community Inhalte zu veröffentlichen.</p><button type="button" id="resendVerification" class="secondary-btn compact">Bestätigungslink senden</button></div><div class="platform-actions"><button class="secondary-btn compact" id="profileLogout" hidden>Abmelden</button><button class="secondary-btn compact" id="profileDelete" hidden>Konto löschen</button></div>
           </div>
           <div id="moderationPanel" class="sticker-card" hidden>
   <h3>Community Moderation</h3>
@@ -545,6 +545,7 @@
         <label>Nutzername oder E-Mail<input name="identity" autocomplete="username" required maxlength="254"></label>
         <label>Passwort<input name="password" type="password" autocomplete="current-password" required></label>
         <button class="candy-btn full" type="submit">Anmelden</button>
+        <button type="button" class="text-link" id="forgotToggle">Passwort vergessen?</button>
       </form>
       <form id="registerForm" hidden>
         <label>Nutzername<input name="username" minlength="3" maxlength="24" autocomplete="username" pattern="[a-zA-Z0-9_.]{3,24}" required></label>
@@ -554,6 +555,8 @@
         <p class="form-note">Die E-Mail dient aktuell zur Kontozuordnung. E-Mail Bestätigung und Wiederherstellung werden vor dem App Store Start eingerichtet.</p>
         <button class="candy-btn full" type="submit">Konto erstellen</button>
       </form>
+      <form id="forgotForm" hidden><h3>Passwort zurücksetzen</h3><label>E-Mail oder Nutzername<input name="identity" required></label><button class="candy-btn full" type="submit">Link anfordern</button></form>
+      <form id="resetForm" hidden><h3>Neues Passwort vergeben</h3><label>Neues Passwort (mindestens 12 Zeichen)<input name="new_password" type="password" minlength="12" autocomplete="new-password" required></label><button class="candy-btn full" type="submit">Passwort ändern</button></form>
       <p id="authMessage" role="alert" aria-live="polite"></p>
     </div>
   </dialog>
