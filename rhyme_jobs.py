@@ -45,7 +45,11 @@ class Manager:
             self._cleanup()
             existing_id=self.by_key.get(key)
             if existing_id and existing_id in self.jobs:
-                return existing_id
+                if self.jobs[existing_id]["status"]!="failed":
+                    return existing_id
+                # A failed attempt must never poison the retry button for 15 minutes.
+                self.jobs.pop(existing_id,None)
+                self.by_key.pop(key,None)
             pending=sum(1 for j in self.jobs.values() if j["status"] in ("queued","working"))
             if pending>=self.max_jobs:
                 raise BusyError()
