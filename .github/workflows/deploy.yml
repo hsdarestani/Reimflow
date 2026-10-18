@@ -23,6 +23,7 @@ jobs:
           python3 -m unittest discover -s tests -p "test_rhyme_async_http.py"
           python3 -m unittest discover -s tests -p "test_rhyme_timeout_fallback.py"
           python3 -m unittest discover -s tests -p "test_rhyme_quality.py"
+          python3 -m unittest discover -s tests -p "test_german_only.py"
           python3 -m unittest discover -s tests -p "test_rhyme_intent.py"
       - name: Verify JavaScript syntax
         run: |
@@ -67,9 +68,9 @@ jobs:
           grep -q 'platform.js?v=20261015-real1' index.html
           grep -q 'platform.css?v=20261015-real1' index.html
           grep -q 'sonic-atelier.css?v=20261014-de1' index.html
-          grep -q 'app.js?v=20261016-async1' index.html
-          grep -q 'rhyme-fallback.js?v=20261015-rhyme1' index.html
-          grep -q 'rhyme-previews.js?v=20261015-phrase2' index.html
+          grep -q 'app.js?v=20261019-de1' index.html
+          grep -q 'rhyme-fallback.js?v=20261019-de1' index.html
+          grep -q 'rhyme-previews.js?v=20261019-de1' index.html
           grep -q 'ai-engine.css?v=20261015-phrase3' index.html
           grep -q 'comic-flow.css?v=20261014-de1' index.html
           grep -q 'REIMFLOW / COMIC FLOW' comic-flow.css
