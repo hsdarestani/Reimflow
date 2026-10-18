@@ -210,6 +210,7 @@ async function searchRhymes(force=false){
 
 function filteredRhymes(){
   return state.aiResults.filter(r=>{
+    if(r.german_valid!==true || r.register==="Englisch/Code-Switch")return false;
     const categoryOk=state.category==="Alle"||r.category===state.category;
     const syllablesOk=state.syllables==="Alle"||syllableBucket(r.syllables)===state.syllables;
     return categoryOk&&syllablesOk;
