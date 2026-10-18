@@ -69,6 +69,7 @@ def review_and_filter(query, initial, review):
             continue
         used.add(key)
         row=dict(item)
+        row["german_valid"]=True  # Only second-pass verified German candidates reach the UI.
         row["strength"]=verdict["strength"]
         row["scope"]=verdict.get("scope","end_word")
         row["explanation"]=str(verdict.get("reason") or row.get("explanation") or "")[:220]
