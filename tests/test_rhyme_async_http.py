@@ -76,6 +76,13 @@ class AsyncRhymeTests(unittest.TestCase):
             self.assertEqual(len(calls),2)
             self.assertEqual(self.request("/api/rhymes",{
                 "query":"Jude Bellingham","category":"Alle","syllables":"Alle"})[0],200)
+            # Switching filters must reuse the single, language-reviewed AI response.
+            status,filtered=self.request("/api/rhymes",{
+                "query":"Jude Bellingham","category":"Nomen","syllables":"2"})
+            self.assertEqual(status,200)
+            self.assertEqual(filtered["quality_reviewed"],True)
+            self.assertEqual(len(calls),2,"Filter changes must not start another AI generation/review")
+
 
     def test_timeout_never_returns_unreviewed_suggestions(self):
         def model(*args,**kwargs):

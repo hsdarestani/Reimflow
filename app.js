@@ -112,16 +112,16 @@ $("#categoryFilters").addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b)return;
   state.category=b.dataset.category;
   $$("#categoryFilters button").forEach(x=>x.classList.toggle("active",x===b));
-  const local=filteredRhymes();renderRhymes();
-  if(state.currentQuery&&!local.length)searchRhymes(false);
+  // Both filters are local; do not restart a live AI request or call the AI twice.
+  if(state.searchLoading)renderLoading();else renderRhymes();
 });
 $("#syllableFilter").addEventListener("change",e=>{
   state.syllables=e.target.value;
-  const local=filteredRhymes();renderRhymes();
-  if(state.currentQuery&&!local.length)searchRhymes(false);
+  // Both filters are local; do not restart a live AI request or call the AI twice.
+  if(state.searchLoading)renderLoading();else renderRhymes();
 });
 
-function requestSignature(){return[normalize(state.currentQuery),state.category,state.syllables].join("|")}
+function requestSignature(){return normalize(state.currentQuery)}
 
 function setSearchBusy(busy){
   const buttons=[
@@ -139,7 +139,7 @@ function setSearchBusy(busy){
 async function searchRhymes(force=false){
   if(!state.currentQuery)return;
   const signature=requestSignature();
-  if(!force&&signature===state.searchSignature&&state.aiResults.length){renderRhymes();return}
+  if(!force&&signature===state.searchSignature&&state.engineOnline===true){renderRhymes();return}
 
   if(activeSearchController) activeSearchController.abort();
   activeSearchController=new AbortController();

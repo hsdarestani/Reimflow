@@ -11,6 +11,9 @@ PRIMARY_MODEL=os.getenv("OPENAI_MODEL","gpt-5.6-sol").strip()
 # High-quality only. Never silently drop to a cheap mini model for rhyme generation.
 FALLBACK_MODELS=list(dict.fromkeys([PRIMARY_MODEL,"gpt-5.5","gpt-5.4"]))
 QUALITY_MODEL=os.getenv("RHYME_REVIEW_MODEL","gpt-5.6-terra").strip()
+# Low reasoning reduces sequential AI time; independent phonetic/language review stays mandatory.
+RHYME_REASONING_EFFORT=os.getenv("REIMFLOW_RHYME_EFFORT","low").strip()
+if RHYME_REASONING_EFFORT not in {"low","medium","high"}: RHYME_REASONING_EFFORT="low"
 DB_PATH=os.getenv("REIMFLOW_DB","/var/lib/reimflow/reimflow.sqlite3")
 _rhyme_jobs=rhyme_jobs.Manager(max_jobs=12,max_workers=3,ttl=900)
 CACHE_TTL=60*60*24*7; MAX_QUERY_LEN=120; RATE_LIMIT=24; RATE_WINDOW=60
@@ -37,7 +40,7 @@ SPRACHE DER ERGEBNISSE: Ausschließlich Deutsch. Jeder einzelne Reimvorschlag mu
 Die Eingabe darf in jeder Sprache sein (auch englische Namen oder Marken); analysiere sie mit ihrer tatsächlichen Originalaussprache, aber liefere ausschließlich deutsche Reimkandidaten. Wenn kein sinnvoller deutscher Reim existiert, liefere lieber null Treffer als englische Treffer.
 Erklärungen, Register und Aussprachehilfen auf Deutsch; etablierte, im Deutschen tatsächlich gebräuchliche Lehnwörter sind nur zulässig, wenn sie im deutschen Sprachgebrauch natürlich verwendet werden.
 Erfinde KEINE Fantasiewörter. Nutze reale Wörter, gebräuchliche Phrasen, bekannte Namen/Marken oder klar etablierte Umgangssprache.
-Qualität vor Quantität, aber suche umfassend! Gib zuerst 5 bis 8 reale, korrekt ausgesprochene Wörter oder Namen, die zum letzten betonten REIMANKER passen, selbst wenn sie nicht zur ganzen Phrase reimen. Dann 3 bis 6 sinnvolle mehrteilige kreative Lyrik-Phrasen, die Rhythmus und Klang der ganzen Query treffen. Nicht die Anzahl erzwingen, aber nicht nach nur einem Versuch aufgeben.
+Qualität vor Quantität, aber suche umfassend! Gib zuerst 4 bis 6 reale, korrekt ausgesprochene deutsche Wörter, die zum letzten betonten REIMANKER passen, selbst wenn sie nicht zur ganzen Phrase reimen. Dann 2 bis 4 sinnvolle mehrteilige kreative deutsche Lyrik-Phrasen, die Rhythmus und Klang der ganzen Query treffen. Nicht die Anzahl erzwingen, aber nicht nach nur einem Versuch aufgeben.
 WICHTIG: analysis.input und analysis.interpreted_as müssen exakt der vom Nutzer eingegebenen, getrimmten Query entsprechen.
 Erweitere Eigennamen NIEMALS selbstständig. Aus "Benzema" darf nicht "Karim Benzema" werden. Aus "Ronaldo" darf nicht "Cristiano Ronaldo" werden.
 Verkürze mehrteilige Namen oder Phrasen ebenfalls nicht. Analysiere exakt die Zeichenfolge, die der Nutzer eingegeben hat.
@@ -56,7 +59,7 @@ Behandle bei mehrteiligen Eingaben drei Reimtypen gleichzeitig:
 Bei fremdsprachigen Eingaben darfst du das Eingabewort in seiner Originalsprache analysieren, aber NICHT englische Reimkandidaten oder englische Code-Switch-Phrasen ausgeben.
 Endwort-Reime sind valide Treffer und kein schwacher Full-Phrase-Reim.
 Nutze mehrere semantische Kategorien, wenn das möglich ist.
-Vermeide die häufige Verwechslung von gleicher Silbenzahl/Rhythmus mit einem Reim. Bei "Blue Ferrari" sind Toyota, Karaoke, Marinade, Batterie keine starken Reime. Mögliche Ankerideen wie Safari/Calamari nur prüfen, nicht automatisch akzeptieren. Nicht behaupten, die gesamte Phrase reime sich, wenn nur das Schlusswort ähnlich klingt. Vermeide Duplikate und bloße Flexionsvarianten. Gib bis zu 14 Kandidaten nur wenn plausibel. Erklärungen kurz und konkret, mit konkret passendem betontem Reimkern. Sei phonetisch ehrlich."""
+Vermeide die häufige Verwechslung von gleicher Silbenzahl/Rhythmus mit einem Reim. Bei "Blue Ferrari" sind Toyota, Karaoke, Marinade, Batterie keine starken Reime. Mögliche Ankerideen wie Safari/Calamari nur prüfen, nicht automatisch akzeptieren. Nicht behaupten, die gesamte Phrase reime sich, wenn nur das Schlusswort ähnlich klingt. Vermeide Duplikate und bloße Flexionsvarianten. Gib bis zu 10 Kandidaten nur wenn plausibel. Erklärungen kurz und konkret, mit konkret passendem betontem Reimkern. Sei phonetisch ehrlich."""
 
 VALIDATE_PROMPT="""Du bist ein strenger Reim-Tester für eine deutschsprachige Rap-Community.
 Prüfe zwei Wörter oder Phrasen nach realer Aussprache, betonten Silben, Vokalen, Konsonanten, Silbenzahl und Rap-Tauglichkeit.
@@ -311,8 +314,14 @@ class Handler(BaseHTTPRequestHandler):
             if not query or len(query)>MAX_QUERY_LEN: self.send_json(400,{"error":"INVALID_QUERY","message":"Bitte ein Wort oder eine kurze Phrase eingeben."}); return
             if category not in {"Alle","Nomen","Adjektiv","Verb","Umgangssprache","Sonstiges"}: category="Alle"
             if syllables not in {"Alle","1","2","3","4+"}: syllables="Alle"
-            key=hashlib.sha256(("rhymes|de-only-v1|"+query.casefold()+"|"+category+"|"+syllables).encode()).hexdigest()
+            # Category and syllable filters are purely presentational. Reuse the
+            # same verified AI result regardless of which filter the user taps.
+            key=hashlib.sha256(("rhymes|de-only-query-v2|"+query.casefold()).encode()).hexdigest()
             cached=cache_get(key)
+            if cached is None:
+                legacy=hashlib.sha256(("rhymes|de-only-v1|"+query.casefold()+"|Alle|Alle").encode()).hexdigest()
+                cached=cache_get(legacy)
+                if cached is not None: cache_put(key,cached)
             if cached: self.send_json(200,cached); return
             if not OPENAI_API_KEY:
                 self.send_json(503,{"error":"AI_CONFIG","message":"Die KI-Suche ist derzeit nicht eingerichtet."}); return
@@ -320,28 +329,32 @@ class Handler(BaseHTTPRequestHandler):
             user_text=json.dumps({
                 "intent":intent,
                 "query":query,
-                "filters":{"category":category,"syllables":syllables},
                 "instructions":"Erstelle zuerst mehrere solide Wortreime speziell für intent.end_word, unabhängig davon ob sie die Gesamtphrase treffen. Dann zusätzlich echte mehrteilige, sinnhafte Rap-Lines mit ähnlichem Klang und Rhythmus zur ganzen Phrase; keine ausgedachten Wörter oder ungebräuchliche Scheinphrasen. Jede Kategorie soll beim Review getrennt geprüft werden. Klang der Originalsprache und Betonung beachten, aber ausschließlich deutsche Wörter und sinnvolle deutsche Phrasen als Reime ausgeben; niemals englische Wörter oder englische Code-Switch-Ausdrücke vorschlagen."
             },ensure_ascii=False)
 
             def generate(job_id):
                 try:
+                    started=time.monotonic()
                     raw,model=call_openai(user_text,RHYME_SCHEMA,
                         "reimflow_quality_candidates",DEVELOPER_PROMPT,
-                        effort="medium",timeout=65)
+                        effort=RHYME_REASONING_EFFORT,timeout=65)
+                    generation_ms=round((time.monotonic()-started)*1000)
                     raw=sanitize(raw,query)
                     _rhyme_jobs.stage(job_id,"review")
                     reviewed,review_model=call_openai(
                         rhyme_quality.review_input(query,raw),
                         rhyme_quality.QUALITY_SCHEMA,"reimflow_independent_review",
                         rhyme_quality.QUALITY_PROMPT,models=list(dict.fromkeys([QUALITY_MODEL,"gpt-5.5","gpt-5.4"])),
-                        effort="medium",timeout=65)
+                        effort=RHYME_REASONING_EFFORT,timeout=65)
+                    review_ms=round((time.monotonic()-started)*1000)-generation_ms
                     data=rhyme_quality.review_and_filter(query,raw,reviewed)
                     # Never cache suggestions without independent phonetic review.
                     result={"ok":True,"engine":"ai_phonetic","model":model,
-                        "intent":intent,"review_model":review_model,"cached":False,**data}
+                        "intent":intent,"review_model":review_model,"cached":False,
+                        "timing_ms":{"generation":generation_ms,"review":review_ms},**data}
                     print("rhyme quality gate:",len(raw["rhymes"]),
-                          "candidates,",len(data["rhymes"]),"accepted",flush=True)
+                          "candidates,",len(data["rhymes"]),"accepted",
+                          "generation_ms:",generation_ms,"review_ms:",review_ms,flush=True)
                     cache_put(key,result)
                     return result
                 except Exception as exc:

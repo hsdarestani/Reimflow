@@ -68,7 +68,7 @@ jobs:
           grep -q 'platform.js?v=20261015-real1' index.html
           grep -q 'platform.css?v=20261015-real1' index.html
           grep -q 'sonic-atelier.css?v=20261014-de1' index.html
-          grep -q 'app.js?v=20261019-de1' index.html
+          grep -q 'app.js?v=20261019-fast1' index.html
           grep -q 'rhyme-fallback.js?v=20261019-de1' index.html
           grep -q 'rhyme-previews.js?v=20261019-de1' index.html
           grep -q 'ai-engine.css?v=20261015-phrase3' index.html
