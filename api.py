@@ -175,13 +175,15 @@ def call_openai(user_text,schema,schema_name,developer_prompt,models=None,effort
     """One quality model per request; fallback only for unavailable models/errors."""
     if not OPENAI_API_KEY: raise RuntimeError("AI_NOT_CONFIGURED")
     last=None
-    for model in dict.fromkeys(models or FALLBACK_MODELS):
+    model_choices=list(dict.fromkeys(models or FALLBACK_MODELS))
+    for model in model_choices:
         # Never silently downgrade to low-cost mini models for phonetic decisions.
         body={"model":model,"store":False,
               "input":[
                  {"role":"developer","content":[{"type":"input_text","text":developer_prompt}]},
                  {"role":"user","content":[{"type":"input_text","text":user_text}]}],
-              "max_output_tokens":4200,
+              # Reasoning tokens count against this budget; 4200 could yield no JSON.
+              "max_output_tokens":8500,
               "text":{"format":{"type":"json_schema","name":schema_name,"strict":True,"schema":schema}}}
         if model.startswith(("gpt-5","gpt-6")):
             body["reasoning"]={"effort":effort}
@@ -189,8 +191,11 @@ def call_openai(user_text,schema,schema_name,developer_prompt,models=None,effort
             data=json.dumps(body,ensure_ascii=False).encode("utf-8"),method="POST",
             headers={"Authorization":"Bearer "+OPENAI_API_KEY,"Content-Type":"application/json","User-Agent":"Reimflow/quality-v1"})
         try:
-            with urllib.request.urlopen(req,timeout=timeout if model==(list(dict.fromkeys(models or FALLBACK_MODELS))[0]) else min(timeout,45)) as resp:
+            with urllib.request.urlopen(req,timeout=timeout if model==model_choices[0] else min(timeout,45)) as resp:
                 raw=json.loads(resp.read(2*1024*1024).decode("utf-8"))
+            if raw.get("status")=="incomplete":
+                reason=str((raw.get("incomplete_details") or {}).get("reason") or "unknown")
+                raise RuntimeError("INCOMPLETE_AI_RESPONSE_"+reason[:40])
             content=extract_output_text(raw)
             if not content: raise RuntimeError("EMPTY_AI_RESPONSE")
             data=json.loads(content)
@@ -209,12 +214,18 @@ def call_openai(user_text,schema,schema_name,developer_prompt,models=None,effort
             print("rhyme upstream:",model,"timeout or network",flush=True)
             # A single retry using another full-quality model is allowed on a
             # generation timeout. Never silently substitute cheap mini models.
-            if (isinstance(e,TimeoutError) or "timed out" in str(e).lower() or "timeout" in str(e).lower()) and model != list(dict.fromkeys(models or FALLBACK_MODELS))[-1]:
+            if (isinstance(e,TimeoutError) or "timed out" in str(e).lower() or "timeout" in str(e).lower()) and model != model_choices[-1]:
                 continue
             raise last
         except (ValueError,RuntimeError) as e:
             last=RuntimeError("OPENAI_BAD_RESPONSE")
-            print("rhyme upstream:",model,"invalid response",flush=True)
+            diagnostic=str(e)
+            if not diagnostic.startswith(("INCOMPLETE_AI_RESPONSE_","EMPTY_AI_RESPONSE","INVALID_AI_RESPONSE")):
+                diagnostic="INVALID_JSON"
+            print("rhyme upstream:",model,"invalid response:",diagnostic[:80],flush=True)
+            # Another full-quality model may recover an incomplete structured response.
+            if model != model_choices[-1]:
+                continue
             raise last
     raise last or RuntimeError("OPENAI_MODEL_UNAVAILABLE")
 
@@ -323,7 +334,7 @@ class Handler(BaseHTTPRequestHandler):
                     reviewed,review_model=call_openai(
                         rhyme_quality.review_input(query,raw),
                         rhyme_quality.QUALITY_SCHEMA,"reimflow_independent_review",
-                        rhyme_quality.QUALITY_PROMPT,models=[QUALITY_MODEL],
+                        rhyme_quality.QUALITY_PROMPT,models=list(dict.fromkeys([QUALITY_MODEL,"gpt-5.5","gpt-5.4"])),
                         effort="medium",timeout=65)
                     data=rhyme_quality.review_and_filter(query,raw,reviewed)
                     # Never cache suggestions without independent phonetic review.
