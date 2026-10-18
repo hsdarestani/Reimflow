@@ -28,7 +28,7 @@ try{
      body:JSON.stringify({ok:true,quality_reviewed:true,engine:"ai_phonetic",
        analysis:{input:"Jude Bellingham",interpreted_as:"Jude Bellingham",syllables:5,language:"Englisch"},
        rhymes:[{word:"Telegramm",pronunciation:"",ipa:"",syllables:3,
-        category:"Nomen",strength:"brauchbar",register:"Standard",kind:"Near Rhyme",
+        category:"Nomen",strength:"brauchbar",register:"Standard",german_valid:true,kind:"Near Rhyme",
         score:0,confidence:0,scope:"end_word",explanation:"Test reviewed response"}]})});
   });
   await page.goto("/",{waitUntil:"domcontentloaded"});

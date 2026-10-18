@@ -15,6 +15,7 @@ class QualityGateTests(unittest.TestCase):
                  "rhymes":[candidate(x) for x in ("Toyota","Karaoke","Marinade","Batterie","Calamari","Safari")]}
         report={"review":[{"word":word,"accept":word in ("Calamari","Safari"),
                            "strength":"brauchbar" if word in ("Calamari","Safari") else "schwach",
+                           "german_valid":word in ("Calamari","Safari"),"scope":"end_word",
                            "reason":"Phonetik des betonten Wortendes geprüft"}
                           for word in ("Toyota","Karaoke","Marinade","Batterie","Calamari","Safari")]}
         result=quality.review_and_filter("Blue Ferrari",initial,report)
@@ -37,10 +38,22 @@ class QualityGateTests(unittest.TestCase):
 
     def test_casefold_dedup_and_reject_weak_even_if_accepted(self):
         candidate_list={"rhymes":[candidate("Safari"),candidate("SAFARI"),candidate("Toyota")]}
-        judgments={"review":[{"word":"safari","accept":True,"strength":"stark","reason":"Passender betonter Reimkern"},
-                            {"word":"Toyota","accept":True,"strength":"schwach","reason":"Nur ein Vokal"}]}
+        judgments={"review":[{"word":"safari","german_valid":True,"scope":"end_word","accept":True,"strength":"stark","reason":"Passender betonter Reimkern"},
+                            {"word":"Toyota","german_valid":False,"scope":"end_word","accept":True,"strength":"schwach","reason":"Nur ein Vokal"}]}
         out=quality.review_and_filter("Ferrari",candidate_list,judgments)
         self.assertEqual(len(out["rhymes"]),1)
         self.assertEqual(out["rhymes"][0]["strength"],"stark")
+
+    def test_rejects_english_candidates_even_when_rhyme_is_strong(self):
+        initial={"rhymes":[candidate("night"),candidate("Licht")]}
+        review={"review":[
+            {"word":"night","german_valid":False,"accept":True,"strength":"stark",
+             "scope":"end_word","reason":"Englisch"},
+            {"word":"Licht","german_valid":True,"accept":True,"strength":"brauchbar",
+             "scope":"end_word","reason":"Deutsch"}
+        ]}
+        result=quality.review_and_filter("light",initial,review)
+        self.assertEqual([r["word"] for r in result["rhymes"]],["Licht"])
+        self.assertTrue(result["rhymes"][0]["german_valid"])
 
 if __name__=="__main__":unittest.main()

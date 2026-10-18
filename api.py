@@ -22,7 +22,7 @@ RHYME_SCHEMA={"type":"object","additionalProperties":False,"required":["analysis
 "rhymes":{"type":"array","minItems":0,"maxItems":14,"items":{"type":"object","additionalProperties":False,"required":["word","pronunciation","ipa","syllables","category","register","score","confidence","kind","explanation"],"properties":{
 "word":{"type":"string"},"pronunciation":{"type":"string"},"ipa":{"type":"string"},"syllables":{"type":"integer","minimum":1,"maximum":20},
 "category":{"type":"string","enum":["Nomen","Adjektiv","Verb","Umgangssprache","Sonstiges"]},
-"register":{"type":"string","enum":["Standard","Umgangssprache","Slang","Name/Marke","Englisch/Code-Switch"]},
+"register":{"type":"string","enum":["Standard","Umgangssprache","Slang","Name/Marke"]},
 "score":{"type":"integer","minimum":0,"maximum":100},"confidence":{"type":"integer","minimum":0,"maximum":100},
 "kind":{"type":"string","enum":["Perfekter Reim","Multi-Silben","Near Rhyme","Assonanz","Slant Rhyme","Phrase"]},"explanation":{"type":"string"}}}}}}
 
@@ -33,7 +33,9 @@ DEVELOPER_PROMPT="""Du bist der phonetische Reimkern von Reimflow, einer App fü
 Finde Reime nach realem Klang, nicht nur nach gleichen Endbuchstaben.
 Priorisiere Lautfolge, betonte Silben, Vokale, Konsonanten, Silbenzahl und Rhythmus.
 Multi-Silben-Reime, Slant Rhymes, Assonanzen und Reime über Wortgrenzen hinweg sind erlaubt.
-Deutsche Umgangssprache, etablierter Slang, Eigennamen, Marken und englische Code-Switches sind erlaubt, wenn sie im Rap plausibel sind.
+SPRACHE DER ERGEBNISSE: Ausschließlich Deutsch. Jeder einzelne Reimvorschlag muss ein tatsächlich gebrauchtes deutsches Wort, eine natürliche deutsche Wortgruppe oder etablierter deutschsprachiger Rap-Slang sein. Keine englischen Reimwörter, keine englischen Phrasen und kein Code-Switching in den Vorschlägen. Erfundene deutsche Wörter sind ebenfalls verboten. Auch Eigennamen oder Marken nicht als Ausweg für englische Kandidaten anbieten.
+Die Eingabe darf in jeder Sprache sein (auch englische Namen oder Marken); analysiere sie mit ihrer tatsächlichen Originalaussprache, aber liefere ausschließlich deutsche Reimkandidaten. Wenn kein sinnvoller deutscher Reim existiert, liefere lieber null Treffer als englische Treffer.
+Erklärungen, Register und Aussprachehilfen auf Deutsch; etablierte, im Deutschen tatsächlich gebräuchliche Lehnwörter sind nur zulässig, wenn sie im deutschen Sprachgebrauch natürlich verwendet werden.
 Erfinde KEINE Fantasiewörter. Nutze reale Wörter, gebräuchliche Phrasen, bekannte Namen/Marken oder klar etablierte Umgangssprache.
 Qualität vor Quantität, aber suche umfassend! Gib zuerst 5 bis 8 reale, korrekt ausgesprochene Wörter oder Namen, die zum letzten betonten REIMANKER passen, selbst wenn sie nicht zur ganzen Phrase reimen. Dann 3 bis 6 sinnvolle mehrteilige kreative Lyrik-Phrasen, die Rhythmus und Klang der ganzen Query treffen. Nicht die Anzahl erzwingen, aber nicht nach nur einem Versuch aufgeben.
 WICHTIG: analysis.input und analysis.interpreted_as müssen exakt der vom Nutzer eingegebenen, getrimmten Query entsprechen.
@@ -48,14 +50,10 @@ Wenn für A kaum natürliche Treffer existieren, darfst du starke Treffer für B
 Ein mehrteiliger Name wie "Karim Benzema" darf also Treffer bekommen, die stark auf "Benzema" oder den Endklang der gesamten Phrase passen. Die Query selbst bleibt trotzdem exakt "Karim Benzema".
 pronunciation ist eine leicht lesbare Aussprachehilfe für deutsche Nutzer; ipa ist möglichst korrekte IPA.
 Behandle bei mehrteiligen Eingaben drei Reimtypen gleichzeitig:
-1) isolierte Endwort-Reime: für "Blue paper" ist "paper" das Endwort.
-Dazu gehören "caper", "taper", "scraper", "shaper" und je nach Akzent "vapor".
-2) sinnvolle mehrteilige Rap-Phrasen, die den Klangverlauf der ganzen Eingabe
-nachbilden: z.B. "Blue paper" → "blue vapor" oder "true caper".
-3) kreativere Lyric-Phrasen wie "clue shaper" sind nur passend,
-wenn Bedeutung nachvollziehbar und ihre ungewohnte Form transparent ist.
-Alle Varianten gegen tatsächlich plausiblen Klang prüfen. Englisch
-gesprochenes "paper" nicht als deutsch ausgesprochenes "Papier" behandeln.
+1) isolierte Endwort-Reime gegen die Originalaussprache des letzten Wortes;
+2) natürliche, mehrteilige DEUTSCHE Rap-Phrasen, die Klang und Rhythmus der ganzen Eingabe treffen;
+3) kreative, aber sprachlich sinnvolle DEUTSCHE Lyrik-Phrasen.
+Bei fremdsprachigen Eingaben darfst du das Eingabewort in seiner Originalsprache analysieren, aber NICHT englische Reimkandidaten oder englische Code-Switch-Phrasen ausgeben.
 Endwort-Reime sind valide Treffer und kein schwacher Full-Phrase-Reim.
 Nutze mehrere semantische Kategorien, wenn das möglich ist.
 Vermeide die häufige Verwechslung von gleicher Silbenzahl/Rhythmus mit einem Reim. Bei "Blue Ferrari" sind Toyota, Karaoke, Marinade, Batterie keine starken Reime. Mögliche Ankerideen wie Safari/Calamari nur prüfen, nicht automatisch akzeptieren. Nicht behaupten, die gesamte Phrase reime sich, wenn nur das Schlusswort ähnlich klingt. Vermeide Duplikate und bloße Flexionsvarianten. Gib bis zu 14 Kandidaten nur wenn plausibel. Erklärungen kurz und konkret, mit konkret passendem betontem Reimkern. Sei phonetisch ehrlich."""
@@ -233,7 +231,7 @@ def sanitize(data, query):
     seen=set(); clean=[]
     for r in data.get("rhymes") or []:
         word=str(r.get("word","")).strip()
-        if not word or word.casefold() in seen: continue
+        if not word or word.casefold() in seen or r.get("register")=="Englisch/Code-Switch": continue
         seen.add(word.casefold()); r["word"]=word[:90]
         r["pronunciation"]=str(r.get("pronunciation",""))[:120]; r["ipa"]=str(r.get("ipa",""))[:140]; r["explanation"]=str(r.get("explanation",""))[:220]
         r["score"]=max(0,min(100,int(r.get("score",0)))); r["confidence"]=max(0,min(100,int(r.get("confidence",0)))); r["syllables"]=max(1,min(20,int(r.get("syllables",1))))
@@ -302,7 +300,7 @@ class Handler(BaseHTTPRequestHandler):
             if not query or len(query)>MAX_QUERY_LEN: self.send_json(400,{"error":"INVALID_QUERY","message":"Bitte ein Wort oder eine kurze Phrase eingeben."}); return
             if category not in {"Alle","Nomen","Adjektiv","Verb","Umgangssprache","Sonstiges"}: category="Alle"
             if syllables not in {"Alle","1","2","3","4+"}: syllables="Alle"
-            key=hashlib.sha256(("rhymes|phrase-v2|"+query.casefold()+"|"+category+"|"+syllables).encode()).hexdigest()
+            key=hashlib.sha256(("rhymes|de-only-v1|"+query.casefold()+"|"+category+"|"+syllables).encode()).hexdigest()
             cached=cache_get(key)
             if cached: self.send_json(200,cached); return
             if not OPENAI_API_KEY:
@@ -312,7 +310,7 @@ class Handler(BaseHTTPRequestHandler):
                 "intent":intent,
                 "query":query,
                 "filters":{"category":category,"syllables":syllables},
-                "instructions":"Erstelle zuerst mehrere solide Wortreime speziell für intent.end_word, unabhängig davon ob sie die Gesamtphrase treffen. Dann zusätzlich echte mehrteilige, sinnhafte Rap-Lines mit ähnlichem Klang und Rhythmus zur ganzen Phrase; keine ausgedachten Wörter oder ungebräuchliche Scheinphrasen. Jede Kategorie soll beim Review getrennt geprüft werden. Klang der Originalsprache und Betonung beachten."
+                "instructions":"Erstelle zuerst mehrere solide Wortreime speziell für intent.end_word, unabhängig davon ob sie die Gesamtphrase treffen. Dann zusätzlich echte mehrteilige, sinnhafte Rap-Lines mit ähnlichem Klang und Rhythmus zur ganzen Phrase; keine ausgedachten Wörter oder ungebräuchliche Scheinphrasen. Jede Kategorie soll beim Review getrennt geprüft werden. Klang der Originalsprache und Betonung beachten, aber ausschließlich deutsche Wörter und sinnvolle deutsche Phrasen als Reime ausgeben; niemals englische Wörter oder englische Code-Switch-Ausdrücke vorschlagen."
             },ensure_ascii=False)
 
             def generate(job_id):

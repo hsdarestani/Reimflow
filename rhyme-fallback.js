@@ -48,22 +48,8 @@
       entry("jung","Adjektiv",1),entry("Dschungel","Nomen",2)
     ],
     ing:[
-      entry("Ring","Nomen",1),entry("Ding","Nomen",1),
-      entry("King","Nomen",1,"Englisch/Code-Switch"),
-      entry("Swing","Nomen",1,"Englisch/Code-Switch")
+      entry("Ring","Nomen",1),entry("Ding","Nomen",1)
     ],
-    ame:[
-      entry("game","Nomen",1,"Englisch/Code-Switch"),entry("name","Nomen",1,"Englisch/Code-Switch"),
-      entry("same","Adjektiv",1,"Englisch/Code-Switch"),
-      entry("flame","Nomen",1,"Englisch/Code-Switch")
-    ],
-    ight:[
-      entry("night","Nomen",1,"Englisch/Code-Switch"),
-      entry("light","Nomen",1,"Englisch/Code-Switch"),
-      entry("fight","Nomen",1,"Englisch/Code-Switch"),
-      entry("right","Adjektiv",1,"Englisch/Code-Switch"),
-      entry("bright","Adjektiv",1,"Englisch/Code-Switch")
-    ]
   };
   const safeLast=query=>{
     const tokens=String(query||"").trim().match(/[a-zA-ZäöüÄÖÜß]+/g)||[];
@@ -79,8 +65,6 @@
     if(/eit$/.test(token))return "eit";
     if(/ung$/.test(token))return "ung";
     if(/ing$/.test(token))return "ing";
-    if(/ame$/.test(token))return "ame";
-    if(/ight$/.test(token))return "ight";
     if(/on$/.test(token))return "on";
     return null;
   }
