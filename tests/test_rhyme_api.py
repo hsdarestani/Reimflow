@@ -49,6 +49,29 @@ class RhymeModelsTest(unittest.TestCase):
             api.OPENAI_API_KEY=original
             api.FALLBACK_MODELS=original_models
 
+    def test_incomplete_reasoning_response_retries_quality_model(self):
+        previous=api.OPENAI_API_KEY
+        calls=[]
+        class Incomplete:
+            def __enter__(self): return self
+            def __exit__(self,*args): return False
+            def read(self,size=-1):
+                return json.dumps({"status":"incomplete","incomplete_details":{"reason":"max_output_tokens"},"output":[{"type":"reasoning"}]}).encode()
+        try:
+            api.OPENAI_API_KEY="fake-test-token"
+            def respond(req,timeout):
+                body=json.loads(req.data)
+                calls.append((body["model"],body["max_output_tokens"]))
+                return Incomplete() if len(calls)==1 else Response()
+            with patch.object(api.urllib.request,"urlopen",side_effect=respond):
+                data,model=api.call_openai("Blue Talisman",api.RHYME_SCHEMA,
+                    "unit_retry","German only",models=["gpt-5.6-sol","gpt-5.5"])
+            self.assertEqual(model,"gpt-5.5")
+            self.assertEqual(calls,[("gpt-5.6-sol",8500),("gpt-5.5",8500)])
+            self.assertEqual(data["analysis"]["input"],"Blue Talisman")
+        finally:
+            api.OPENAI_API_KEY=previous
+
     def test_no_credentials_stored_in_response(self):
         self.assertNotIn("Authorization",api.RHYME_SCHEMA)
         self.assertNotIn("api_key",api.RHYME_SCHEMA)
