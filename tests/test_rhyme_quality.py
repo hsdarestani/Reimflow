@@ -44,4 +44,16 @@ class QualityGateTests(unittest.TestCase):
         self.assertEqual(len(out["rhymes"]),1)
         self.assertEqual(out["rhymes"][0]["strength"],"stark")
 
+    def test_rejects_english_candidates_even_when_rhyme_is_strong(self):
+        initial={"rhymes":[candidate("night"),candidate("Licht")]}
+        review={"review":[
+            {"word":"night","german_valid":False,"accept":True,"strength":"stark",
+             "scope":"end_word","reason":"Englisch"},
+            {"word":"Licht","german_valid":True,"accept":True,"strength":"brauchbar",
+             "scope":"end_word","reason":"Deutsch"}
+        ]}
+        result=quality.review_and_filter("light",initial,review)
+        self.assertEqual([r["word"] for r in result["rhymes"]],["Licht"])
+        self.assertTrue(result["rhymes"][0]["german_valid"])
+
 if __name__=="__main__":unittest.main()
