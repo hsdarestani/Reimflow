@@ -349,7 +349,17 @@
           <button type="button" class="more-tile" data-go="premium"><span class="more-symbol" aria-hidden="true">◇</span><span><strong>Premium</strong><small>In Planung</small></span><span class="more-arrow" aria-hidden="true">↗</span></button>
         </div>
         <div class="more-settings">
-          <div><h2>Design</h2><p>Wähle den Stil, der zu dir passt.</p></div>
+          <div><h2>Design</h2><p>Wähle den Stil, der zu dir passt.</p>
+            <details class="more-style-shortcuts">
+              <summary>Comic Stile direkt wählen</summary>
+              <div class="more-style-options" role="group" aria-label="Comic Stile">
+                <button type="button" data-theme-pick="sonic-art" aria-pressed="true">Pop</button>
+                <button type="button" data-theme-pick="comic-graffiti" aria-pressed="false">Graffiti</button>
+                <button type="button" data-theme-pick="comic-novel" aria-pressed="false">Roman</button>
+                <button type="button" data-theme-pick="comic-clean" aria-pressed="false">Klar</button>
+              </div>
+            </details>
+          </div>
           <div class="theme-switcher">
       <button class="theme-toggle" id="themeToggle" type="button" title="Design wechseln" aria-haspopup="true" aria-expanded="false" aria-controls="themeMenu">
         <span class="theme-swatch" aria-hidden="true"></span>
