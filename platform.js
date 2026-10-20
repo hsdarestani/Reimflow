@@ -40,7 +40,11 @@ function renderCommunity(){
  const queue=$("#testerQueue");
  if(queue)queue.innerHTML=["tester","admin"].includes(app.user?.role)?app.queue.map(x=>'<article class="sticker-card submission-card"><div><div class="submission-pair"><span>'+esc(x.source)+'</span> → <span>'+esc(x.target)+'</span></div><div class="submission-meta"><span class="micro-tag">@'+esc(x.username)+'</span></div></div>'+(x.author_id===app.user.id?'<small>Eigener Beitrag</small>':'<div class="review-actions"><button class="ai-check-btn" data-ai-review="'+x.id+'">✦ KI Prüfung</button><button class="approve-btn" data-decision="accepted" data-id="'+x.id+'">✓ Passt</button><button class="reject-btn" data-decision="rejected" data-id="'+x.id+'">× Nein</button></div>')+'<div class="ai-review-slot" data-ai-result="'+x.id+'"></div></article>').join("")||'<div class="empty-state">Keine offenen Reime.</div>':'<div class="empty-state">Nur für bestätigte Tester.</div>';
  const leaders=$(".leaderboard ol");
- if(leaders)leaders.innerHTML=app.leaders.length?app.leaders.map(x=>'<li><span class="avatar violet-bg">'+esc(x.display_name.slice(0,2).toUpperCase())+'</span><div><strong>'+esc(x.display_name)+'</strong><small>@'+esc(x.username)+'</small></div><b>'+Number(x.points)+'</b></li>').join(""):'<li>Hier erscheinen echte Punkte der Mitglieder.</li>';
+ const hasLeaders=Array.isArray(app.leaders)&&app.leaders.length>0;
+ const leaderboard=$(".leaderboard");
+ if(leaderboard)leaderboard.hidden=!hasLeaders;
+ $(".community-grid")?.classList.toggle("no-leaders",!hasLeaders);
+ if(leaders)leaders.innerHTML=hasLeaders?app.leaders.map(x=>'<li><span class="avatar violet-bg">'+esc(x.display_name.slice(0,2).toUpperCase())+'</span><div><strong>'+esc(x.display_name)+'</strong><small>@'+esc(x.username)+'</small></div><b>'+Number(x.points)+'</b></li>').join(""):"";
 }
 function renderBeats(){
  const grid=$("#beatGrid");if(!grid)return;

@@ -289,3 +289,172 @@ html[data-theme="sonic-art"][data-comic-style="pop"] .shortcut-icon { background
     pointer-events: none;
   }
 }
+
+
+/* 2026 mobile editorial repair: remove overlays and dead-end placeholders.
+   Applied to every theme; theme-specific colors remain unchanged. */
+.community-grid.no-leaders {
+  grid-template-columns:minmax(0,1fr);
+}
+.leaderboard[hidden] {
+  display:none!important;
+}
+.community-grid,
+.community-grid>div,
+.beat-toolbar,
+.beat-toolbar>div {
+  min-width:0;
+}
+.leaderboard li {
+  grid-template-columns:44px minmax(0,1fr) auto;
+}
+.leaderboard li>div {
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+@media (max-width:760px) {
+  /* Sticky chrome hid the heading after a small scroll. Keep the header in
+     document flow on phones, while the fixed bottom dock stays available. */
+  .topbar,
+  html[data-theme="sonic-art"] .topbar,
+  html[data-theme="sonic-art"][data-comic-style="pop"] .topbar {
+    position:relative;
+    top:auto;
+  }
+  .page[data-page="beats"] .app-shell,
+  .page[data-page="community"] .app-shell,
+  html[data-theme="sonic-art"] .page[data-page="beats"] .app-shell,
+  html[data-theme="sonic-art"] .page[data-page="community"] .app-shell,
+  html[data-theme="sonic-art"][data-comic-style="pop"] .page[data-page="beats"] .app-shell,
+  html[data-theme="sonic-art"][data-comic-style="pop"] .page[data-page="community"] .app-shell {
+    padding-top:clamp(22px,5vw,34px);
+    padding-bottom:130px;
+    min-height:0;
+  }
+  /* These index numbers were overlaying the heading and its eyebrow. */
+  .page[data-page="beats"] .app-shell::before,
+  .page[data-page="community"] .app-shell::before,
+  html[data-theme="sonic-art"] .page[data-page="beats"] .app-shell::before,
+  html[data-theme="sonic-art"] .page[data-page="community"] .app-shell::before {
+    content:none;
+    display:none;
+  }
+  .page[data-page="beats"] .page-title,
+  .page[data-page="community"] .page-title,
+  html[data-theme="sonic-art"] .page[data-page="beats"] .page-title,
+  html[data-theme="sonic-art"] .page[data-page="community"] .page-title {
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:16px;
+    margin:0 0 24px;
+    padding:0 0 22px;
+    border-bottom:1px solid rgba(32,38,49,.18);
+  }
+  .page[data-page="beats"] .page-title>div,
+  .page[data-page="community"] .page-title>div {
+    min-width:0;
+    width:100%;
+  }
+  .page[data-page="beats"] .page-title .kicker,
+  .page[data-page="community"] .page-title .kicker,
+  html[data-theme="sonic-art"] .page[data-page="beats"] .page-title .kicker,
+  html[data-theme="sonic-art"] .page[data-page="community"] .page-title .kicker {
+    display:block;
+    position:static;
+    margin:0 0 10px;
+    line-height:1.45;
+    letter-spacing:.05em;
+    font-size:.76rem;
+    opacity:1;
+  }
+  .page[data-page="beats"] .page-title h1,
+  .page[data-page="community"] .page-title h1,
+  html[data-theme="sonic-art"] .page[data-page="beats"] .page-title h1,
+  html[data-theme="sonic-art"] .page[data-page="community"] .page-title h1,
+  html[data-theme="sonic-art"][data-comic-style="pop"] .page[data-page="beats"] .page-title h1,
+  html[data-theme="sonic-art"][data-comic-style="pop"] .page[data-page="community"] .page-title h1 {
+    margin:0;
+    max-width:100%;
+    font-size:clamp(2rem,9vw,2.85rem);
+    line-height:1.16;
+    letter-spacing:-.045em;
+    text-transform:none;
+    overflow-wrap:normal;
+    word-break:normal;
+  }
+  .page[data-page="beats"] .page-title .candy-btn,
+  .page[data-page="community"] .page-title .candy-btn,
+  html[data-theme="sonic-art"] .page[data-page="beats"] .page-title .candy-btn,
+  html[data-theme="sonic-art"] .page[data-page="community"] .page-title .candy-btn {
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+    align-self:flex-start;
+    width:auto;
+    max-width:100%;
+    min-height:48px;
+    padding:10px 18px;
+    margin:0;
+    font-size:.9rem;
+    line-height:1.3;
+  }
+  .page[data-page="beats"] .page-title .candy-btn span,
+  .page[data-page="community"] .page-title .candy-btn span {
+    flex:0 0 auto;
+  }
+  .page[data-page="beats"] .beat-toolbar {
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    align-items:stretch;
+    margin-bottom:20px;
+  }
+  .page[data-page="beats"] .beat-toolbar .segmented {
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .page[data-page="beats"] .beat-toolbar .segmented button {
+    min-height:44px;
+    padding:9px 13px;
+  }
+  .page[data-page="beats"] .beat-toolbar .input-with-icon {
+    width:100%;
+    min-height:52px;
+  }
+  .page[data-page="beats"] .beat-grid,
+  .page[data-page="community"] .community-tab {
+    min-width:0;
+  }
+  .page[data-page="beats"] .beat-grid>.empty-state,
+  .page[data-page="community"] .community-tab>.empty-state {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:110px;
+    padding:24px 18px;
+    margin:0;
+    line-height:1.5;
+    font-size:.9rem;
+    text-align:center;
+    overflow-wrap:break-word;
+  }
+  .page[data-page="community"] .subtabs {
+    flex-wrap:wrap;
+    margin-bottom:18px;
+  }
+  .page[data-page="community"] .leaderboard {
+    position:relative;
+    top:auto;
+    margin-top:22px;
+    min-width:0;
+    width:100%;
+    padding:20px;
+    height:auto;
+  }
+  .page[data-page="community"] .leaderboard ol {
+    margin:14px 0;
+  }
+}
