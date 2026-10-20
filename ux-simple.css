@@ -157,3 +157,29 @@ html[data-theme="sonic-art"] .more-settings h2 { color:#202631; }
 @media(max-width:760px) {
  .rhyme-card.ai-rhyme details.rhyme-explanation { grid-column:1/-1; }
 }
+
+/* Consistent, quiet cards and mobile dock on the default design. */
+html[data-theme="sonic-art"] .search-panel,
+html[data-theme="sonic-art"] .sticker-card,
+html[data-theme="sonic-art"] .review-chip { background:#fff;border:1px solid #e4e7e8;box-shadow:0 10px 30px rgba(23,31,42,.045); }
+html[data-theme="sonic-art"] .rhyme-card.ai-rhyme,
+html[data-theme="sonic-art"] .rhyme-card.ai-rhyme:hover { background:#fff;border:1px solid #e4e7e8;box-shadow:0 8px 25px rgba(23,31,42,.055);transform:none;border-radius:16px; }
+html[data-theme="sonic-art"] .rhyme-card.ai-rhyme:hover { border-color:#edb1a5; }
+html[data-theme="sonic-art"] .input-with-icon { border:1px solid #dbe1e5;border-radius:12px; }
+html[data-theme="sonic-art"] .input-with-icon:focus-within { border-color:#ea6248;box-shadow:0 0 0 3px rgba(234,98,72,.1); }
+html[data-theme="sonic-art"] .match-score { width:56px;height:56px;border:0;border-radius:14px;box-shadow:none;background:#fbe3de;color:#bb4734; }
+html[data-theme="sonic-art"] .ai-rhyme.good .match-score { background:#f5f1e8;color:#785c37; }
+html[data-theme="sonic-art"] .search-empty { background:#fff;border:1px dashed #d4dce1;box-shadow:none; }
+html[data-theme="sonic-art"] .mobile-nav { background:rgba(255,255,255,.96);border:1px solid #e4e7e8;border-radius:18px;box-shadow:0 10px 28px rgba(20,29,40,.12); }
+html[data-theme="sonic-art"] .mobile-nav button { color:#627080; }
+html[data-theme="sonic-art"] .mobile-nav button.active { color:#d04d35;background:#fff0eb; }
+html[data-theme="sonic-art"] .mobile-nav button.active span { color:#d04d35;background:transparent;border-color:transparent; }
+html[data-theme="sonic-art"] .page[data-page="rhymes"] .search-panel { margin-top:18px; }
+html[data-theme="sonic-art"] .more-tile .more-symbol,
+html[data-theme="sonic-art"] .shortcut-icon { background:#fff0eb;color:#da573e; }
+#accountStatus { max-width:min(24vw,220px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+@media(max-width:650px) {
+ #accountStatus { max-width:38vw; }
+ html[data-theme="sonic-art"] .rhyme-card.ai-rhyme { padding:14px;gap:8px 10px; }
+ html[data-theme="sonic-art"] .match-score { width:46px;height:46px; }
+}
