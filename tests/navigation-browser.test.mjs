@@ -58,7 +58,7 @@ try{
         const toast=document.querySelector("#toast");
         const nav=dock.getBoundingClientRect(),msg=toast.getBoundingClientRect();
         return{
-          tracks:getComputedStyle(dock).gridTemplateColumns.split(/\\s+/).length,
+          tracks:getComputedStyle(dock).gridTemplateColumns.split(" ").filter(Boolean).length,
           nav:{left:nav.left,right:nav.right,top:nav.top,bottom:nav.bottom},
           toast:{left:msg.left,right:msg.right,top:msg.top,bottom:msg.bottom},
           toastVisible:getComputedStyle(toast).opacity,
