@@ -141,3 +141,19 @@ html[data-theme="sonic-art"] .more-settings h2 { color:#202631; }
   .shortcut-tile,.more-tile,.advanced-filters summary:after { transition:none!important; }
   .shortcut-tile:hover,.more-tile:hover { transform:none; }
 }
+/* Dense result metadata and profile actions are available on demand. */
+.rhyme-card.ai-rhyme details.rhyme-explanation { display:block!important;grid-column:2/-1;padding-top:10px; }
+.rhyme-card.ai-rhyme details.rhyme-explanation summary { display:list-item;list-style:revert;cursor:pointer;font-size:.8rem;font-weight:700;color:var(--theme-muted,#646d79); }
+.rhyme-card.ai-rhyme details.rhyme-explanation summary:hover { color:var(--theme-accent,#e35b42); }
+.rhyme-card.ai-rhyme details.rhyme-explanation:not([open])>p { display:none!important; }
+.rhyme-card.ai-rhyme details.rhyme-explanation[open]>p { display:block!important;margin:10px 0 0!important;line-height:1.55;font-size:.82rem; }
+.rhyme-card.ai-rhyme .tag-row .micro-tag:nth-child(n+4) { display:none; }
+.profile-content-card>h3 { font-size:1.05rem;margin:16px 0 10px; }
+.profile-content-card>h3:first-child { margin-top:0; }
+.profile-account-details { margin-top:22px;border-top:1px solid var(--theme-border,#e1e4e8); }
+.profile-account-details summary { cursor:pointer;padding:18px 0 4px;font-size:.91rem;font-weight:750; }
+.profile-account-body { padding:12px 0 4px; }
+.profile-account-body h4 { margin:6px 0 10px; }
+@media(max-width:760px) {
+ .rhyme-card.ai-rhyme details.rhyme-explanation { grid-column:1/-1; }
+}
