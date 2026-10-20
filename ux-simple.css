@@ -183,3 +183,9 @@ html[data-theme="sonic-art"] .shortcut-icon { background:#fff0eb;color:#da573e; 
  html[data-theme="sonic-art"] .rhyme-card.ai-rhyme { padding:14px;gap:8px 10px; }
  html[data-theme="sonic-art"] .match-score { width:46px;height:46px; }
 }
+
+.more-style-shortcuts { margin-top:13px; }
+.more-style-shortcuts summary { cursor:pointer;font-size:.83rem;font-weight:700;color:var(--theme-muted,#667085); }
+.more-style-options { display:flex;flex-wrap:wrap;gap:7px;margin-top:12px; }
+.more-style-options button { padding:8px 12px;min-height:36px;border-radius:10px;border:1px solid var(--theme-border,#e1e4e8);background:transparent;color:var(--theme-fg,#202631);font-weight:700;font-size:.8rem; }
+.more-style-options button.active { background:var(--theme-accent,#ea6248);color:#fff;border-color:var(--theme-accent,#ea6248); }
