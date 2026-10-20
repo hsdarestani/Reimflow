@@ -78,6 +78,7 @@
 
   // Linear's ambient pointer lighting and card spotlights.
   window.addEventListener("pointermove", (event) => {
+    if (root.dataset.theme !== "linear") return;
     root.style.setProperty("--pointer-x", event.clientX + "px");
     root.style.setProperty("--pointer-y", event.clientY + "px");
   }, { passive: true });

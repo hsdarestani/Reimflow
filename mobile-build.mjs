@@ -6,7 +6,7 @@ import {join} from "node:path";
 const files=[
  "index.html","styles.css","themes.css","ai-engine.css",
  "sonic-atelier.css","comic-flow.css","comic-variants.css",
- "flow-challenge.css","rap-flow.css","platform.css",
+ "flow-challenge.css","rap-flow.css","platform.css","ux-simple.css",
  "theme-engine.js","sonic-atelier.js","rhyme-fallback.js",
  "rhyme-previews.js","app.js","platform.js",
  "flow-scoring.js","flow-challenge.js","rap-audio.js","rap-flow.js"
