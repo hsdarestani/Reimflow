@@ -223,18 +223,7 @@ html[data-comic-style="novel"] .flow-page-title h1 {font-family:"Marcellus",Geor
   .flow-game-actions .flow-stop,.flow-game-actions .flow-share {font-size:.73rem}
   .flow-orbit {width:112px;height:112px}
 }
-/* New dedicated Flow tab fits the existing mobile navigation without overlap. */
-@media(max-width:900px) {
-  .mobile-nav {gap:1px}
-  .mobile-nav button {min-width:0;padding:6px 4px!important;font-size:.57rem}
-  html[data-theme="sonic-art"] .mobile-nav {
-    grid-template-columns:repeat(6,minmax(0,1fr))!important;
-    gap:1px;
-  }
-  html[data-theme="sonic-art"] .mobile-nav button {
-    padding:4px 1px!important;min-width:0;font-size:.52rem;
-  }
-}
+/* Mobile dock layout is centralized in ux-simple.css (four tabs, safe area). */
 @media(prefers-reduced-motion:reduce) {
   .flow-orbit.pulse {animation:none!important}
   .flow-beat,.flow-pad {transition:none!important}
