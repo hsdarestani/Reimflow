@@ -256,7 +256,7 @@ function renderRhymes(errorMessage=""){
   const list=$("#rhymeResults");
   if(!state.currentQuery){
     $("#resultsCount").textContent="Bereit";$("#resultsFor").textContent="";
-    list.innerHTML='<div class="search-empty"><div class="empty-glyph">R</div><strong>Schreib ein Wort. Wir hören auf den Klang.</strong><p>Die Suche berücksichtigt Aussprache, Silben, Betonung, Umgangssprache und Multi Silben Reime.</p></div>';return;
+    list.innerHTML='<div class="search-empty"><div class="empty-glyph">R</div><strong>Starte mit einem Wort.</strong><p>Zum Beispiel Berlin, Mission oder Nacht.</p></div>';return;
   }
   const rows=filteredRhymes();$("#resultsCount").textContent=errorMessage?"Suche fehlgeschlagen":rows.length+" "+(rows.length===1?"Treffer":"Treffer");$("#resultsFor").textContent=' für „'+state.currentQuery+'“';
   if(errorMessage){
@@ -295,7 +295,7 @@ function renderRhymes(errorMessage=""){
     '<div class="rhyme-word"><div class="word-line"><strong>'+escapeHtml(r.word)+'</strong><span class="ai-chip"+(offline?" source-offline":"")+"">"+(offline?"IDEE":"KI")+"</span></div><small>'+escapeHtml(r.pronunciation||"")+(r.ipa?' · <span class="ipa-inline">'+escapeHtml(r.ipa)+'</span>':"")+'</small></div>'+
     '<div class="tag-row"><span class="micro-tag">'+escapeHtml(r.category||"Sonstiges")+'</span><span class="micro-tag">'+escapeHtml(String(r.syllables||"?"))+' Silben</span><span class="micro-tag">'+escapeHtml(rhymeKindLabel(r.kind||"Klangreim"))+'</span><span class="micro-tag">'+escapeHtml(r.register||"Standard")+'</span></div>'+
     '<div class="result-actions"><button class="icon-btn speak-result" data-word="'+escapeAttr(r.word)+'" aria-label="Aussprache anhören">♫</button><button class="favorite-btn '+(fav?"active":"")+'" data-fav="'+escapeAttr(r.word)+'" aria-label="Favorit">♥</button></div>'+
-    '<div class="rhyme-explanation"><span class="review-explanation-label">'+(offline?"Nicht geprüft":"Zweite KI Klangprüfung · keine Wahrscheinlichkeitsangabe")+'</span><p>'+escapeHtml(r.explanation||"")+'</p></div></article>';
+    '<details class="rhyme-explanation"><summary>Warum passt der Reim?</summary><p><strong>'+(offline?"Ungeprüfte Idee":"Klang von KI geprüft")+'</strong> · '+escapeHtml(r.explanation||"")+'</p></details></article>';
   }).join("");
   if(offline)$("#retryOnlineSearch")?.addEventListener("click",()=>searchRhymes(true));
 }
