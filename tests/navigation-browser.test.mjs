@@ -59,6 +59,8 @@ try{
         const nav=dock.getBoundingClientRect(),msg=toast.getBoundingClientRect();
         return{
           tracks:getComputedStyle(dock).gridTemplateColumns.split(" ").filter(Boolean).length,
+          columns:getComputedStyle(dock).gridTemplateColumns,
+          buttons:[...dock.querySelectorAll("button")].map(b=>({name:b.dataset.go,left:b.getBoundingClientRect().left,right:b.getBoundingClientRect().right,width:b.getBoundingClientRect().width})),
           nav:{left:nav.left,right:nav.right,top:nav.top,bottom:nav.bottom},
           toast:{left:msg.left,right:msg.right,top:msg.top,bottom:msg.bottom},
           toastVisible:getComputedStyle(toast).opacity,
