@@ -189,3 +189,103 @@ html[data-theme="sonic-art"][data-comic-style="pop"] .shortcut-icon { background
 .more-style-options { display:flex;flex-wrap:wrap;gap:7px;margin-top:12px; }
 .more-style-options button { padding:8px 12px;min-height:36px;border-radius:10px;border:1px solid var(--theme-border,#e1e4e8);background:transparent;color:var(--theme-fg,#202631);font-weight:700;font-size:.8rem; }
 .more-style-options button.active { background:var(--theme-accent,#ea6248);color:#fff;border-color:var(--theme-accent,#ea6248); }
+
+
+/* Four destinations need four equal mobile columns (legacy themes used five).
+   Reserve enough space for the Android/iOS safe area and put feedback ABOVE
+   the dock instead of behind its higher stacking context. */
+@media (max-width: 900px) {
+  body,
+  html[data-theme="sonic-art"] body {
+    padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px));
+  }
+  .mobile-nav,
+  html[data-theme="sonic-art"] .mobile-nav,
+  html[data-theme="sonic-art"][data-comic-style="pop"] .mobile-nav {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: stretch;
+    justify-items: stretch;
+    justify-content: stretch;
+    gap: 2px;
+    box-sizing: border-box;
+    height: 72px;
+    min-height: 72px;
+    left: 10px;
+    right: 10px;
+    bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    padding: 5px;
+    overflow: hidden;
+    z-index: 140;
+  }
+  .mobile-nav button,
+  html[data-theme="sonic-art"] .mobile-nav button,
+  html[data-theme="sonic-art"][data-comic-style="pop"] .mobile-nav button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    width: 100%;
+    min-height: 0;
+    height: 100%;
+    gap: 5px;
+    padding: 7px 2px 6px;
+    font: 700 .72rem/1.15 "Space Grotesk", system-ui, sans-serif;
+    letter-spacing: 0;
+    text-transform: none;
+    white-space: nowrap;
+    touch-action: manipulation;
+  }
+  .mobile-nav button span,
+  html[data-theme="sonic-art"] .mobile-nav button span,
+  html[data-theme="sonic-art"][data-comic-style="pop"] .mobile-nav button span {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 27px;
+    height: 27px;
+    line-height: 1;
+    font-size: 1.2rem;
+  }
+  #toast.toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+    z-index: 240;
+    max-width: calc(100vw - 32px);
+    width: max-content;
+    min-width: min(220px, calc(100vw - 32px));
+    box-sizing: border-box;
+    padding: 12px 18px;
+    border-radius: 16px;
+    font-size: .88rem;
+    line-height: 1.45;
+    text-align: center;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    pointer-events: none;
+    transform: translate(-50%, 12px);
+    transition: opacity .2s ease, transform .2s ease;
+  }
+  #toast.toast.show {
+    transform: translate(-50%, 0);
+  }
+}
+@media (max-width: 360px) {
+  .mobile-nav button,
+  html[data-theme="sonic-art"] .mobile-nav button,
+  html[data-theme="sonic-art"][data-comic-style="pop"] .mobile-nav button {
+    font-size: .67rem;
+    gap: 3px;
+  }
+}
+@media (min-width: 901px) {
+  #toast.toast {
+    z-index: 240;
+    max-width: min(460px, calc(100vw - 32px));
+    box-sizing: border-box;
+    text-align: center;
+    pointer-events: none;
+  }
+}
