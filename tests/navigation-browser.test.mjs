@@ -72,6 +72,40 @@ try{
       assert.ok(layout.toast.left>=0 && layout.toast.right<=layout.viewport.width+1,"toast clipped horizontally: "+JSON.stringify(layout));
       assert.ok(layout.toast.top>=0 && layout.toastVisible==="1","toast hidden or clipped: "+JSON.stringify(layout));
       console.log(size.width+"px toast clears mobile dock: PASSED");
+      // The old decorative label and sticky masthead obscured Beats / Community
+      // headings; the empty leaderboard previously collapsed to a 44px column.
+      for(const name of ["beats","community"]){
+        await page.locator(".mobile-nav [data-go='more']").click();
+        await page.locator('.page[data-page="more"] .more-tile[data-go="'+name+'"]').click();
+        await page.waitForTimeout(160);
+        const pageLayout=await page.evaluate(name=>{
+          const shell=document.querySelector('.page[data-page="'+name+'"] .app-shell');
+          const heading=shell.querySelector(".page-title h1").getBoundingClientRect();
+          const kicker=shell.querySelector(".page-title .kicker").getBoundingClientRect();
+          const action=shell.querySelector(".page-title .candy-btn").getBoundingClientRect();
+          const header=document.querySelector(".topbar");
+          const decorative=getComputedStyle(shell,"::before");
+          return {
+            headingTop:heading.top, headingBottom:heading.bottom,
+            kickerBottom:kicker.bottom, buttonTop:action.top,
+            headerBottom:header.getBoundingClientRect().bottom,
+            headerPosition:getComputedStyle(header).position,
+            artVisibility:decorative.display,
+            overflow:document.documentElement.scrollWidth-innerWidth,
+            leaderboardHidden:document.querySelector(".leaderboard")?.hidden,
+            page:name
+          };
+        },name);
+        assert.ok(pageLayout.headingTop>=pageLayout.kickerBottom-1,"kicker overlaps heading: "+JSON.stringify(pageLayout));
+        assert.ok(pageLayout.buttonTop>=pageLayout.headingBottom+8,"button overlaps heading: "+JSON.stringify(pageLayout));
+        assert.ok(pageLayout.headingTop>=pageLayout.headerBottom-2,"heading behind header: "+JSON.stringify(pageLayout));
+        assert.equal(pageLayout.headerPosition,"relative","phone header must not overlay page content");
+        assert.equal(pageLayout.artVisibility,"none","decorative index overlaps mobile title");
+        assert.ok(pageLayout.overflow<=1,"horizontal overflow: "+JSON.stringify(pageLayout));
+        if(name==="community")assert.equal(pageLayout.leaderboardHidden,true,"do not show placeholder leaderboard before data is available");
+        console.log(size.width+"px "+name+" page layout passed");
+      }
+
 
     }
     await context.close();
