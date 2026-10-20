@@ -72,7 +72,13 @@ function go(page){
   window.ReimflowFlowChallenge?.onPageChange(page);
   window.ReimflowRapFlow?.onPageChange(page);
   $$(".page").forEach(p=>p.classList.toggle("active",p.dataset.page===page));
-  $$("[data-go]").forEach(b=>b.classList.toggle("active",b.dataset.go===page));
+  $("[data-go]").forEach(b=>b.classList.toggle("active",b.dataset.go===page));
+  const primaryPage=["home","rhymes","flow"].includes(page)?page:"more";
+  $(".desktop-nav [data-go], .mobile-nav [data-go]").forEach(b=>{
+    const active=b.dataset.go===primaryPage;
+    b.classList.toggle("active",active);
+    if(active)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");
+  });
   window.scrollTo({top:0,behavior:"smooth"});
   if(page==="community")renderCommunity();
   if(page==="beats")renderBeats();
