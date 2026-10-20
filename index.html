@@ -27,6 +27,7 @@
   <link rel="stylesheet" href="flow-challenge.css?v=20261014-flow1" />
   <link rel="stylesheet" href="rap-flow.css?v=20261015-wav1" />
   <link rel="stylesheet" href="platform.css?v=20261015-real1" />
+  <link rel="stylesheet" href="ux-simple.css?v=20261020-1" />
 </head>
 <body>
   <div class="theme-atmosphere" aria-hidden="true"><span class="ambient-one"></span><span class="ambient-two"></span><span class="ambient-three"></span></div>
@@ -42,80 +43,34 @@
     <nav class="desktop-nav" aria-label="Hauptnavigation">
       <button class="nav-link active" data-go="home">Start</button>
       <button class="nav-link" data-go="rhymes">Reime</button>
-      <button class="nav-link" data-go="flow">⚡ Flow Spiel</button>
-      <button class="nav-link" data-go="community">Community</button>
-      <button class="nav-link" data-go="beats">Beats</button>
-      <button class="nav-link" data-go="profile">Profil</button>
+      <button class="nav-link" data-go="flow">Flow</button>
+      <button class="nav-link" data-go="more">Entdecken</button>
     </nav>
-    <div class="theme-switcher">
-      <button class="theme-toggle" id="themeToggle" type="button" title="Design wechseln" aria-haspopup="true" aria-expanded="false" aria-controls="themeMenu">
-        <span class="theme-swatch" aria-hidden="true"></span>
-        <span class="theme-current">Pop Comic</span>
-        <span class="theme-caret" aria-hidden="true">⌄</span>
-      </button>
-      <div class="theme-menu" id="themeMenu" role="radiogroup" aria-label="Design auswählen">
-        <div class="theme-menu-title">Design auswählen</div>
-        <button class="theme-option" type="button" role="radio" data-theme-option="sonic-art" aria-checked="true">
-          <span class="theme-preview sonic" aria-hidden="true"></span><span><strong>Pop Comic</strong><small>Pop Art · Kräftig · Laut</small></span><span class="theme-check">✓</span>
-        </button>
-        <button class="theme-option" type="button" role="radio" data-theme-option="comic-graffiti" aria-checked="false">
-          <span class="theme-preview comic-graffiti" aria-hidden="true"></span><span><strong>Street Graffiti</strong><small>Sprühfarbe · Neon · Straße</small></span><span class="theme-check">✓</span>
-        </button>
-        <button class="theme-option" type="button" role="radio" data-theme-option="comic-novel" aria-checked="false">
-          <span class="theme-preview comic-novel" aria-hidden="true"></span><span><strong>Graphic Novel</strong><small>Dunkel · Grafisch · Dramatisch</small></span><span class="theme-check">✓</span>
-        </button>
-        <button class="theme-option" type="button" role="radio" data-theme-option="comic-clean" aria-checked="false">
-          <span class="theme-preview comic-clean" aria-hidden="true"></span><span><strong>Clean Comic</strong><small>Illustrativ · Elegant · Leicht</small></span><span class="theme-check">✓</span>
-        </button>
-        <div class="theme-menu-subtitle">Weitere Designs</div>
-        <button class="theme-option" type="button" role="radio" data-theme-option="playful" aria-checked="false">
-          <span class="theme-preview playful" aria-hidden="true"></span><span><strong>Playful</strong><small>Original · hell & geometrisch</small></span><span class="theme-check">✓</span>
-        </button>
-        <button class="theme-option" type="button" role="radio" data-theme-option="linear" aria-checked="false">
-          <span class="theme-preview linear" aria-hidden="true"></span><span><strong>Linear / Modern</strong><small>Cineastisch · Indigo · Glas</small></span><span class="theme-check">✓</span>
-        </button>
-        <button class="theme-option" type="button" role="radio" data-theme-option="minimal-dark" aria-checked="false">
-          <span class="theme-preview minimal" aria-hidden="true"></span><span><strong>Minimalist Dark</strong><small>Schiefer · Bernstein · Ruhig</small></span><span class="theme-check">✓</span>
-        </button>
-        <button class="theme-option" type="button" role="radio" data-theme-option="vaporwave" aria-checked="false">
-          <span class="theme-preview vapor" aria-hidden="true"></span><span><strong>Vaporwave</strong><small>Neon · Retro · Leuchtend</small></span><span class="theme-check">✓</span>
-        </button>
-        <button class="theme-option" type="button" role="radio" data-theme-option="art-deco" aria-checked="false">
-          <span class="theme-preview deco" aria-hidden="true"></span><span><strong>Art Deco</strong><small>Schwarz · Gold · Elegant</small></span><span class="theme-check">✓</span>
-        </button>
-      </div>
-    </div>
-    <button class="pill-btn small" data-go="premium">Premium <span class="button-dot">↗</span></button><button class="pill-btn small" data-go="profile" id="accountStatus">Anmelden</button>
+    <button class="pill-btn small" data-go="profile" id="accountStatus">Anmelden</button>
   </header>
 
   <main>
     <section class="page active" data-page="home">
       <div class="sonic-hero container">
         <div class="hero-copy">
-          <div class="eyebrow"><span class="mini-star">✦</span> AI hört Klang, nicht nur Buchstaben</div>
-          <h1 class="sonic-title" aria-label="Finde Reime, die klingen">
-            <span class="line">Finde Reime</span>
-            <span class="line">die klingen.</span>
+          <div class="eyebrow"><span class="mini-star">✦</span> Reime auf Deutsch</div>
+          <h1 class="sonic-title" aria-label="Dein Wort. Dein Reim.">
+            <span class="line">Dein Wort.</span>
+            <span class="line">Dein Reim.</span>
           </h1>
-          <p>Kein Wörterbuch. Ein Instrument für Klang. Reimflow zerlegt Namen, Wörter und Phrasen in Aussprache, Silben und Rhythmus und baut daraus neue Wege für deine nächste Line.</p>
+          <p>Gib ein Wort oder eine Zeile ein. Finde Reime, die auf Deutsch gut klingen.</p>
           <form class="hero-search" id="heroSearch">
             <label class="sr-only" for="heroQuery">Wort oder Phrase</label>
-            <input id="heroQuery" autocomplete="off" placeholder="Schreib etwas, das klingen soll …" />
+            <input id="heroQuery" autocomplete="off" placeholder="Wort oder Zeile eingeben …" />
             <button class="candy-btn" type="submit">Reim finden <span>→</span></button>
           </form>
           <div class="quick-tags">
-            <span>Probier aus /</span>
-            <button data-example="Jude Bellingham">Jude Bellingham</button>
-            <button data-example="Taycan Turbo">Taycan Turbo</button>
-            <button data-example="Berlin">Berlin</button>
+            <span>Zum Beispiel</span>
+            <button type="button" data-example="Berlin">Berlin</button>
+            <button type="button" data-example="Mission">Mission</button>
+            <button type="button" data-example="Nacht">Nacht</button>
           </div>
-          <div class="comic-quick-switch" role="group" aria-label="Vier Comic Designs vergleichen">
-            <span>Comic Stile</span>
-            <button type="button" data-theme-pick="sonic-art" aria-pressed="true">01 Pop</button>
-            <button type="button" data-theme-pick="comic-graffiti" aria-pressed="false">02 Graffiti</button>
-            <button type="button" data-theme-pick="comic-novel" aria-pressed="false">03 Roman</button>
-            <button type="button" data-theme-pick="comic-clean" aria-pressed="false">04 Klar</button>
-          </div>
+
         </div>
 
         <div class="sonic-sculpture" aria-label="Interaktive Klangskulptur">
@@ -133,72 +88,11 @@
         </div>
       </div>
 
-      <div class="flow-teaser container">
-        <div><span class="flow-teaser-kicker">NEU · REIMFLOW SPIEL</span><strong>TRIFFST DU DEN TAKT?</strong><p>Das Rhythmusspiel: 16 Schläge, direkte Wertung und deine beste Trefferfolge.</p></div>
-        <button class="candy-btn" data-go="flow" type="button">⚡ Jetzt spielen <span>→</span></button>
+      <div class="home-shortcuts container" aria-label="Weitere Möglichkeiten">
+        <button type="button" class="shortcut-tile" data-go="flow"><span class="shortcut-icon" aria-hidden="true">↗</span><strong>Flow üben</strong><small>Rhythmus trainieren</small></button>
+        <button type="button" class="shortcut-tile" data-go="beats"><span class="shortcut-icon" aria-hidden="true">♫</span><strong>Beats entdecken</strong><small>Beats und Samples hören</small></button>
+        <button type="button" class="shortcut-tile" data-go="community"><span class="shortcut-icon" aria-hidden="true">✦</span><strong>Reime teilen</strong><small>Mit der Community</small></button>
       </div>
-      <div class="keyword-marquee" aria-hidden="true">
-        <div>AUSSPRACHE / SILBEN / BETONUNG / UMGANGSSPRACHE / MULTI SILBEN / ASSONANZ / PHONETIK / BARS / AUSSPRACHE / SILBEN / STRESS / SLANG /</div>
-      </div>
-
-      <section class="art-chapter">
-        <div class="container chapter-grid">
-          <div class="chapter-index">Kapitel <strong>I</strong></div>
-          <div>
-            <div class="chapter-copy">
-              <h2>Wir suchen nicht nach <em>Buchstaben.</em><br>Wir suchen nach Klang.</h2>
-              <div>
-                <p>Ein Reim lebt im Mund, nicht auf dem Papier. Deshalb schaut Reimflow auf Betonung, Vokale, Konsonanten, Silbenzahl und Rhythmus. Auch Namen, Marken und deutsche Umgangssprache werden klanglich analysiert. Die Reimvorschläge sind immer auf Deutsch.</p>
-                <div class="chapter-note">Sprache → Laute → Reime → Textzeile</div>
-              </div>
-            </div>
-
-            <div class="art-triptych">
-              <article class="art-panel">
-                <span class="roman">I / HÖREN</span><span class="glyph">ʃ</span>
-                <h3>Klang suchen</h3>
-                <p>KI untersucht die Aussprache und findet passende, mehrsilbige und ungenaue Reime.</p>
-                <button class="text-link" data-go="rhymes">Reimsuche öffnen →</button>
-              </article>
-              <article class="art-panel">
-                <span class="roman">II / PRÜFEN</span><span class="glyph">✓</span>
-                <h3>Menschen hören mit</h3>
-                <p>Tester prüfen, ob ein Reim im echten Rap funktioniert. AI hilft, ersetzt aber nicht das Ohr.</p>
-                <button class="text-link" data-go="community">Community öffnen →</button>
-              </article>
-              <article class="art-panel">
-                <span class="roman">III / BAUEN</span><span class="glyph">∞</span>
-                <h3>Aus Klang wird Track</h3>
-                <p>Beats und Samples liegen im selben kreativen Raum. Reim finden, Material hören, weiterbauen.</p>
-                <button class="text-link" data-go="beats">Beats öffnen →</button>
-              </article>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="community-installation">
-        <div class="container">
-          <div class="installation-head">
-            <h2>Der Reim ist erst echt,<span>wenn er im Ohr besteht.</span></h2>
-            <div class="installation-caption">Reimflow wächst als kollektives Klangarchiv. Community Beiträge treffen auf AI Analyse und menschliche Prüfung.</div>
-          </div>
-          <div class="judgement-stage">
-            <div class="judgement-word left">BELLINGHAM</div>
-            <div class="judgement-center">
-              <div class="ear" aria-hidden="true"></div>
-              <small>Menschliches Gehör
-+ KI Prüfung</small>
-            </div>
-            <div class="judgement-word right">TALISMAN</div>
-            <div class="judgement-score">KLANGWERT / 91</div>
-          </div>
-          <div class="installation-actions">
-            <span class="chapter-note">Nicht jeder Eintrag wird übernommen. Gute Reime werden bestätigt, schlechte verschwinden.</span>
-            <button class="secondary-btn" data-go="community">Tester Bereich ansehen →</button>
-          </div>
-        </div>
-      </section>
     </section>
 
     <section class="page" data-page="flow">
@@ -360,8 +254,7 @@
     <section class="page" data-page="rhymes">
       <div class="container app-shell" data-art-label="02 / REIMSUCHE">
         <div class="page-title">
-          <div><span class="kicker">KI gestützte Reimsuche</span><h1>Finde deinen Reim.</h1></div>
-          <div class="points-pill">✦ <span data-points>120</span> Punkte</div>
+          <div><span class="kicker">Reimsuche</span><h1>Finde deinen Reim.</h1></div>
         </div>
 
         <div class="search-panel sticker-card">
@@ -372,7 +265,9 @@
             </div>
             <button class="candy-btn" type="submit">Suchen <span>→</span></button>
           </form>
-          <div class="filters">
+          <details class="advanced-filters">
+            <summary>Filter <span class="advanced-summary-hint">Wortart und Silben</span></summary>
+            <div class="filters">
             <div>
               <span class="filter-label">Wortart</span>
               <div class="segmented" id="categoryFilters">
@@ -387,7 +282,8 @@
               <label class="filter-label" for="syllableFilter">Silben</label>
               <select id="syllableFilter"><option value="Alle">Alle</option><option>1</option><option>2</option><option>3</option><option>4+</option></select>
             </div>
-          </div>
+            </div>
+          </details>
         </div>
 
         <div id="queryInsight" class="query-insight" hidden></div>
@@ -404,7 +300,7 @@
     <section class="page" data-page="community">
       <div class="container app-shell" data-art-label="03 / GEMEINSCHAFT">
         <div class="page-title">
-          <div><span class="kicker">Gemeinsam besser</span><h1>Community & Tester.</h1></div>
+          <div><span class="kicker">Reime teilen und prüfen</span><h1>Community</h1></div>
           <button class="candy-btn" id="openSubmit">Reim hinzufügen <span>＋</span></button>
         </div>
 
@@ -432,7 +328,7 @@
     <section class="page" data-page="beats">
       <div class="container app-shell" data-art-label="04 / KLANGARCHIV">
         <div class="page-title">
-          <div><span class="kicker">Für Rapper und Produzenten</span><h1>Beats & Samples.</h1></div>
+          <div><span class="kicker">Beats und Samples</span><h1>Finde deinen Sound.</h1></div>
           <button class="candy-btn" id="openBeatUpload">Hochladen <span>↑</span></button>
         </div>
         <div class="beat-toolbar">
@@ -440,6 +336,59 @@
           <div class="input-with-icon mini"><span>⌕</span><input id="beatSearch" placeholder="Produzent oder Titel" /></div>
         </div>
         <div id="beatGrid" class="beat-grid"></div>
+      </div>
+    </section>
+
+    <section class="page" data-page="more">
+      <div class="container app-shell rf-more-shell">
+        <div class="page-title"><div><span class="kicker">Alles an einem Ort</span><h1>Entdecken</h1></div></div>
+        <div class="more-grid">
+          <button type="button" class="more-tile" data-go="beats"><span class="more-symbol" aria-hidden="true">♫</span><span><strong>Beats &amp; Samples</strong><small>Musik finden und hochladen</small></span><span class="more-arrow" aria-hidden="true">↗</span></button>
+          <button type="button" class="more-tile" data-go="community"><span class="more-symbol" aria-hidden="true">✦</span><span><strong>Community</strong><small>Reime teilen und prüfen</small></span><span class="more-arrow" aria-hidden="true">↗</span></button>
+          <button type="button" class="more-tile" data-go="profile"><span class="more-symbol" aria-hidden="true">☺</span><span><strong>Mein Profil</strong><small>Favoriten und Beiträge</small></span><span class="more-arrow" aria-hidden="true">↗</span></button>
+          <button type="button" class="more-tile" data-go="premium"><span class="more-symbol" aria-hidden="true">◇</span><span><strong>Premium</strong><small>In Planung</small></span><span class="more-arrow" aria-hidden="true">↗</span></button>
+        </div>
+        <div class="more-settings">
+          <div><h2>Design</h2><p>Wähle den Stil, der zu dir passt.</p></div>
+          <div class="theme-switcher">
+      <button class="theme-toggle" id="themeToggle" type="button" title="Design wechseln" aria-haspopup="true" aria-expanded="false" aria-controls="themeMenu">
+        <span class="theme-swatch" aria-hidden="true"></span>
+        <span class="theme-current">Pop Comic</span>
+        <span class="theme-caret" aria-hidden="true">⌄</span>
+      </button>
+      <div class="theme-menu" id="themeMenu" role="radiogroup" aria-label="Design auswählen">
+        <div class="theme-menu-title">Design auswählen</div>
+        <button class="theme-option" type="button" role="radio" data-theme-option="sonic-art" aria-checked="true">
+          <span class="theme-preview sonic" aria-hidden="true"></span><span><strong>Pop Comic</strong><small>Pop Art · Kräftig · Laut</small></span><span class="theme-check">✓</span>
+        </button>
+        <button class="theme-option" type="button" role="radio" data-theme-option="comic-graffiti" aria-checked="false">
+          <span class="theme-preview comic-graffiti" aria-hidden="true"></span><span><strong>Street Graffiti</strong><small>Sprühfarbe · Neon · Straße</small></span><span class="theme-check">✓</span>
+        </button>
+        <button class="theme-option" type="button" role="radio" data-theme-option="comic-novel" aria-checked="false">
+          <span class="theme-preview comic-novel" aria-hidden="true"></span><span><strong>Graphic Novel</strong><small>Dunkel · Grafisch · Dramatisch</small></span><span class="theme-check">✓</span>
+        </button>
+        <button class="theme-option" type="button" role="radio" data-theme-option="comic-clean" aria-checked="false">
+          <span class="theme-preview comic-clean" aria-hidden="true"></span><span><strong>Clean Comic</strong><small>Illustrativ · Elegant · Leicht</small></span><span class="theme-check">✓</span>
+        </button>
+        <div class="theme-menu-subtitle">Weitere Designs</div>
+        <button class="theme-option" type="button" role="radio" data-theme-option="playful" aria-checked="false">
+          <span class="theme-preview playful" aria-hidden="true"></span><span><strong>Playful</strong><small>Original · hell & geometrisch</small></span><span class="theme-check">✓</span>
+        </button>
+        <button class="theme-option" type="button" role="radio" data-theme-option="linear" aria-checked="false">
+          <span class="theme-preview linear" aria-hidden="true"></span><span><strong>Linear / Modern</strong><small>Cineastisch · Indigo · Glas</small></span><span class="theme-check">✓</span>
+        </button>
+        <button class="theme-option" type="button" role="radio" data-theme-option="minimal-dark" aria-checked="false">
+          <span class="theme-preview minimal" aria-hidden="true"></span><span><strong>Minimalist Dark</strong><small>Schiefer · Bernstein · Ruhig</small></span><span class="theme-check">✓</span>
+        </button>
+        <button class="theme-option" type="button" role="radio" data-theme-option="vaporwave" aria-checked="false">
+          <span class="theme-preview vapor" aria-hidden="true"></span><span><strong>Vaporwave</strong><small>Neon · Retro · Leuchtend</small></span><span class="theme-check">✓</span>
+        </button>
+        <button class="theme-option" type="button" role="radio" data-theme-option="art-deco" aria-checked="false">
+          <span class="theme-preview deco" aria-hidden="true"></span><span><strong>Art Deco</strong><small>Schwarz · Gold · Elegant</small></span><span class="theme-check">✓</span>
+        </button>
+      </div>
+    </div>
+        </div>
       </div>
     </section>
 
@@ -451,7 +400,7 @@
           <button class="secondary-btn compact" id="profileEditButton">Anmelden</button>
         </div>
         <div class="stats-grid">
-          <div class="sticker-card stat-card"><span>✦</span><strong data-points>120</strong><small>Punkte</small></div>
+          <div class="sticker-card stat-card"><span>✦</span><strong data-points>0</strong><small>Punkte</small></div>
           <div class="sticker-card stat-card"><span>✓</span><strong id="acceptedCount">0</strong><small>Bestätigte Reime</small></div>
           <div class="sticker-card stat-card"><span>♫</span><strong>0</strong><small>Eigene Uploads</small></div>
           <div class="sticker-card stat-card"><span>♛</span><strong>–</strong><small>Community Rang</small></div>
@@ -499,12 +448,10 @@
   </main>
 
   <nav class="mobile-nav" aria-label="Mobile Navigation">
-    <button class="active" data-go="home"><span>⌂</span>Start</button>
-    <button data-go="rhymes"><span>◎</span>Reime</button>
-    <button data-go="flow"><span>⚡</span>Flow</button>
-    <button data-go="community"><span>✦</span>Community</button>
-    <button data-go="beats"><span>▶</span>Beats</button>
-    <button data-go="profile"><span>☺</span>Profil</button>
+    <button class="active" data-go="home"><span aria-hidden="true">⌂</span>Start</button>
+    <button data-go="rhymes"><span aria-hidden="true">◎</span>Reime</button>
+    <button data-go="flow"><span aria-hidden="true">⚡</span>Flow</button>
+    <button data-go="more"><span aria-hidden="true">☰</span>Entdecken</button>
   </nav>
 
   <dialog id="submitDialog" class="modal">
@@ -594,7 +541,7 @@
   <script src="sonic-atelier.js?v=20261005d"></script>
   <script src="rhyme-fallback.js?v=20261019-de1"></script>
   <script src="rhyme-previews.js?v=20261019-de1"></script>
-  <script src="app.js?v=20261019-fast1"></script>
+  <script src="app.js?v=20261020-ux1"></script>
   <script src="platform.js?v=20261015-real1"></script>
   <script src="flow-scoring.js?v=20261014-de1"></script>
   <script src="flow-challenge.js?v=20261014-de1"></script>
