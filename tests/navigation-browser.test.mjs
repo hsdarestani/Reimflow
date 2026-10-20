@@ -46,6 +46,33 @@ try{
         return{left:r.left,right:r.right,viewport:innerWidth,width:r.width};
       });
       assert.ok(geometry.left>=0 && geometry.right<=size.width+1,"navigation exceeds phone width: "+JSON.stringify(geometry));
+      // Regression: the legacy dock declared five tracks for four destinations.
+      // Trigger the real blank-query toast and assert its painted rectangle never
+      // intersects the fixed dock, including at narrow phone widths.
+      await page.locator(".mobile-nav [data-go='home']").click();
+      await page.locator("#heroSearch button[type='submit']").click();
+      await page.locator("#toast.show").waitFor({state:"visible",timeout:1800});
+      await page.waitForTimeout(240);
+      const layout=await page.evaluate(()=>{
+        const dock=document.querySelector(".mobile-nav");
+        const toast=document.querySelector("#toast");
+        const nav=dock.getBoundingClientRect(),msg=toast.getBoundingClientRect();
+        return{
+          tracks:getComputedStyle(dock).gridTemplateColumns.split(" ").filter(Boolean).length,
+          columns:getComputedStyle(dock).gridTemplateColumns,
+          buttons:[...dock.querySelectorAll("button")].map(b=>({name:b.dataset.go,left:b.getBoundingClientRect().left,right:b.getBoundingClientRect().right,width:b.getBoundingClientRect().width})),
+          nav:{left:nav.left,right:nav.right,top:nav.top,bottom:nav.bottom},
+          toast:{left:msg.left,right:msg.right,top:msg.top,bottom:msg.bottom},
+          toastVisible:getComputedStyle(toast).opacity,
+          viewport:{width:innerWidth,height:innerHeight}
+        };
+      });
+      assert.equal(layout.tracks,4,"mobile dock must have four equal tracks: "+JSON.stringify(layout));
+      assert.ok(layout.toast.bottom<=layout.nav.top-10,"toast must clear the mobile nav: "+JSON.stringify(layout));
+      assert.ok(layout.toast.left>=0 && layout.toast.right<=layout.viewport.width+1,"toast clipped horizontally: "+JSON.stringify(layout));
+      assert.ok(layout.toast.top>=0 && layout.toastVisible==="1","toast hidden or clipped: "+JSON.stringify(layout));
+      console.log(size.width+"px toast clears mobile dock: PASSED");
+
     }
     await context.close();
   }
