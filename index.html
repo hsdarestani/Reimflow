@@ -406,9 +406,26 @@
           <div class="sticker-card stat-card"><span>♛</span><strong>–</strong><small>Community Rang</small></div>
         </div>
         <div class="profile-grid">
-          <div class="sticker-card">
-            <span class="kicker">Deine Aktivität</span><h3>Letzte Beiträge</h3>
-            <div id="profileActivity" class="activity-list"></div><h3>Favoriten</h3><p id="myFavoriteList" class="tiny-note">Noch keine Favoriten.</p><h3>Deine Flow Ergebnisse</h3><p id="myScoreList" class="tiny-note">Noch kein gespeichertes Spiel.</p><h3>Blockierte Mitglieder</h3><div id="blockedMembers" class="activity-list"></div><p><a href="/api/platform/export" id="accountExport" download="reimflow-data.json" hidden>Meine Daten exportieren (JSON)</a></p><div id="emailVerificationPanel" hidden><p class="tiny-note">Bitte E-Mail bestätigen, um Community Inhalte zu veröffentlichen.</p><button type="button" id="resendVerification" class="secondary-btn compact">Bestätigungslink senden</button></div><div class="platform-actions"><button class="secondary-btn compact" id="profileLogout" hidden>Abmelden</button><button class="secondary-btn compact" id="profileDelete" hidden>Konto löschen</button></div>
+          <div class="sticker-card profile-content-card">
+            <h3>Meine Beiträge</h3>
+            <div id="profileActivity" class="activity-list"></div>
+            <h3>Meine Favoriten</h3>
+            <p id="myFavoriteList" class="tiny-note">Noch keine Favoriten.</p>
+            <h3>Flow Ergebnisse</h3>
+            <p id="myScoreList" class="tiny-note">Noch kein gespeichertes Spiel.</p>
+            <div id="emailVerificationPanel" hidden><p class="tiny-note">Bitte E-Mail bestätigen, um Community Inhalte zu veröffentlichen.</p><button type="button" id="resendVerification" class="secondary-btn compact">Bestätigungslink senden</button></div>
+            <details class="profile-account-details">
+              <summary>Kontoeinstellungen</summary>
+              <div class="profile-account-body">
+                <h4>Blockierte Mitglieder</h4>
+                <div id="blockedMembers" class="activity-list"></div>
+                <p><a href="/api/platform/export" id="accountExport" download="reimflow-data.json" hidden>Meine Daten exportieren</a></p>
+                <div class="platform-actions">
+                  <button class="secondary-btn compact" id="profileLogout" hidden>Abmelden</button>
+                  <button class="secondary-btn compact" id="profileDelete" hidden>Konto löschen</button>
+                </div>
+              </div>
+            </details>
           </div>
           <div id="moderationPanel" class="sticker-card" hidden>
   <h3>Community Moderation</h3>
@@ -417,11 +434,7 @@
   <div id="adminReports"></div>
   <div id="adminMembers"></div>
 </div>
-<div class="sticker-card premium-mini">
-            <div class="burst small-burst">PRO</div><span class="kicker">Mehr Möglichkeiten</span><h3>Reimflow Premium</h3>
-            <p>Mehr Suchfilter, tiefere Klang Treffer, keine Limits und Extras für Rapper und Producer.</p>
-            <button class="candy-btn full" data-go="premium">Premium ansehen <span>→</span></button>
-          </div>
+/div>
         </div>
       </div>
     </section>
