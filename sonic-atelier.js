@@ -14,6 +14,7 @@
 
   window.addEventListener("pointermove",e=>{
     if(!isArt()) return;
+    if(cursor.style.display==="none")return;
     cursor.style.left=e.clientX+"px";cursor.style.top=e.clientY+"px";
   },{passive:true});
   document.addEventListener("pointerover",e=>{
@@ -66,7 +67,7 @@
   const words=["KLANG","SILBE","REIM"];
   let wi=0;
   setInterval(()=>{
-    if(!core||!isArt()||matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+    if(!core||!isArt()||innerWidth<901||document.hidden||matchMedia("(prefers-reduced-motion: reduce)").matches)return;
     wi=(wi+1)%words.length;
     core.classList.remove("swap");
     void core.offsetWidth;
@@ -118,7 +119,7 @@
   function sync(){
     const show=isArt();
     progress.style.display=show?"block":"none";
-    cursor.style.display=show&&innerWidth>980?"block":"none";
+    cursor.style.display="none"; // Content-first design does not override the system cursor.
   }
   addEventListener("reimflow:themechange",sync);
   addEventListener("resize",sync);
