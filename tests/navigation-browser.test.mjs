@@ -19,16 +19,27 @@ try{
     await page.waitForTimeout(1000);
     console.log("BOOT",size.width,await page.evaluate(()=>({scripts:[...document.scripts].map(s=>s.src.split("/").at(-1)),active:document.querySelector(".page.active")?.dataset.page,appState:typeof state, errors:window.__reimflow_errors||[]})));
     const selector=size.width<500?".mobile-nav [data-go]":".desktop-nav [data-go]";
-    for(const name of ["home","rhymes","flow","community","beats","profile"]){
+    // Four clear primary destinations, with Beats/Community/Profile under Entdecken.
+    for(const name of ["home","rhymes","flow","more"]){
       const button=page.locator(selector+'[data-go="'+name+'"]');
-      const count=await button.count();
-      if(count<1)throw Error("Missing "+name+" on "+size.width+"px");
+      assert.equal(await button.count(),1,"Missing primary tab "+name+" on "+size.width+"px");
       await button.click({timeout:5000});
       await page.waitForTimeout(190);
       const active=await page.locator(".page.active").getAttribute("data-page");
-      console.log(size.width+"px click="+name+" active="+active+" errors="+JSON.stringify(errors));
       assert.equal(active,name,"navigation failed on "+size.width+"px for "+name);
     }
+    for(const name of ["beats","community","profile","premium"]){
+      await page.locator(selector+'[data-go="more"]').click({timeout:5000});
+      await page.locator('.page[data-page="more"] .more-tile[data-go="'+name+'"]').click({timeout:5000});
+      const active=await page.locator(".page.active").getAttribute("data-page");
+      assert.equal(active,name,"secondary navigation failed on "+size.width+"px for "+name);
+      assert.equal(await page.locator(selector+'[data-go="more"].active').count(),1,"Entdecken should remain selected for "+name);
+    }
+    await page.locator(selector+'[data-go="rhymes"]').click({timeout:5000});
+    assert.equal(await page.locator(".advanced-filters:not([open])").count(),1);
+    await page.locator(".advanced-filters summary").click({timeout:5000});
+    assert.equal(await page.locator(".advanced-filters[open] #categoryFilters").count(),1);
+    console.log(size.width+"px primary and secondary navigation passed");
     if(size.width<500){
       const geometry=await page.evaluate(()=>{
         const nav=document.querySelector(".mobile-nav"),r=nav.getBoundingClientRect();
