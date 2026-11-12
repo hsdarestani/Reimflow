@@ -84,7 +84,7 @@
         input:String(query).trim(),interpreted_as:String(query).trim(),
         pronunciation:"",ipa:"",syllables:0,language:"Ungeprüft",
         correction:null,
-        note:"Nur ungeprüfte Wortideen mit ähnlicher Endung für „"+anchor+"“. Die tatsächliche Aussprache, Betonung und Reimqualität wurden nicht durch KI geprüft."
+        note:"Nur ungeprüfte Wortideen mit ähnlicher Endung für „"+anchor+"“. Die tatsächliche Aussprache, Betonung und Reimqualität sind noch nicht geprüft."
       },
       rhymes:items.slice(0,10).map((row,index)=>({
         ...row,pronunciation:"",ipa:"",
