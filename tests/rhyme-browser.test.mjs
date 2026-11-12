@@ -28,6 +28,14 @@ try{
           ]
         })});
       }
+      if(query==="Pokerface"){
+        await delay(400);
+        return route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({
+          ok:true,engine:"ai_phonetic",quality_reviewed:true,
+          analysis:{input:query,interpreted_as:query,pronunciation:"PO-ker-feiss",ipa:"/ˈpoːkɐfeɪs/",syllables:3,language:"Englisch",correction:null,note:""},
+          rhymes:[]
+        })});
+      }
       if(query==="Blue paper"){
         return route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({
           ok:true,engine:"ai_phonetic",quality_reviewed:true,
@@ -87,6 +95,17 @@ try{
     await page.locator(".search-empty:not(.error)").waitFor({state:"visible",timeout:6500});
     assert.equal(await page.locator(".rhyme-card").count(),0);
     assert.equal(await page.locator(".rhyme-preview").count(),0);
+    // A rare English sound should never be silently declared a perfect rhyme:
+    // offer near-sound ideas immediately, and keep them unverified if none pass.
+    await page.locator("#rhymeQuery").fill("Pokerface");
+    await page.locator("#rhymeSearchForm button[type='submit']").click();
+    await page.locator(".rhyme-preview").waitFor({state:"visible",timeout:1000});
+    assert.match(await page.locator(".rhyme-preview").innerText(),/Eis|Preis/);
+    await page.locator(".search-empty:not(.error)").waitFor({state:"visible",timeout:6500});
+    assert.equal(await page.locator(".rhyme-card").count(),0);
+    assert.equal(await page.locator("#resultsCount").innerText(),"0 Treffer");
+    assert.match(await page.locator(".rhyme-preview").innerText(),/Nicht als Reim bestätigt/);
+    assert.doesNotMatch(await page.locator("#rhymeResults").innerText(),/Wissensbasis|Kollegah|Bushido/);
     assert.deepEqual(errors,[],JSON.stringify({viewport:viewport.width,errors}));
     console.log(viewport.width+"px German-only rhyme preview, reviewed rhymes and fallback protection: PASSED");
     await context.close();
