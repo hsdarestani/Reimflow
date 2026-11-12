@@ -458,3 +458,10 @@ html[data-theme="sonic-art"][data-comic-style="pop"] .shortcut-icon { background
     margin:14px 0;
   }
 }
+
+/* Contextual rhyme learning: subtle status and feedback controls */
+.rhyme-learning-status { font-size: .82rem; line-height: 1.5; opacity: .8; margin: .75rem 0 1rem; }
+.rhyme-feedback-btn { min-width: 38px; min-height: 38px; opacity: .8; transition: opacity .2s, transform .2s; }
+.rhyme-feedback-btn:hover, .rhyme-feedback-btn:focus-visible { opacity: 1; transform: translateY(-1px); }
+.rhyme-feedback-btn.selected-vote, .rhyme-feedback-btn[aria-pressed="true"] { opacity: 1; outline: 2px solid currentColor; outline-offset: 2px; }
+.rhyme-feedback-btn:disabled { opacity: .45; cursor: progress; }
