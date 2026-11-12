@@ -40,7 +40,7 @@ points:0,
 favorites:[],
 submissions:[],
 beats:[],category:"Alle",syllables:"Alle",beatFilter:"Alle",currentQuery:"",
-aiResults:[],queryAnalysis:null,searchSignature:"",engineOnline:null,searchLoading:false,resultSource:"ai"
+aiResults:[],queryAnalysis:null,searchSignature:"",engineOnline:null,searchLoading:false,resultSource:"ai",knowledgeStatus:null,feedbackVotes:{}
 };
 
 const $=(s,root=document)=>root.querySelector(s);
@@ -180,6 +180,8 @@ async function searchRhymes(force=false){
     }
     if(data.ok!==true || data.quality_reviewed!==true)throw new Error("Die unabhängige Klangprüfung konnte nicht abgeschlossen werden.");
     state.aiResults=Array.isArray(data.rhymes)?data.rhymes:[];
+    state.knowledgeStatus=data.knowledge||null;
+    state.feedbackVotes={};
     state.queryAnalysis=data.analysis||null;state.searchSignature=signature;state.engineOnline=true;state.searchLoading=false;state.resultSource=data.engine==="offline_suffix"?"offline_suffix":"ai";
     renderRhymes();renderQueryInsight(state.queryAnalysis);updateEngineState(data.cached?"Zwischenspeicher":"Aktuell");
   }catch(err){
@@ -282,9 +284,15 @@ function renderRhymes(errorMessage=""){
     ...rows.filter(r=>r.scope==="phrase_variation"),
     ...rows.filter(r=>!r.scope||r.scope==="end_word")
   ]:rows;
-  const caveat=offline?'<div class="rhyme-offline-note"><strong>Vorschläge ohne KI-Prüfung</strong><p>Diese Wörter haben ähnliche Endungen. Aussprache, Betonung und Reimqualität sind nicht geprüft. Bitte selbst anhören oder die KI Suche später erneut versuchen.</p><button class="secondary-btn compact" id="retryOnlineSearch">KI Suche erneut versuchen</button></div>':"";
+  const contextBanner=!offline&&state.knowledgeStatus
+      ?'<p class="rhyme-learning-status" role="status">'+
+      (state.knowledgeStatus.licensed_tracks>0
+        ?'Wissensbasis: '+escapeHtml(state.knowledgeStatus.licensed_tracks)+' lizenzierte Titel · '+escapeHtml(state.knowledgeStatus.artists_covered)+' Künstler'
+        :'Wissensbasis: Noch keine lizenzierten Songtexte importiert')+
+      ' · Nutzerfeedback hilft bei zukünftigen Vorschlägen.</p>':"";
+   const caveat=offline?'<div class="rhyme-offline-note"><strong>Vorschläge ohne KI-Prüfung</strong><p>Diese Wörter haben ähnliche Endungen. Aussprache, Betonung und Reimqualität sind nicht geprüft. Bitte selbst anhören oder die KI Suche später erneut versuchen.</p><button class="secondary-btn compact" id="retryOnlineSearch">KI Suche erneut versuchen</button></div>':"";
   let lastScope="";
-  list.innerHTML=caveat+grouped.map(r=>{
+  list.innerHTML=contextBanner+caveat+grouped.map(r=>{
     const scope=hasPhrase?(r.scope||"end_word"):"end_word";
     const heading=scope!==lastScope?(lastScope=scope,'<div class="rhyme-group-title">'+escapeHtml(scopeTitle[scope]||"Reime aufs Endwort")+'</div>'):"";
     const fav=state.favorites.includes(r.word);
@@ -294,14 +302,33 @@ function renderRhymes(errorMessage=""){
     return heading+'<article class="rhyme-card ai-rhyme '+tone+'"><div class="match-score" title="Einschätzung einer zweiten KI Prüfung">'+label+'</div>'+
     '<div class="rhyme-word"><div class="word-line"><strong>'+escapeHtml(r.word)+'</strong><span class="ai-chip"+(offline?" source-offline":"")+"">"+(offline?"IDEE":"KI")+"</span></div><small>'+escapeHtml(r.pronunciation||"")+(r.ipa?' · <span class="ipa-inline">'+escapeHtml(r.ipa)+'</span>':"")+'</small></div>'+
     '<div class="tag-row"><span class="micro-tag">'+escapeHtml(r.category||"Sonstiges")+'</span><span class="micro-tag">'+escapeHtml(String(r.syllables||"?"))+' Silben</span><span class="micro-tag">'+escapeHtml(rhymeKindLabel(r.kind||"Klangreim"))+'</span><span class="micro-tag">'+escapeHtml(r.register||"Standard")+'</span></div>'+
-    '<div class="result-actions"><button class="icon-btn speak-result" data-word="'+escapeAttr(r.word)+'" aria-label="Aussprache anhören">♫</button><button class="favorite-btn '+(fav?"active":"")+'" data-fav="'+escapeAttr(r.word)+'" aria-label="Favorit">♥</button></div>'+
+    '<div class="result-actions"><button class="icon-btn speak-result" data-word="'+escapeAttr(r.word)+'" aria-label="Aussprache anhören">♫</button><button class="favorite-btn '+(fav?"active":"")+'" data-fav="'+escapeAttr(r.word)+'" aria-label="Favorit">♥</button>'+
+     (offline?'':'<button class="icon-btn rhyme-feedback-btn" data-rhyme-vote="1" data-word="'+escapeAttr(r.word)+'" aria-label="Guter Reim" title="Guter Reim">👍</button><button class="icon-btn rhyme-feedback-btn" data-rhyme-vote="-1" data-word="'+escapeAttr(r.word)+'" aria-label="Schwacher Reim" title="Schwacher Reim">👎</button>')+'</div>'+
     '<details class="rhyme-explanation"><summary>Warum passt der Reim?</summary><p><strong>'+(offline?"Ungeprüfte Idee":"Klang von KI geprüft")+'</strong> · '+escapeHtml(r.explanation||"")+'</p></details></article>';
   }).join("");
   if(offline)$("#retryOnlineSearch")?.addEventListener("click",()=>searchRhymes(true));
 }
 
+async function submitRhymeVote(button){
+  const word=button.dataset.word, vote=Number(button.dataset.rhymeVote), query=state.currentQuery;
+  if(!word||![1,-1].includes(vote)||state.resultSource!=="ai")return;
+  if(button.disabled)return;
+  button.disabled=true;
+  try{
+    const response=await fetch("/api/platform/rhyme-feedback",{method:"POST",credentials:"same-origin",
+      headers:{"Content-Type":"application/json","X-Reimflow-Client":"1"},
+      body:JSON.stringify({query,word,vote})});
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(response.status===401?"Bitte anmelden, um Reime zu bewerten.":data.message||"Bewertung konnte nicht gespeichert werden.");
+    const siblings=button.parentElement?.querySelectorAll("[data-rhyme-vote]")||[];
+    siblings.forEach(b=>{b.setAttribute("aria-pressed",String(b===button));b.classList.toggle("selected-vote",b===button)});
+    toast("Danke für dein Feedback!");
+  }catch(err){toast(err.message||"Bewertung fehlgeschlagen.");}
+  finally{button.disabled=false;}
+}
 $("#rhymeResults").addEventListener("click",e=>{
-  const speak=e.target.closest(".speak-result");if(speak)speakWord(speak.dataset.word);
+  const vote=e.target.closest("[data-rhyme-vote]");if(vote){submitRhymeVote(vote);return;}
+   const speak=e.target.closest(".speak-result");if(speak)speakWord(speak.dataset.word);
   const fav=e.target.closest("[data-fav]");if(fav)window.ReimflowPlatform?.toggleFavorite(fav.dataset.fav);
 });
 $("#speakQuery").addEventListener("click",()=>state.currentQuery&&speakWord(state.currentQuery));
