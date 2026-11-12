@@ -261,7 +261,9 @@ function renderRhymes(errorMessage=""){
   }
   const rows=filteredRhymes();$("#resultsCount").textContent=errorMessage?"Suche fehlgeschlagen":rows.length+" "+(rows.length===1?"Treffer":"Treffer");$("#resultsFor").textContent=' für „'+state.currentQuery+'“';
   if(errorMessage){
-    list.innerHTML='<div class="search-empty error"><div class="empty-glyph">!</div><strong>Die Reimsuche konnte nicht geladen werden.</strong><p>'+escapeHtml(errorMessage)+'</p><button class="secondary-btn compact" id="retrySearch">Erneut versuchen</button></div>';
+    const preview=window.ReimflowRhymePreviews?.find(state.currentQuery);
+    const ideas=preview?'<div class="rhyme-preview"><strong>Ungeprüfte Klangideen</strong><span class="rhyme-preview-note">Keine bestätigten Reime</span><div class="rhyme-preview-tags">'+preview.words.map(word=>'<span>'+escapeHtml(word)+'</span>').join('')+'</div><small>'+escapeHtml(preview.note)+'</small></div>':"";
+    list.innerHTML='<div class="search-empty error"><div class="empty-glyph">!</div><strong>Die Reimsuche konnte nicht geladen werden.</strong><p>'+escapeHtml(errorMessage)+'</p><button class="secondary-btn compact" id="retrySearch">Erneut versuchen</button></div>'+ideas;
     $("#retrySearch")?.addEventListener("click",()=>searchRhymes(true));return;
   }
   if(!rows.length){
