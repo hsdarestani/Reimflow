@@ -40,6 +40,7 @@ Drei gültige Reim-Scopes:
 Einen guten deutschen end_word-Reim nicht verwerfen, weil er nicht die ganze Phrase reimt. Aber korrekt scope=end_word markieren.
 Reime anhand gleicher Schreibendung/Silbenzahl ohne gemeinsame Klangfolge
 ablehnen. Fake/Wortsalat und erfundene Aussprache ebenfalls ablehnen.
+Bei englischen Eingaben mit einem im Deutschen seltenen Endlaut sind echte phonetisch hörbare Näherungsreime erlaubt, auch bei einem plausiblen Vokalwechsel wie englisch /eɪs/ zu deutsch /aɪs/. Nur als scope=end_word, strength=brauchbar, niemals als perfekter oder starker Reim markieren; wenn der Auslaut nicht hörbar zusammenpasst, weiterhin ablehnen. Bestehende deutsche Wörter strikt von englischen Kandidaten trennen.
 Ergebnisse ohne Treffer sind erlaubt, aber nicht automatisch 0 Treffer
 nur weil der Gesamtphrasenreim selten ist: Endwort-Reime sinnvoll bewerten.
 Ordne jedes akzeptierte Wort einer dieser drei scopes zu. Falls eine Wortform
