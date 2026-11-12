@@ -57,12 +57,14 @@ try{
     assert.equal(await page.locator(".rhyme-offline-note").count(),0);
     await page.locator("#retrySearch").click();
     await page.locator(".rhyme-card .ai-chip").first().waitFor({timeout:8500});
-    assert.deepEqual(await page.locator(".rhyme-card .ai-chip").allTextContents(),["KI"],
+    assert.deepEqual(await page.locator(".rhyme-card .ai-chip").allTextContents(),["REIM"],
       "AI status chip must render only its label, not JavaScript source fragments");
     assert.equal(await page.locator(".rhyme-card .ai-chip").first().getAttribute("class"),"ai-chip");
     assert.doesNotMatch(await page.locator(".rhyme-card").first().innerText(),/offline\?|\+\(/);
     assert.equal(await message.count(),0);
     assert.equal(await page.locator(".rhyme-card").count(),1);
+    assert.equal(await page.locator(".rhyme-learning-status").count(),0,"Public UI must not expose source corpus");
+    assert.doesNotMatch(await page.locator("#rhymeResults").innerText(),/Wissensbasis|lizenzierte Titel|Künstlerprofile|KI geprüft/);
     assert.equal(tries,2);
 
     // German-only hand-curated preview is displayed while review runs.
