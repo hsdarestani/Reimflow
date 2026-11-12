@@ -103,7 +103,7 @@ try{
     assert.match(await page.locator(".rhyme-preview").innerText(),/Eis|Preis/);
     await page.locator(".search-empty:not(.error)").waitFor({state:"visible",timeout:6500});
     assert.equal(await page.locator(".rhyme-card").count(),0);
-    assert.equal(await page.locator("#resultsCount").innerText(),"0 Treffer");
+    assert.match(await page.locator("#resultsCount").innerText(),/^0\s+TREFFER$/i);
     assert.match(await page.locator(".rhyme-preview").innerText(),/Nicht als Reim bestätigt/);
     assert.doesNotMatch(await page.locator("#rhymeResults").innerText(),/Wissensbasis|Kollegah|Bushido/);
     assert.deepEqual(errors,[],JSON.stringify({viewport:viewport.width,errors}));
