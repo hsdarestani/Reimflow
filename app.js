@@ -266,6 +266,11 @@ function renderRhymes(errorMessage=""){
   }
   if(!rows.length){
     list.innerHTML='<div class="search-empty"><div class="empty-glyph">∿</div><strong>Keine bestätigten Reime für diesen Suchversuch.</strong><p>Das bedeutet nicht, dass es keine Reime gibt. Versuche die Suche erneut oder gib das letzte Wort alleine ein. Bei mehrteiligen Eingaben werden Endwort und Gesamtphrase getrennt geprüft.</p><button class="secondary-btn compact" id="refineSearch">Neu analysieren</button><button class="secondary-btn compact" id="findAnchorOnly" hidden>Nur letztes Wort suchen</button></div>';
+    const preview=state.aiResults.length===0?window.ReimflowRhymePreviews?.find(state.currentQuery):null;
+    if(preview){
+      const ideas='<div class="rhyme-preview"><strong>Ungeprüfte Klangideen</strong><span class="rhyme-preview-note">Nicht als Reim bestätigt</span><div class="rhyme-preview-tags">'+preview.words.map(word=>'<span>'+escapeHtml(word)+'</span>').join('')+'</div><small>'+escapeHtml(preview.note)+'</small></div>';
+      list.insertAdjacentHTML("beforeend",ideas);
+    }
     $("#refineSearch")?.addEventListener("click",()=>searchRhymes(true));
     const words=state.currentQuery.trim().split(/\s+/);
     if(words.length>1){
