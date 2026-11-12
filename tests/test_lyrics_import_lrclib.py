@@ -67,7 +67,8 @@ class ImportLyricsTest(unittest.TestCase):
         self.assertEqual(result["tracks_imported"],0)
         self.assertEqual(si.status(self.db)["licensed_tracks"],0)
     def test_credits_must_be_primary_artist(self):
-        self.assertTrue(provider.belongs_to_artist("Eko Fresh feat. Other","Eko"))
+        self.assertFalse(provider.belongs_to_artist("Eko Fresh feat. Other","Eko"))
+        self.assertTrue(provider.belongs_to_artist("Eko Fresh","Eko"))
         self.assertFalse(provider.belongs_to_artist("Other feat. Eko Fresh","Eko"))
         self.assertTrue(provider.belongs_to_artist("MoTrip","Mo Trip"))
         self.assertFalse(provider.belongs_to_artist("Eko","Kollegah"))
