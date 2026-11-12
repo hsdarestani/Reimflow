@@ -1,4 +1,4 @@
-"""Regression tests for public diagnostic routes opened by mobile browsers."""
+"""Regression: hide internal lyric source and generation details from public URLs."""
 import tempfile
 import unittest
 from pathlib import Path
@@ -31,11 +31,8 @@ class CorpusRoutesTest(unittest.TestCase):
                 ):
                     client=FakeHandler(path)
                     api.Handler.do_GET(client)
-                    self.assertEqual(client.result[0],200,path)
-                    body=client.result[1]
-                    self.assertTrue(body["ok"])
-                    self.assertEqual(body["public_research_profiles"],9)
-                    self.assertFalse(body["lyrics_included"])
+                    self.assertEqual(client.result[0],404,path)
+                    self.assertEqual(client.result[1],{"error":"NOT_FOUND"})
                 client=FakeHandler("/api/rhymes/not-a-real-path")
                 api.Handler.do_GET(client)
                 self.assertEqual(client.result[0],404)
