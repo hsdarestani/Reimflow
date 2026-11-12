@@ -288,7 +288,7 @@ function renderRhymes(errorMessage=""){
       ?'<p class="rhyme-learning-status" role="status">'+
       (state.knowledgeStatus.licensed_tracks>0
         ?'Wissensbasis: '+escapeHtml(state.knowledgeStatus.licensed_tracks)+' lizenzierte Titel · '+escapeHtml(state.knowledgeStatus.artists_covered)+' Künstler'
-        :'Wissensbasis: Noch keine lizenzierten Songtexte importiert')+
+        :'Wissensbasis: '+escapeHtml(state.knowledgeStatus.public_research_profiles||0)+' recherchierte Künstlerprofile · noch keine lizenzierten Songtexte')+
       ' · Nutzerfeedback hilft bei zukünftigen Vorschlägen.</p>':"";
    const caveat=offline?'<div class="rhyme-offline-note"><strong>Vorschläge ohne KI-Prüfung</strong><p>Diese Wörter haben ähnliche Endungen. Aussprache, Betonung und Reimqualität sind nicht geprüft. Bitte selbst anhören oder die KI Suche später erneut versuchen.</p><button class="secondary-btn compact" id="retryOnlineSearch">KI Suche erneut versuchen</button></div>':"";
   let lastScope="";
