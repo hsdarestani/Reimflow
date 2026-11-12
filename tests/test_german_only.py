@@ -36,7 +36,9 @@ class GermanOnlyRhymesTest(unittest.TestCase):
 
     def test_cache_namespace_invalidated_for_multilingual_results(self):
         api_text = (ROOT / "api.py").read_text(encoding="utf-8")
-        self.assertIn("rhymes|de-only-v1|", api_text)
+        self.assertIn("rhymes|de-only-query-v2|", api_text)
+        self.assertIn("context_revision",api_text)
+        self.assertNotIn("cached=cache_get(legacy)",api_text)
         self.assertNotIn('"Englisch/Code-Switch"]}', api_text)
 
 if __name__ == "__main__":
