@@ -266,6 +266,11 @@ class Handler(BaseHTTPRequestHandler):
     server_version="ReimflowAPI/1.0"
     def log_message(self,fmt,*args): print("%s - %s"%(self.address_string(),fmt%args),flush=True)
     def send_json(self,status,payload):
+        # Public response deliberately excludes internal artist corpus and AI
+        # implementation metadata. Full payload is retained server-side in
+        # the database cache for quality control and feedback integrity.
+        if status==200 and isinstance(payload,dict) and payload.get("quality_reviewed") is True and isinstance(payload.get("rhymes"),list):
+            payload={k:payload[k] for k in ("ok","analysis","rhymes","quality_reviewed","cached") if k in payload}
         body=json.dumps(payload,ensure_ascii=False).encode()
         self.send_response(status); self.send_header("Content-Type","application/json; charset=utf-8"); self.send_header("Content-Length",str(len(body)))
         self.send_header("Cache-Control","no-store"); self.send_header("X-Content-Type-Options","nosniff"); self.end_headers(); self.wfile.write(body)
@@ -280,10 +285,10 @@ class Handler(BaseHTTPRequestHandler):
         route=urllib.parse.urlsplit(self.path).path.rstrip("/") or "/"
         if route=="/api/health":
             self.send_json(200,{"ok":True,"ai":bool(OPENAI_API_KEY),"model":PRIMARY_MODEL if OPENAI_API_KEY else None,"service":"reimflow-rhyme-engine"}); return
+        # Corpus diagnostics are operator-only via the on-server CLI.
+        # Never expose artist, track-count or feature-method metadata publicly.
         if route in ("/api/rhymes/context-status","/api/corpus/status"):
-            summary=style_intelligence.status(DB_PATH)
-            summary.pop("_latest",None)
-            self.send_json(200,{"ok":True,"method":"rights_cleared_aggregate_features","lyrics_included":False,**summary}); return
+            self.send_json(404,{"error":"NOT_FOUND"}); return
         if self.path.startswith("/api/rhymes/jobs/"):
             job_id=self.path[len("/api/rhymes/jobs/"):]
             if not job_id or len(job_id)>80 or not all(ch.isalnum() or ch in "-_" for ch in job_id):
