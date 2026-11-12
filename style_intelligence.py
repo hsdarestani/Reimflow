@@ -11,6 +11,7 @@ import hashlib
 import json
 import re
 import sqlite3
+import sys
 import time
 from pathlib import Path
 
@@ -87,10 +88,15 @@ def import_licensed(path, *, db_path, artist, title, source_url, rights_ref, val
     until = datetime.date.fromisoformat(valid_until)
     if until < datetime.date.today():
         raise ValueError("The license has expired")
-    source = Path(path)
-    if source.suffix.lower() != ".txt" or not source.is_file() or source.stat().st_size > MAX_FILE_BYTES:
-        raise ValueError("Only a local UTF-8 .txt file up to 2MB is accepted")
-    data = source.read_bytes()
+    if str(path) == "-":
+        data = sys.stdin.buffer.read(MAX_FILE_BYTES+1)
+        if not data or len(data)>MAX_FILE_BYTES:
+            raise ValueError("Invalid or oversized UTF-8 input")
+    else:
+        source = Path(path)
+        if source.suffix.lower() != ".txt" or not source.is_file() or source.stat().st_size > MAX_FILE_BYTES:
+            raise ValueError("Only a local UTF-8 .txt file up to 2MB is accepted")
+        data = source.read_bytes()
     text = data.decode("utf-8-sig")
     rows, lines = analyze(text)
     digest = hashlib.sha256(data).hexdigest()
@@ -187,11 +193,21 @@ def record_feedback(db_connection, *, user_id, query, word, vote):
         DO UPDATE SET vote=excluded.vote, updated_at=excluded.updated_at""",
         (user_id,_query_hash(query),word.casefold(),vote,time.time_ns()))
 
+def revoke(path, source_id):
+    if not re.fullmatch(r"[a-f0-9]{32}",source_id or ""):
+        raise ValueError("Invalid source ID")
+    with connect(path) as c:
+        c.execute("PRAGMA foreign_keys=ON")
+        removed=c.execute("DELETE FROM rf_lyric_sources WHERE source_id=?",(source_id,)).rowcount
+        c.commit()
+    return {"source_id":source_id,"revoked":removed==1}
+
 def cli():
     parser = argparse.ArgumentParser(description="Import licensed lyric text as NON-reconstructive features")
-    parser.add_argument("command",choices=["ingest","status"])
+    parser.add_argument("command",choices=["ingest","status","revoke"])
     parser.add_argument("--db",default="/var/lib/reimflow/reimflow.sqlite3")
     parser.add_argument("--file")
+    parser.add_argument("--source-id")
     parser.add_argument("--artist", choices=ARTISTS + tuple(ARTIST_ALIASES))
     parser.add_argument("--title")
     parser.add_argument("--source-url")
@@ -201,6 +217,8 @@ def cli():
     args=parser.parse_args()
     if args.command=="status":
         print(json.dumps(status(args.db),ensure_ascii=False)); return
+    if args.command=="revoke":
+        print(json.dumps(revoke(args.db,args.source_id),ensure_ascii=False)); return
     if not args.rights_confirmed:
         parser.error("--rights-confirmed is mandatory: operator must verify training/analysis rights")
     if not all([args.file,args.artist,args.title,args.source_url,args.rights_ref,args.valid_until]):
