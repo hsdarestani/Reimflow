@@ -100,25 +100,33 @@ def analyze(text):
     return rows, lines
 
 def import_licensed(path, *, db_path, artist, title, source_url, rights_ref, valid_until):
-    artist = ARTIST_ALIASES.get(artist, artist)
-    if artist not in ARTISTS:
-        raise ValueError("Unsupported artist")
-    if not all(isinstance(v, str) and v.strip() for v in (title,source_url,rights_ref)):
-        raise ValueError("Provenance and rights reference are required")
-    if not source_url.startswith(("https://", "urn:")):
-        raise ValueError("Use an HTTPS source or rights registry URN")
-    until = datetime.date.fromisoformat(valid_until)
-    if until < datetime.date.today():
-        raise ValueError("The license has expired")
+    """Read an operator-provided licensed file or stdin, then process in memory."""
     if str(path) == "-":
-        data = sys.stdin.buffer.read(MAX_FILE_BYTES+1)
-        if not data or len(data)>MAX_FILE_BYTES:
-            raise ValueError("Invalid or oversized UTF-8 input")
+        data = sys.stdin.buffer.read(MAX_FILE_BYTES + 1)
     else:
         source = Path(path)
         if source.suffix.lower() != ".txt" or not source.is_file() or source.stat().st_size > MAX_FILE_BYTES:
             raise ValueError("Only a local UTF-8 .txt file up to 2MB is accepted")
         data = source.read_bytes()
+    return import_licensed_bytes(data, db_path=db_path, artist=artist, title=title,
+                                 source_url=source_url, rights_ref=rights_ref,
+                                 valid_until=valid_until)
+
+
+def import_licensed_bytes(data, *, db_path, artist, title, source_url, rights_ref, valid_until):
+    """Import rights-attested lyrics while retaining only aggregated statistical features."""
+    artist = ARTIST_ALIASES.get(artist, artist)
+    if artist not in ARTISTS:
+        raise ValueError("Unsupported artist")
+    if not all(isinstance(v, str) and v.strip() for v in (title, source_url, rights_ref)):
+        raise ValueError("Provenance and rights reference are required")
+    if not source_url.startswith(("https://", "urn:")):
+        raise ValueError("Use an HTTPS source or rights registry URN")
+    until = datetime.date.fromisoformat(valid_until)
+    if until < datetime.date.today():
+        raise ValueError("The rights review date has passed")
+    if not isinstance(data, (bytes, bytearray)) or not 0 < len(data) <= MAX_FILE_BYTES:
+        raise ValueError("Invalid or oversized UTF-8 lyrics input")
     text = data.decode("utf-8-sig")
     rows, lines = analyze(text)
     digest = hashlib.sha256(data).hexdigest()
