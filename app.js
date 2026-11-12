@@ -40,7 +40,7 @@ points:0,
 favorites:[],
 submissions:[],
 beats:[],category:"Alle",syllables:"Alle",beatFilter:"Alle",currentQuery:"",
-aiResults:[],queryAnalysis:null,searchSignature:"",engineOnline:null,searchLoading:false,resultSource:"ai",knowledgeStatus:null,feedbackVotes:{}
+aiResults:[],queryAnalysis:null,searchSignature:"",engineOnline:null,searchLoading:false,resultSource:"ai",feedbackVotes:{}
 };
 
 const $=(s,root=document)=>root.querySelector(s);
@@ -97,8 +97,8 @@ async function checkEngine(){
 function updateEngineState(extra=""){
   const el=$("#engineState");if(!el)return;
   if(state.searchLoading){el.className="engine-state loading";el.innerHTML="<span></span> Klang wird analysiert…";return}
-  if(state.engineOnline===true){el.className="engine-state online";el.innerHTML="<span></span> KI Reimsuche"+(extra?" · "+escapeHtml(extra):"");return}
-  if(state.engineOnline===false){el.className="engine-state offline";el.innerHTML="<span></span> KI gerade nicht erreichbar";return}
+  if(state.engineOnline===true){el.className="engine-state online";el.innerHTML="<span></span> Reimsuche"+(extra?" · "+escapeHtml(extra):"");return}
+  if(state.engineOnline===false){el.className="engine-state offline";el.innerHTML="<span></span> Reimsuche gerade nicht erreichbar";return}
   el.className="engine-state";el.innerHTML="<span></span> Verbindung wird geprüft";
 }
 
@@ -158,29 +158,28 @@ async function searchRhymes(force=false){
     const response=await fetch("/api/rhymes",{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify({query:state.currentQuery,category:state.category,syllables:state.syllables}),signal:controller.signal});
     let data=await response.json().catch(()=>({}));
     if(seq!==searchSequence)return;
-    if(!response.ok)throw new Error(data.message||"KI Suche nicht verfügbar");
+    if(!response.ok)throw new Error(data.message||"Suche nicht verfügbar");
     // Long-running, independently reviewed model requests stay on the server.
     // Each poll is a short HTTP request, avoiding mobile/proxy timeouts.
     let polling=0;
     while(data.pending===true){
-      if(!data.job_id || !/^[a-zA-Z0-9_-]{20,80}$/.test(data.job_id))throw new Error("Ungültige KI Suchanfrage.");
-      if(++polling>135)throw new Error("Die KI braucht ungewöhnlich lange. Bitte später erneut versuchen.");
+      if(!data.job_id || !/^[a-zA-Z0-9_-]{20,80}$/.test(data.job_id))throw new Error("Ungültige Suchanfrage.");
+      if(++polling>135)throw new Error("Die Suche dauert ungewöhnlich lange. Bitte später erneut versuchen.");
       const stage=data.stage;
       const progress=$("#searchProgressText");
       if(progress)progress.textContent=stage==="review"
-        ?"Die zweite KI prüft jetzt Aussprache und Reimqualität…"
+        ?"Reimqualität wird geprüft…"
         :"Wir suchen echte Wortreime und passende mehrteilige Rap Phrasen…";
       await new Promise(resolve=>setTimeout(resolve,Math.min(4000,Math.max(1200,data.poll_after_ms||2200))));
       if(seq!==searchSequence || controller.signal.aborted)return;
       const poll=await fetch("/api/rhymes/jobs/"+encodeURIComponent(data.job_id),{
         headers:{"Accept":"application/json"},signal:controller.signal,cache:"no-store"});
       data=await poll.json().catch(()=>({}));
-      if(!poll.ok)throw new Error(data.message||"KI Suche nicht verfügbar");
+      if(!poll.ok)throw new Error(data.message||"Suche nicht verfügbar");
       if(poll.status!==202&&data.pending!==true)break;
     }
     if(data.ok!==true || data.quality_reviewed!==true)throw new Error("Die unabhängige Klangprüfung konnte nicht abgeschlossen werden.");
     state.aiResults=Array.isArray(data.rhymes)?data.rhymes:[];
-    state.knowledgeStatus=data.knowledge||null;
     state.feedbackVotes={};
     state.queryAnalysis=data.analysis||null;state.searchSignature=signature;state.engineOnline=true;state.searchLoading=false;state.resultSource=data.engine==="offline_suffix"?"offline_suffix":"ai";
     renderRhymes();renderQueryInsight(state.queryAnalysis);updateEngineState(data.cached?"Zwischenspeicher":"Aktuell");
@@ -193,7 +192,7 @@ async function searchRhymes(force=false){
     if(fallback){
       state.engineOnline=false;state.resultSource=fallback.source||"curated";
       state.aiResults=fallback.rhymes;state.queryAnalysis=fallback.analysis;state.searchSignature=signature;
-      renderRhymes();renderQueryInsight(fallback.analysis,true);updateEngineState();toast("KI derzeit nicht erreichbar. Ungeprüfte Wortideen werden angezeigt.");
+      renderRhymes();renderQueryInsight(fallback.analysis,true);updateEngineState();toast("Suche derzeit nicht erreichbar. Ungeprüfte Wortideen werden angezeigt.");
     }else{
       state.aiResults=[];state.queryAnalysis=null;state.resultSource="ai";
       if(err.name==="AbortError"){
@@ -231,8 +230,8 @@ function renderLoading(){
   const phraseWords=state.currentQuery.trim().split(/\s+/);
   const anchorWord=phraseWords.at(-1)||"";
   const phraseHint=phraseWords.length>1?'<div class="rhyme-anchor-chooser">Ganze Phrase: <strong>'+escapeHtml(state.currentQuery)+'</strong> · Endwort: <strong>'+escapeHtml(anchorWord)+'</strong><button type="button" class="secondary-btn compact" id="onlyRhymeAnchor">Nur „'+escapeHtml(anchorWord)+'“ suchen</button></div>':"";
-  const first=(preview?'<div class="rhyme-preview"><strong>Sofort-Ideen fürs Endwort „'+escapeHtml(preview.anchor)+'“</strong><span class="rhyme-preview-note">Wörterbuchbeispiele, noch nicht durch die KI geprüft</span><div class="rhyme-preview-tags">'+preview.words.map(x=>'<span>'+escapeHtml(x)+'</span>').join('')+'</div>'+(preview.phrases.length?'<p>Mehrteilige Rap-Ideen: <b>'+preview.phrases.map(escapeHtml).join(' · ')+'</b></p>':'')+'<small>'+escapeHtml(preview.note)+'</small></div>':'');
-  $("#rhymeResults").innerHTML=phraseHint+first+'<div class="search-progress-copy"><strong>KI prüft gerade Aussprache und Reimqualität</strong><span id="searchProgressText">Endwort und ganze Phrase werden getrennt analysiert. Du kannst die Seite weiter nutzen.</span><button class="secondary-btn compact" type="button" id="cancelRhymeSearch">Abbrechen</button></div>'+Array.from({length:3},(_,i)=>'<div class="rhyme-skeleton" style="--i:'+i+'"><span></span><div><b></b><small></small></div><i></i></div>').join("");
+  const first=(preview?'<div class="rhyme-preview"><strong>Sofort-Ideen fürs Endwort „'+escapeHtml(preview.anchor)+'“</strong><span class="rhyme-preview-note">Erste Wortideen · noch nicht geprüft</span><div class="rhyme-preview-tags">'+preview.words.map(x=>'<span>'+escapeHtml(x)+'</span>').join('')+'</div>'+(preview.phrases.length?'<p>Mehrteilige Rap-Ideen: <b>'+preview.phrases.map(escapeHtml).join(' · ')+'</b></p>':'')+'<small>'+escapeHtml(preview.note)+'</small></div>':'');
+  $("#rhymeResults").innerHTML=phraseHint+first+'<div class="search-progress-copy"><strong>Passende Reime werden gesucht</strong><span id="searchProgressText">Endwort und ganze Phrase werden getrennt analysiert. Du kannst die Seite weiter nutzen.</span><button class="secondary-btn compact" type="button" id="cancelRhymeSearch">Abbrechen</button></div>'+Array.from({length:3},(_,i)=>'<div class="rhyme-skeleton" style="--i:'+i+'"><span></span><div><b></b><small></small></div><i></i></div>').join("");
   $("#onlyRhymeAnchor")?.addEventListener("click",()=>runSearch(anchorWord,{stay:true,force:true}));
   $("#cancelRhymeSearch")?.addEventListener("click",()=>{
     if(activeSearchController)activeSearchController.abort();
@@ -240,8 +239,8 @@ function renderLoading(){
     renderRhymes("Suche abgebrochen. Du kannst eine neue Suche starten.");
   });
   const seqNow=searchSequence;
-  setTimeout(()=>{if(seqNow===searchSequence&&state.searchLoading){const el=$("#searchProgressText");if(el)el.textContent="Die KI sucht Wortreime und sinnvolle mehrteilige Formulierungen…"}},7000);
-  setTimeout(()=>{if(seqNow===searchSequence&&state.searchLoading){const el=$("#searchProgressText");if(el)el.textContent="Die zweite KI prüft den Klang. Solange sind die ersten Ideen oben sichtbar."}},16000);
+  setTimeout(()=>{if(seqNow===searchSequence&&state.searchLoading){const el=$("#searchProgressText");if(el)el.textContent="Weitere Wortreime und Formulierungen werden gesucht…"}},7000);
+  setTimeout(()=>{if(seqNow===searchSequence&&state.searchLoading){const el=$("#searchProgressText");if(el)el.textContent="Die Reimqualität wird geprüft. Erste Vorschläge bleiben sichtbar."}},16000);
 }
 
 function renderQueryInsight(analysis,fallback=false){
@@ -284,27 +283,21 @@ function renderRhymes(errorMessage=""){
     ...rows.filter(r=>r.scope==="phrase_variation"),
     ...rows.filter(r=>!r.scope||r.scope==="end_word")
   ]:rows;
-  const contextBanner=!offline&&state.knowledgeStatus
-      ?'<p class="rhyme-learning-status" role="status">'+
-      (state.knowledgeStatus.licensed_tracks>0
-        ?'Wissensbasis: '+escapeHtml(state.knowledgeStatus.licensed_tracks)+' lizenzierte Titel · '+escapeHtml(state.knowledgeStatus.artists_covered)+' Künstler'
-        :'Wissensbasis: '+escapeHtml(state.knowledgeStatus.public_research_profiles||0)+' recherchierte Künstlerprofile · noch keine lizenzierten Songtexte')+
-      ' · Nutzerfeedback hilft bei zukünftigen Vorschlägen.</p>':"";
-   const caveat=offline?'<div class="rhyme-offline-note"><strong>Vorschläge ohne KI-Prüfung</strong><p>Diese Wörter haben ähnliche Endungen. Aussprache, Betonung und Reimqualität sind nicht geprüft. Bitte selbst anhören oder die KI Suche später erneut versuchen.</p><button class="secondary-btn compact" id="retryOnlineSearch">KI Suche erneut versuchen</button></div>':"";
+   const caveat=offline?'<div class="rhyme-offline-note"><strong>Noch ungeprüfte Vorschläge</strong><p>Diese Wörter haben ähnliche Endungen. Aussprache, Betonung und Reimqualität sind nicht geprüft. Bitte selbst anhören oder die Suche später erneut versuchen.</p><button class="secondary-btn compact" id="retryOnlineSearch">Suche erneut versuchen</button></div>':"";
   let lastScope="";
-  list.innerHTML=contextBanner+caveat+grouped.map(r=>{
+  list.innerHTML=caveat+grouped.map(r=>{
     const scope=hasPhrase?(r.scope||"end_word"):"end_word";
     const heading=scope!==lastScope?(lastScope=scope,'<div class="rhyme-group-title">'+escapeHtml(scopeTitle[scope]||"Reime aufs Endwort")+'</div>'):"";
     const fav=state.favorites.includes(r.word);
     const strength=r.strength==="stark"?"stark":"brauchbar";
     const label=offline?"IDEE":strength==="stark"?"STARK":"NAH";
     const tone=strength==="stark"?"elite":"good";
-    return heading+'<article class="rhyme-card ai-rhyme '+tone+'"><div class="match-score" title="Einschätzung einer zweiten KI Prüfung">'+label+'</div>'+
-    '<div class="rhyme-word"><div class="word-line"><strong>'+escapeHtml(r.word)+'</strong><span class="ai-chip'+(offline?' source-offline':'')+'">'+(offline?'IDEE':'KI')+'</span></div><small>'+escapeHtml(r.pronunciation||"")+(r.ipa?' · <span class="ipa-inline">'+escapeHtml(r.ipa)+'</span>':"")+'</small></div>'+
+    return heading+'<article class="rhyme-card ai-rhyme '+tone+'"><div class="match-score" title="Reimqualität">'+label+'</div>'+
+    '<div class="rhyme-word"><div class="word-line"><strong>'+escapeHtml(r.word)+'</strong><span class="ai-chip'+(offline?' source-offline':'')+'">'+(offline?'IDEE':'REIM')+'</span></div><small>'+escapeHtml(r.pronunciation||"")+(r.ipa?' · <span class="ipa-inline">'+escapeHtml(r.ipa)+'</span>':"")+'</small></div>'+
     '<div class="tag-row"><span class="micro-tag">'+escapeHtml(r.category||"Sonstiges")+'</span><span class="micro-tag">'+escapeHtml(String(r.syllables||"?"))+' Silben</span><span class="micro-tag">'+escapeHtml(rhymeKindLabel(r.kind||"Klangreim"))+'</span><span class="micro-tag">'+escapeHtml(r.register||"Standard")+'</span></div>'+
     '<div class="result-actions"><button class="icon-btn speak-result" data-word="'+escapeAttr(r.word)+'" aria-label="Aussprache anhören">♫</button><button class="favorite-btn '+(fav?"active":"")+'" data-fav="'+escapeAttr(r.word)+'" aria-label="Favorit">♥</button>'+
      (offline?'':'<button class="icon-btn rhyme-feedback-btn" data-rhyme-vote="1" data-word="'+escapeAttr(r.word)+'" aria-label="Guter Reim" title="Guter Reim">👍</button><button class="icon-btn rhyme-feedback-btn" data-rhyme-vote="-1" data-word="'+escapeAttr(r.word)+'" aria-label="Schwacher Reim" title="Schwacher Reim">👎</button>')+'</div>'+
-    '<details class="rhyme-explanation"><summary>Warum passt der Reim?</summary><p><strong>'+(offline?"Ungeprüfte Idee":"Klang von KI geprüft")+'</strong> · '+escapeHtml(r.explanation||"")+'</p></details></article>';
+    '<details class="rhyme-explanation"><summary>Warum passt der Reim?</summary><p><strong>'+(offline?"Ungeprüfte Idee":"Klang geprüft")+'</strong> · '+escapeHtml(r.explanation||"")+'</p></details></article>';
   }).join("");
   if(offline)$("#retryOnlineSearch")?.addEventListener("click",()=>searchRhymes(true));
 }
