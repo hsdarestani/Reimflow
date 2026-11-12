@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import hashlib, json, os, sqlite3, threading, time, urllib.error, urllib.request, importlib.util, email.parser, email.policy
+import hashlib, json, os, sqlite3, threading, time, urllib.error, urllib.request, urllib.parse, importlib.util, email.parser, email.policy
 from collections import defaultdict, deque
 import platform_api
 import rhyme_jobs
@@ -275,9 +275,12 @@ class Handler(BaseHTTPRequestHandler):
         return json.loads(self.rfile.read(length).decode())
     def do_GET(self):
         if platform_api.handle(self): return
-        if self.path=="/api/health":
+        # Diagnostic/status links may gain a trailing slash or benign query
+        # parameters when opened from mobile in-app browsers.
+        route=urllib.parse.urlsplit(self.path).path.rstrip("/") or "/"
+        if route=="/api/health":
             self.send_json(200,{"ok":True,"ai":bool(OPENAI_API_KEY),"model":PRIMARY_MODEL if OPENAI_API_KEY else None,"service":"reimflow-rhyme-engine"}); return
-        if self.path=="/api/rhymes/context-status":
+        if route in ("/api/rhymes/context-status","/api/corpus/status"):
             summary=style_intelligence.status(DB_PATH)
             summary.pop("_latest",None)
             self.send_json(200,{"ok":True,"method":"rights_cleared_aggregate_features","lyrics_included":False,**summary}); return
