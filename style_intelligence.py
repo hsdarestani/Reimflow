@@ -14,7 +14,8 @@ import sqlite3
 import time
 from pathlib import Path
 
-ARTISTS = ("Eko", "Kollegah", "Ali As", "Sadiq", "Shindy", "Bushido", "MoTrip", "SSIO")
+ARTISTS = ("Eko", "Kollegah", "Ali As", "Sadiq", "Shindy", "Bushido", "Mo Trip", "SSIO", "Miami Yacine")
+ARTIST_ALIASES = {"MoTrip": "Mo Trip", "Ssio": "SSIO"}
 WORD = re.compile(r"[^\W\d_]+(?:['’-][^\W\d_]+)*", re.UNICODE)
 VOWELS = re.compile(r"[aeiouyäöü]+", re.I)
 MAX_FILE_BYTES = 2_000_000
@@ -76,6 +77,7 @@ def analyze(text):
     return rows, lines
 
 def import_licensed(path, *, db_path, artist, title, source_url, rights_ref, valid_until):
+    artist = ARTIST_ALIASES.get(artist, artist)
     if artist not in ARTISTS:
         raise ValueError("Unsupported artist")
     if not all(isinstance(v, str) and v.strip() for v in (title,source_url,rights_ref)):
@@ -121,14 +123,14 @@ def status(path):
                 COALESCE(MAX(created_at),0) FROM rf_lyric_sources WHERE valid_until>=date('now')""").fetchone()
             count = c.execute("SELECT COUNT(*),COALESCE(MAX(updated_at),0) FROM rf_rhyme_feedback").fetchone()
         return {"licensed_tracks":active[0],"artists_covered":active[1],"lines_analyzed":active[2],
-                "feedback_count":count[0],"_latest":max(active[3], count[1] // 1_000_000_000)}
+                "feedback_count":count[0],"_latest":max(active[3] * 1_000_000_000, count[1])}
     except sqlite3.Error:
         return {"licensed_tracks":0,"artists_covered":0,"lines_analyzed":0,"feedback_count":0,"_latest":0}
 
 def revision(path):
     """Invalidate cache when ingested material or human feedback changes."""
     s = status(path)
-    return ":".join(str(s[k]) for k in ("licensed_tracks","lines_analyzed","feedback_count","_latest"))
+    return ":".join(str(s[k]) for k in ("licensed_tracks","artists_covered","lines_analyzed","feedback_count","_latest"))
 
 def context(path, query):
     """Return only aggregate pattern information. Never output lyrics or artist imitation."""
@@ -190,7 +192,7 @@ def cli():
     parser.add_argument("command",choices=["ingest","status"])
     parser.add_argument("--db",default="/var/lib/reimflow/reimflow.sqlite3")
     parser.add_argument("--file")
-    parser.add_argument("--artist", choices=ARTISTS)
+    parser.add_argument("--artist", choices=ARTISTS + tuple(ARTIST_ALIASES))
     parser.add_argument("--title")
     parser.add_argument("--source-url")
     parser.add_argument("--rights-ref")
