@@ -136,6 +136,46 @@ class RhymeModelsTest(unittest.TestCase):
         finally:
             api.OPENAI_API_KEY=prev
 
+    def test_exhausted_credits_do_not_retry_or_block_cache(self):
+        import tempfile
+        old_key,old_db=api.OPENAI_API_KEY,api.DB_PATH
+        old_until=api._quota_block_until
+        attempts=[]
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                api.DB_PATH=tmp+"/db.sqlite3"
+                api.OPENAI_API_KEY="unit-test"
+                api._quota_block_until=0.0
+                def quota(req,timeout):
+                    attempts.append(1)
+                    err=json.dumps({"error":{"type":"insufficient_quota",
+                        "code":"credit_balance_exhausted"}}).encode()
+                    raise api.urllib.error.HTTPError(req.full_url,429,"no credits",
+                        {"Retry-After":"60"},io.BytesIO(err))
+                with patch.object(api.urllib.request,"urlopen",side_effect=quota),patch.object(api.time,"sleep") as sleep:
+                    with self.assertRaises(api.APIQuotaExhausted):
+                        api.call_openai("Pokerface",api.RHYME_SCHEMA,"test","prompt",
+                            models=["gpt-5.6-sol"])
+                self.assertEqual(len(attempts),1)
+                sleep.assert_not_called()
+                self.assertTrue(api._quota_unavailable())
+
+                class Client:
+                    headers={}
+                    client_address=("127.0.0.111",9876)
+                    path="/api/rhymes"
+                    def read_json(self): return {"query":"Pokerface"}
+                    def send_json(self,status,payload): self.result=(status,payload)
+
+                client=Client()
+                api.Handler.do_POST(client)
+                self.assertEqual(client.result[0],503)
+                self.assertEqual(client.result[1]["error"],"AI_UNAVAILABLE")
+                self.assertEqual(len(attempts),1)
+        finally:
+            api.OPENAI_API_KEY,api.DB_PATH=old_key,old_db
+            api._quota_block_until=old_until
+
     def test_standard_mode_does_not_force_paid_fast_tier(self):
         old=api.OPENAI_API_KEY
         api.OPENAI_API_KEY="mock"
