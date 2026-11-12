@@ -72,6 +72,45 @@ class RhymeModelsTest(unittest.TestCase):
         finally:
             api.OPENAI_API_KEY=previous
 
+    def test_fast_generation_and_compact_independent_review_payloads(self):
+        prev=api.OPENAI_API_KEY
+        api.OPENAI_API_KEY="mock-for-unit-test"
+        requests=[]
+        try:
+            def spy(req,timeout):
+                requests.append(json.loads(req.data))
+                return Response()
+            with patch.object(api.urllib.request,"urlopen",side_effect=spy):
+                api.call_openai("Pokerface",api.RHYME_SCHEMA,
+                    "reimflow_quality_candidates",api.DEVELOPER_PROMPT,
+                    effort="low",max_output_tokens=4300,
+                    models=["gpt-5.6-sol"],service_tier="fast")
+                api.call_openai("Pokerface",api.RHYME_SCHEMA,
+                    "reimflow_independent_review","German review",
+                    effort="low",max_output_tokens=2700,
+                    models=["gpt-5.6-terra"],service_tier="fast")
+            self.assertEqual([x["max_output_tokens"] for x in requests],[4300,2700])
+            self.assertTrue(all(x["service_tier"]=="fast" for x in requests))
+            self.assertTrue(all(x["text"]["verbosity"]=="low" for x in requests))
+            self.assertTrue(all(x["reasoning"]["effort"]=="low" for x in requests))
+        finally:
+            api.OPENAI_API_KEY=prev
+
+    def test_standard_mode_does_not_force_paid_fast_tier(self):
+        old=api.OPENAI_API_KEY
+        api.OPENAI_API_KEY="mock"
+        seen=[]
+        try:
+            def inspect(req,timeout):
+                seen.append(json.loads(req.data))
+                return Response()
+            with patch.object(api.urllib.request,"urlopen",side_effect=inspect):
+                api.call_openai("Nacht",api.RHYME_SCHEMA,"test","prompt",
+                    models=["gpt-5.6-sol"],service_tier="default")
+            self.assertNotIn("service_tier",seen[0])
+        finally:
+            api.OPENAI_API_KEY=old
+
     def test_no_credentials_stored_in_response(self):
         self.assertNotIn("Authorization",api.RHYME_SCHEMA)
         self.assertNotIn("api_key",api.RHYME_SCHEMA)
