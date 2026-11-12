@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify Python API syntax
         run: |
-          python3 -m py_compile api.py rhyme_jobs.py platform_api.py rap-flow-analysis.py rhyme-quality.py rhyme-intent.py style_intelligence.py
+          python3 -m py_compile api.py rhyme_jobs.py platform_api.py rap-flow-analysis.py rhyme-quality.py rhyme-intent.py style_intelligence.py lyrics_import_lrclib.py
           python3 -m unittest discover -s tests -p "test_platform_api.py"
           python3 -m unittest discover -s tests -p "test_rap_flow.py"
           python3 -m unittest discover -s tests -p "test_rhyme_api.py"
@@ -26,6 +26,7 @@ jobs:
           python3 -m unittest discover -s tests -p "test_german_only.py"
           python3 -m unittest discover -s tests -p "test_rhyme_intent.py"
           python3 -m unittest discover -s tests -p "test_style_intelligence.py"
+          python3 -m unittest discover -s tests -p "test_lyrics_import_lrclib.py"
       - name: Verify JavaScript syntax
         run: |
           node --check app.js
