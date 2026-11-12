@@ -277,10 +277,16 @@ def expand(db_path, *, rights_ref, review_due,
         raise ValueError("Invalid time budget")
     existing=_already_imported(db_path)
     initial_count=si.status(db_path)["licensed_tracks"]
+    # Fair coverage: prioritize artists with the fewest already analyzed
+    # tracks so bounded runs never starve the final artists in the list.
+    with si.connect(db_path) as conn:
+        artist_counts=dict(conn.execute("""SELECT artist,COUNT(*) FROM rf_lyric_sources
+            WHERE valid_until>=date('now') GROUP BY artist""").fetchall())
+    artist_order=sorted(baseline.SEARCHES,key=lambda name:artist_counts.get(name,0))
     found=0;imported=0;skipped=0;not_found=0;errors=[]
     summary=[]
     started=clock()
-    for artist in baseline.SEARCHES:
+    for artist in artist_order:
         artist_stats={"artist":artist,"catalog_candidates":0,"new_analyses":0,
                       "already_present":0,"unavailable_lyrics":0,"errors":0}
         try:
