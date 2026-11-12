@@ -20,6 +20,7 @@ from email.policy import default as email_policy
 from http.cookies import SimpleCookie
 from pathlib import Path
 from urllib.parse import urlparse
+import style_intelligence
 
 DATABASE = os.getenv("REIMFLOW_DB", "/var/lib/reimflow/reimflow.sqlite3")
 MEDIA_DIR = Path(os.getenv("REIMFLOW_MEDIA_DIR", str(Path(DATABASE).parent / "media")))
@@ -147,6 +148,7 @@ def initialize():
         columns=[r["name"] for r in c.execute("PRAGMA table_info(rf_users)")]
         if "email_verified" not in columns:
             c.execute("ALTER TABLE rf_users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 0")
+    style_intelligence.connect(DATABASE).close()
 
 
 def password_hash(password, salt=None):
@@ -491,6 +493,7 @@ def handle(h):
                     personal["beats"]=[dict(row) for row in c.execute("SELECT id,title,kind,bpm,license,created_at FROM rf_beats WHERE user_id=?", (user["id"],))]
                     personal["favorites"]=[row["word"] for row in c.execute("SELECT word FROM rf_favorites WHERE user_id=?", (user["id"],))]
                     personal["scores"]=[dict(row) for row in c.execute("SELECT bpm,mode,best FROM rf_scores WHERE user_id=?", (user["id"],))]
+                    personal["rhyme_feedback"]=[dict(row) for row in c.execute("SELECT query_hash,word,vote,updated_at FROM rf_rhyme_feedback WHERE user_id=?", (user["id"],))]
                 respond(h,200,{"ok":True,"export":personal})
         elif re.fullmatch(r"/api/platform/media/\d+", path):
             send_audio(h, int(path.rsplit("/", 1)[1]))
@@ -706,6 +709,18 @@ def handle(h):
                 c.execute("UPDATE rf_users SET points=points+? WHERE id=?", (10 if decision=="accepted" else 0,row["user_id"]))
                 c.execute("UPDATE rf_users SET points=points+2 WHERE id=?", (uid,))
             respond(h, 200, {"ok": True})
+        elif kind == "rhyme-feedback":
+            if not request_allowed(h, "rhyme-feedback-" + str(uid), 25, 3600):
+                respond(h,429,{"error":"FEEDBACK_RATE_LIMIT"})
+                return True
+            d=read_json(h)
+            query, word = trim(d.get("query"),120), trim(d.get("word"),90)
+            vote=d.get("vote")
+            if not query or not word or type(vote) is not int or vote not in (-1,1):
+                raise ValueError("Ungueltige Bewertung")
+            with connection() as c:
+                style_intelligence.record_feedback(c,user_id=uid,query=query,word=word,vote=vote)
+            respond(h,200,{"ok":True,"message":"Danke! Deine Bewertung hilft uns, die Reimvorschläge zu verbessern."})
         elif kind == "favorites":
             d = read_json(h)
             word = trim(d.get("word"), 90)
