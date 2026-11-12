@@ -371,6 +371,8 @@ class Handler(BaseHTTPRequestHandler):
                         "knowledge":{"licensed_tracks":corpus_status["licensed_tracks"],
                            "artists_covered":corpus_status["artists_covered"],
                            "feedback_count":corpus_status["feedback_count"],
+                           "public_research_profiles":corpus_status["public_research_profiles"],
+                           "research_kind":"public_editorial_summaries_not_lyrics",
                            "context_applied":bool(lyric_context.get("patterns") or lyric_context.get("feedback"))},
                         "timing_ms":{"generation":generation_ms,"review":review_ms},**data}
                     print("rhyme quality gate:",len(raw["rhymes"]),
