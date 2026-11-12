@@ -1,0 +1,35 @@
+name: Benchmark production rhyme latency and quality
+on:
+  push:
+    paths:
+      - .github/workflows/benchmark-rhyme-latency.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Time fresh and warm searches without leaking server internals
+        run: |
+          python3 - <<'PY'
+          import json,time,urllib.request,urllib.error
+          base="https://reimflow.smarbiz.sbs"
+          def fetch(url, payload=None):
+              raw=None if payload is None else json.dumps(payload).encode()
+              req=urllib.request.Request(base+url,data=raw,headers={"Content-Type":"application/json","Accept":"application/json"},method="POST" if payload is not None else "GET")
+              with urllib.request.urlopen(req,timeout=30) as resp:return resp.status,json.load(resp)
+          for query in ("Pokerface","Pokerface","Nacht"):
+              begin=time.monotonic()
+              status,data=fetch("/api/rhymes",{"query":query,"category":"Alle","syllables":"Alle"})
+              while status==202 and time.monotonic()-begin<180:
+                  time.sleep(1.5)
+                  status,data=fetch("/api/rhymes/jobs/"+data["job_id"])
+              print(json.dumps({"query":query,"seconds":round(time.monotonic()-begin,1),"http":status,
+                  "cached":data.get("cached"),"quality_reviewed":data.get("quality_reviewed"),
+                  "count":len(data.get("rhymes") or []),
+                  "rhymes":[{"word":r.get("word"),"strength":r.get("strength")} for r in (data.get("rhymes") or [])[:8]],
+                  "error":data.get("error")},ensure_ascii=False),flush=True)
+              if status!=200:raise SystemExit(1)
+          PY
