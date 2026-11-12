@@ -10,6 +10,12 @@
       words:["Safari","Kalamari"],
       phrases:[],
       note:"Nur deutsche Endwort-Ideen, nicht automatisch ein Reim auf die ganze Phrase."
+    },
+    pokerface:{
+      anchor:"Pokerface",language:"Englisch",
+      words:["Eis","weiß","Preis","Kreis"],
+      phrases:[],
+      note:"Ungeprüfte Klangannäherungen: englisch /eɪs/ klingt nicht gleich wie deutsch /aɪs/. Keine bestätigten Reime."
     }
   };
   const lastWord=q=>(String(q||"").match(/[a-zA-ZäöüÄÖÜß]+/g)||[]).at(-1)?.toLocaleLowerCase("de-DE")||"";
