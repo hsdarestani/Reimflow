@@ -25,6 +25,7 @@ import style_intelligence as si
 
 MB = "https://musicbrainz.org/ws/2"
 ITUNES = "https://itunes.apple.com/search"
+DEEZER = "https://api.deezer.com"
 LYRICS = "https://lrclib.net/api/search"
 UA = "ReimflowLicensedAnalysis/1.1 (https://reimflow.smarbiz.sbs)"
 MAX_PAYLOAD = 4*1024*1024
@@ -148,15 +149,76 @@ def itunes_titles(artist, *, max_titles=140, fetch=json_get):
     return titles[:max_titles]
 
 
+
+def deezer_titles(artist, *, max_titles=140, fetch=json_get, sleeper=time.sleep):
+    """Third independent metadata discovery, no Deezer lyrics or audio accessed.
+
+    Look up the exact artist profile; combine popular solo tracks with titles
+    of their album recordings. Bound album requests to avoid undue rate load.
+    """
+    artist_id=None
+    for alias in baseline.SEARCHES[artist]:
+        url=DEEZER+"/search/artist?"+urllib.parse.urlencode({"q":alias,"limit":100})
+        try: result=fetch(url)
+        except SourceUnavailable: continue
+        for row in result.get("data",[]):
+            if baseline.normalize(row.get("name",""))==baseline.normalize(alias):
+                artist_id=row.get("id")
+                break
+        if artist_id: break
+    if not isinstance(artist_id,int) or artist_id<=0:
+        return []
+    seen=set()
+    titles=[]
+    def add_tracks(rows):
+        for row in rows:
+            if not isinstance(row,dict):continue
+            credited=(row.get("artist") or {}).get("name","")
+            if not looks_like_solo_credit(credited,artist):continue
+            title=row.get("title","")
+            if not likely_solo_title(title):continue
+            key=baseline.normalize(title)
+            if key not in seen:
+                seen.add(key);titles.append(title.strip())
+    try:
+        top=fetch(DEEZER+f"/artist/{artist_id}/top?limit=100")
+        add_tracks(top.get("data",[]))
+    except SourceUnavailable:
+        pass
+    albums=[]
+    for offset in (0,100):
+        if len(albums)>=100:break
+        try:
+            data=fetch(DEEZER+f"/artist/{artist_id}/albums?"
+                       +urllib.parse.urlencode({"limit":100,"index":offset}))
+        except SourceUnavailable:break
+        page=data.get("data",[])
+        if not isinstance(page,list):break
+        for album in page:
+            if album.get("id") and not VERSION_PATTERN.search(str(album.get("title",""))):
+                albums.append(album["id"])
+        if len(page)<100:break
+        sleeper(0.3)
+    # Cover full album eras before repeating alternate editions.
+    for album_id in albums[:36]:
+        if len(titles)>=max_titles:break
+        try:
+            album_tracks=fetch(DEEZER+f"/album/{album_id}/tracks?limit=100")
+        except SourceUnavailable:continue
+        add_tracks(album_tracks.get("data",[]))
+        sleeper(0.25)
+    return titles[:max_titles]
+
+
 def candidate_titles(artist, *, max_titles=140, mb_fetch=json_get,
-                     itunes_fetch=json_get, sleeper=time.sleep):
+                     itunes_fetch=json_get, deezer_fetch=json_get, sleeper=time.sleep):
     mb=musicbrainz_titles(artist,max_titles=max_titles,fetch=mb_fetch,sleeper=sleeper)
     it=itunes_titles(artist,max_titles=max_titles,fetch=itunes_fetch)
+    dz=deezer_titles(artist,max_titles=max_titles,fetch=deezer_fetch,sleeper=sleeper)
     seen=set();out=[]
-    # Interleave two independently curated metadata sources: improve coverage
-    # without letting whichever lists first monopolize the search budget.
-    for i in range(max(len(mb),len(it))):
-        for track in (mb[i:i+1]+it[i:i+1]):
+    # Interleave three independent catalogs to avoid provider-specific gaps.
+    for i in range(max(len(mb),len(it),len(dz),default=0)):
+        for track in mb[i:i+1]+it[i:i+1]+dz[i:i+1]:
             key=baseline.normalize(track)
             if key not in seen:
                 seen.add(key);out.append(track)
