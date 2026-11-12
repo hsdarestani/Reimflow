@@ -330,7 +330,7 @@ class Handler(BaseHTTPRequestHandler):
             # Category and syllable filters are purely presentational. Reuse the
             # same verified AI result regardless of which filter the user taps.
             key=hashlib.sha256(("rhymes|de-only-query-v2|"+query.casefold()).encode()).hexdigest()
-            context_revision=style_intelligence.revision(DB_PATH)
+            context_revision=style_intelligence.revision(DB_PATH,query)
             cached=cache_get(key)
             if cached and cached.get("context_revision")!=context_revision:
                 cached=None
