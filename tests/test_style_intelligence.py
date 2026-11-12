@@ -42,6 +42,11 @@ class StyleIntelligenceTest(unittest.TestCase):
     def test_corpus_is_empty_until_rights_cleared(self):
         summary=si.status(self.db)
         self.assertEqual(summary["licensed_tracks"],0)
+        self.assertEqual(summary["public_research_profiles"],9)
+        reference=si.context(self.db,"Nacht")["public_editorial_research"]
+        self.assertEqual(reference["artist_count"],9)
+        self.assertTrue(reference["not_training_material"])
+        self.assertTrue(any("multisyllabic" in tag for tag in reference["technique_families"]))
         self.assertFalse(si.context(self.db,"Nacht")["available"])
         with self.assertRaises(ValueError):
             self.ingest(rights_ref="")
