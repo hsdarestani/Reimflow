@@ -284,7 +284,7 @@ class Handler(BaseHTTPRequestHandler):
         # parameters when opened from mobile in-app browsers.
         route=urllib.parse.urlsplit(self.path).path.rstrip("/") or "/"
         if route=="/api/health":
-            self.send_json(200,{"ok":True,"ai":bool(OPENAI_API_KEY),"model":PRIMARY_MODEL if OPENAI_API_KEY else None,"service":"reimflow-rhyme-engine"}); return
+            self.send_json(200,{"ok":True,"ai":bool(OPENAI_API_KEY),"service":"reimflow"}); return
         # Corpus diagnostics are operator-only via the on-server CLI.
         # Never expose artist, track-count or feature-method metadata publicly.
         if route in ("/api/rhymes/context-status","/api/corpus/status"):
