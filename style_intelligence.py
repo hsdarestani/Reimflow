@@ -41,6 +41,7 @@ def connect(path):
         query_hash TEXT NOT NULL, word TEXT NOT NULL,
         vote INTEGER NOT NULL CHECK(vote IN (-1,1)), updated_at INTEGER NOT NULL,
         PRIMARY KEY(user_id,query_hash,word))""")
+    c.execute("CREATE INDEX IF NOT EXISTS rf_feedback_query ON rf_rhyme_feedback(query_hash)")
     c.commit()
     return c
 
@@ -111,7 +112,7 @@ def import_licensed(path, *, db_path, artist, title, source_url, rights_ref, val
             source_url=excluded.source_url,rights_ref=excluded.rights_ref,
             valid_until=excluded.valid_until,digest=excluded.digest,
             lines_analyzed=excluded.lines_analyzed,created_at=excluded.created_at""",
-            (source_id,artist,title,source_url,rights_ref,valid_until,digest,lines,int(time.time())))
+            (source_id,artist,title,source_url,rights_ref,valid_until,digest,lines,time.time_ns()))
         c.executemany("""INSERT INTO rf_lyric_features
             (source_id,ending,word_count,syllables_est,repeated_ending,occurrences)
             VALUES(?,?,?,?,?,?)""", ((source_id,*row) for row in rows))
@@ -133,10 +134,19 @@ def status(path):
     except sqlite3.Error:
         return {"licensed_tracks":0,"artists_covered":0,"lines_analyzed":0,"feedback_count":0,"_latest":0}
 
-def revision(path):
-    """Invalidate cache when ingested material or human feedback changes."""
-    s = status(path)
-    return ":".join(str(s[k]) for k in ("licensed_tracks","artists_covered","lines_analyzed","feedback_count","_latest"))
+def revision(path, query):
+    """Per-query feedback revision plus licensed-corpus fingerprint; no global vote cache bust."""
+    try:
+        with connect(path) as c:
+            sources=c.execute("""SELECT source_id,digest,valid_until
+                FROM rf_lyric_sources WHERE valid_until>=date('now')
+                ORDER BY source_id""").fetchall()
+            votes=c.execute("""SELECT COUNT(*),COALESCE(MAX(updated_at),0)
+                FROM rf_rhyme_feedback WHERE query_hash=?""",(_query_hash(query),)).fetchone()
+        blob=json.dumps([sources, votes],ensure_ascii=False)
+        return hashlib.sha256(blob.encode("utf8")).hexdigest()[:24]
+    except sqlite3.Error:
+        return "no-database"
 
 def context(path, query):
     """Return only aggregate pattern information. Never output lyrics or artist imitation."""
