@@ -1,0 +1,75 @@
+name: Audit production corpus influence (read-only)
+on:
+  push:
+    paths:
+      - .github/workflows/corpus-impact-audit.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test real request handler with isolated corpus on/off/revoked
+        run: |
+          python3 -m unittest discover -s tests -p "test_corpus_influence.py" -v
+      - name: Test production health, licensed corpus and AI context flag
+        run: |
+          python3 - <<'PY'
+          import json, time, urllib.request, urllib.error
+
+          ROOT="https://reimflow.smarbiz.sbs"
+          def http(method,path,payload=None,timeout=25):
+              data=None if payload is None else json.dumps(payload,ensure_ascii=False).encode("utf8")
+              req=urllib.request.Request(ROOT+path,data=data,method=method,
+                  headers={"Accept":"application/json","Content-Type":"application/json",
+                           "User-Agent":"ReimflowCorpusAudit/1.0"})
+              with urllib.request.urlopen(req,timeout=timeout) as resp:
+                  return resp.status,json.load(resp)
+
+          _,stats=http("GET","/api/corpus/status")
+          assert stats["ok"] and stats["licensed_tracks"]>=85,stats
+          assert stats["artists_covered"]==9 and stats["lines_analyzed"]>=4987,stats
+          assert not stats["lyrics_included"]
+          _,health=http("GET","/api/health")
+          assert health["ok"] and health["ai"],health
+          print("LIVE CORPUS:",json.dumps({
+              k:stats[k] for k in ("licensed_tracks","artists_covered","lines_analyzed",
+                                   "feedback_count","public_research_profiles")},ensure_ascii=False))
+          print("LIVE AI:",health["ai"],health["model"])
+          for query in ("Nacht","Abendhimmel","Neonlichter"):
+              status,response=http("POST","/api/rhymes",
+                  {"query":query,"category":"Alle","syllables":"Alle"},timeout=40)
+              if status==202:
+                  job_id=response["job_id"]
+                  for attempt in range(105):
+                      time.sleep(2)
+                      status,response=http("GET","/api/rhymes/jobs/"+job_id,timeout=20)
+                      if status != 202:
+                          break
+              assert status==200,(query,status,response)
+              assert response["ok"] and response["quality_reviewed"],(query,response)
+              assert response["review_model"],"Independent reviewer missing"
+              assert response["quality_method"]=="independent_ai_review",(query,response)
+              context=response.get("knowledge") or {}
+              assert context.get("licensed_tracks",0)>=85,(query,context)
+              assert context.get("artists_covered")==9,(query,context)
+              assert context.get("context_applied") is True,(query,context)
+              candidates=response.get("rhymes") or []
+              assert all(x.get("german_valid") is True for x in candidates),(query,candidates)
+              assert all(x.get("strength") in ("stark","brauchbar") for x in candidates)
+              print("LIVE QUERY:",json.dumps({
+                  "query":query,"context_applied":context["context_applied"],
+                  "licensed_tracks":context["licensed_tracks"],
+                  "quality_reviewed":response["quality_reviewed"],
+                  "independent_review_model":response["review_model"],
+                  "count":len(candidates),"cached":response.get("cached"),
+                  "suggestions":[{"word":x.get("word"),"strength":x.get("strength")}
+                                 for x in candidates[:6]]
+              },ensure_ascii=False))
+          print("LIVE CORPUS INTEGRATION AUDIT: PASSED")
+          PY
