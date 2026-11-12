@@ -56,7 +56,11 @@ try{
     assert.equal(await page.locator(".rhyme-card").count(),0);
     assert.equal(await page.locator(".rhyme-offline-note").count(),0);
     await page.locator("#retrySearch").click();
-    await page.locator(".rhyme-card .ai-chip").getByText("KI").first().waitFor({timeout:8500});
+    await page.locator(".rhyme-card .ai-chip").first().waitFor({timeout:8500});
+    assert.deepEqual(await page.locator(".rhyme-card .ai-chip").allTextContents(),["KI"],
+      "AI status chip must render only its label, not JavaScript source fragments");
+    assert.equal(await page.locator(".rhyme-card .ai-chip").first().getAttribute("class"),"ai-chip");
+    assert.doesNotMatch(await page.locator(".rhyme-card").first().innerText(),/offline\?|\+\(/);
     assert.equal(await message.count(),0);
     assert.equal(await page.locator(".rhyme-card").count(),1);
     assert.equal(tries,2);
