@@ -96,6 +96,46 @@ class RhymeModelsTest(unittest.TestCase):
         finally:
             api.OPENAI_API_KEY=prev
 
+    def test_transient_rate_limit_has_single_bounded_retry(self):
+        prev=api.OPENAI_API_KEY
+        api.OPENAI_API_KEY="mock"
+        attempts=[]
+        try:
+            def respond(req,timeout):
+                attempts.append(json.loads(req.data))
+                if len(attempts)==1:
+                    raise api.urllib.error.HTTPError(req.full_url,429,"Too Many Requests",
+                        {"Retry-After":"0"},io.BytesIO(b"rate-limited"))
+                return Response()
+            with patch.object(api.urllib.request,"urlopen",side_effect=respond),patch.object(api.time,"sleep") as sleep:
+                result,model=api.call_openai("Pokerface",api.RHYME_SCHEMA,"test","prompt",
+                    models=["gpt-5.6-terra"],service_tier="default")
+            self.assertEqual(model,"gpt-5.6-terra")
+            self.assertEqual(len(attempts),2)
+            self.assertNotIn("service_tier",attempts[0])
+            self.assertEqual(sleep.call_count,1)
+            self.assertLessEqual(sleep.call_args.args[0],5)
+        finally:
+            api.OPENAI_API_KEY=prev
+
+    def test_persistent_rate_limit_does_not_retry_forever(self):
+        prev=api.OPENAI_API_KEY
+        api.OPENAI_API_KEY="mock"
+        attempts=[]
+        try:
+            def respond(req,timeout):
+                attempts.append(1)
+                raise api.urllib.error.HTTPError(req.full_url,429,"Busy",
+                    {"Retry-After":"8"},io.BytesIO(b"rate-limited"))
+            with patch.object(api.urllib.request,"urlopen",side_effect=respond),patch.object(api.time,"sleep") as sleep:
+                with self.assertRaisesRegex(RuntimeError,"OPENAI_HTTP_429"):
+                    api.call_openai("Pokerface",api.RHYME_SCHEMA,"test","prompt",
+                        models=["gpt-5.6-terra"])
+            self.assertEqual(len(attempts),2)
+            self.assertEqual(sleep.call_args.args[0],5)
+        finally:
+            api.OPENAI_API_KEY=prev
+
     def test_standard_mode_does_not_force_paid_fast_tier(self):
         old=api.OPENAI_API_KEY
         api.OPENAI_API_KEY="mock"
