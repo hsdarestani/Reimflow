@@ -3,6 +3,7 @@ import hashlib, json, os, sqlite3, threading, time, urllib.error, urllib.request
 from collections import defaultdict, deque
 import platform_api
 import rhyme_jobs
+import style_intelligence
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 HOST="127.0.0.1"; PORT=int(os.getenv("PORT","8787"))
@@ -60,6 +61,14 @@ Bei fremdsprachigen Eingaben darfst du das Eingabewort in seiner Originalsprache
 Endwort-Reime sind valide Treffer und kein schwacher Full-Phrase-Reim.
 Nutze mehrere semantische Kategorien, wenn das möglich ist.
 Vermeide die häufige Verwechslung von gleicher Silbenzahl/Rhythmus mit einem Reim. Bei "Blue Ferrari" sind Toyota, Karaoke, Marinade, Batterie keine starken Reime. Mögliche Ankerideen wie Safari/Calamari nur prüfen, nicht automatisch akzeptieren. Nicht behaupten, die gesamte Phrase reime sich, wenn nur das Schlusswort ähnlich klingt. Vermeide Duplikate und bloße Flexionsvarianten. Gib bis zu 10 Kandidaten nur wenn plausibel. Erklärungen kurz und konkret, mit konkret passendem betontem Reimkern. Sei phonetisch ehrlich."""
+
+STYLE_CONTEXT_RULES="""Lizenzkontext: Verwende aggregierte, urheberrechtlich geklaerte Analysemerkmale
+nur als Orientierung fuer Rhythmus, Mehrsilbigkeit und originelle Reimtechnik.
+Keine Songzeilen oder charakteristischen Phrasen reproduzieren und keine
+gezielte Imitation eines bestimmten Kuenstlers. Aggregierte Schreibendungen
+sind KEIN Beweis fuer Lautgleichheit; der unabhaengige Phonetik-Check bleibt Pflicht.
+Feedback ist ein schwaches Signal, kein Ground Truth. Ablehnungen beachten,
+aber niemals phonologisch unpassende Kandidaten allein wegen Stimmen akzeptieren."""
 
 VALIDATE_PROMPT="""Du bist ein strenger Reim-Tester für eine deutschsprachige Rap-Community.
 Prüfe zwei Wörter oder Phrasen nach realer Aussprache, betonten Silben, Vokalen, Konsonanten, Silbenzahl und Rap-Tauglichkeit.
@@ -268,6 +277,10 @@ class Handler(BaseHTTPRequestHandler):
         if platform_api.handle(self): return
         if self.path=="/api/health":
             self.send_json(200,{"ok":True,"ai":bool(OPENAI_API_KEY),"model":PRIMARY_MODEL if OPENAI_API_KEY else None,"service":"reimflow-rhyme-engine"}); return
+        if self.path=="/api/rhymes/context-status":
+            summary=style_intelligence.status(DB_PATH)
+            summary.pop("_latest",None)
+            self.send_json(200,{"ok":True,"method":"rights_cleared_aggregate_features","lyrics_included":False,**summary}); return
         if self.path.startswith("/api/rhymes/jobs/"):
             job_id=self.path[len("/api/rhymes/jobs/"):]
             if not job_id or len(job_id)>80 or not all(ch.isalnum() or ch in "-_" for ch in job_id):
@@ -317,18 +330,21 @@ class Handler(BaseHTTPRequestHandler):
             # Category and syllable filters are purely presentational. Reuse the
             # same verified AI result regardless of which filter the user taps.
             key=hashlib.sha256(("rhymes|de-only-query-v2|"+query.casefold()).encode()).hexdigest()
+            context_revision=style_intelligence.revision(DB_PATH)
             cached=cache_get(key)
-            if cached is None:
-                legacy=hashlib.sha256(("rhymes|de-only-v1|"+query.casefold()+"|Alle|Alle").encode()).hexdigest()
-                cached=cache_get(legacy)
-                if cached is not None: cache_put(key,cached)
+            if cached and cached.get("context_revision")!=context_revision:
+                cached=None
+            # Old prompt versions must never bypass the contextual quality pipeline.
             if cached: self.send_json(200,cached); return
             if not OPENAI_API_KEY:
                 self.send_json(503,{"error":"AI_CONFIG","message":"Die KI-Suche ist derzeit nicht eingerichtet."}); return
             intent=rhyme_intent.search_intent(query)
+            lyric_context=style_intelligence.context(DB_PATH,query)
+            corpus_status=style_intelligence.status(DB_PATH)
             user_text=json.dumps({
                 "intent":intent,
                 "query":query,
+                "licensed_pattern_context":lyric_context,
                 "instructions":"Erstelle zuerst mehrere solide Wortreime speziell für intent.end_word, unabhängig davon ob sie die Gesamtphrase treffen. Dann zusätzlich echte mehrteilige, sinnhafte Rap-Lines mit ähnlichem Klang und Rhythmus zur ganzen Phrase; keine ausgedachten Wörter oder ungebräuchliche Scheinphrasen. Jede Kategorie soll beim Review getrennt geprüft werden. Klang der Originalsprache und Betonung beachten, aber ausschließlich deutsche Wörter und sinnvolle deutsche Phrasen als Reime ausgeben; niemals englische Wörter oder englische Code-Switch-Ausdrücke vorschlagen."
             },ensure_ascii=False)
 
@@ -336,7 +352,7 @@ class Handler(BaseHTTPRequestHandler):
                 try:
                     started=time.monotonic()
                     raw,model=call_openai(user_text,RHYME_SCHEMA,
-                        "reimflow_quality_candidates",DEVELOPER_PROMPT,
+                        "reimflow_quality_candidates",DEVELOPER_PROMPT+"\n"+STYLE_CONTEXT_RULES,
                         effort=RHYME_REASONING_EFFORT,timeout=65)
                     generation_ms=round((time.monotonic()-started)*1000)
                     raw=sanitize(raw,query)
@@ -351,6 +367,11 @@ class Handler(BaseHTTPRequestHandler):
                     # Never cache suggestions without independent phonetic review.
                     result={"ok":True,"engine":"ai_phonetic","model":model,
                         "intent":intent,"review_model":review_model,"cached":False,
+                        "context_revision":context_revision,
+                        "knowledge":{"licensed_tracks":corpus_status["licensed_tracks"],
+                           "artists_covered":corpus_status["artists_covered"],
+                           "feedback_count":corpus_status["feedback_count"],
+                           "context_applied":bool(lyric_context.get("patterns") or lyric_context.get("feedback"))},
                         "timing_ms":{"generation":generation_ms,"review":review_ms},**data}
                     print("rhyme quality gate:",len(raw["rhymes"]),
                           "candidates,",len(data["rhymes"]),"accepted",
@@ -393,5 +414,6 @@ class Handler(BaseHTTPRequestHandler):
 if __name__=="__main__":
     db().close()
     platform_api.initialize()
+    style_intelligence.connect(DB_PATH).close()
     print(f"Reimflow API listening on {HOST}:{PORT}; AI={'on' if OPENAI_API_KEY else 'off'}; model={PRIMARY_MODEL}",flush=True)
     ThreadingHTTPServer((HOST,PORT),Handler).serve_forever()
