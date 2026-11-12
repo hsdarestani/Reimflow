@@ -65,6 +65,47 @@ German-language rap rhyme and producer-community prototype. Live testing URL: **
 - To publish future changes, run **Deploy Reimflow on STRATO (isolated)** from the Publisher repo Actions tab. The workflow reads current Reimflow `main` and verifies the live HTTPS website and `/api/health`.
 - The GitHub Actions workflow in **this** repository validates source only. The former password-based Hetzner deployment was retired.
 
+## Rights-gated intelligence — nine reference rappers (2026-11-12)
+
+Ashkan's updated reference list: **Eko, Kollegah, Ali As, Sadiq,
+Shindy, Bushido, Mo Trip (MoTrip), SSIO and Miami Yacine**.
+
+Reimflow now has an operator-controlled, rights-gated ingestion and
+context-retrieval pipeline in style_intelligence.py. It NEVER downloads
+or scrapes lyrics. **The system starts with zero licensed tracks.**
+Only independently licensed text may be imported.
+
+The pipeline stores aggregate orthographic endings, approximate syllable
+counts and line lengths, **not raw lyrics or lines**. These are weak
+statistical hints, NOT phonetic rhyme judgments. Reimflow uses these hints
+and query-specific feedback within its existing AI rhyme prompts, followed
+by a mandatory independent phonetic and German-language quality check.
+Generating copied lyrics or close imitation of any specific artist is
+not part of the feature.
+
+After deploying the backend, check its status from /opt/reimflow:
+
+    docker compose exec -T api python /app/style_intelligence.py status --db /var/lib/reimflow/reimflow.sqlite3
+
+Example for a securely rights-cleared UTF-8 lyrics file (replace ALL
+example metadata with the actual rights agreement and use only legally
+authorized material):
+
+    docker compose exec -T api python /app/style_intelligence.py ingest --db /var/lib/reimflow/reimflow.sqlite3 --file - --artist "Miami Yacine" --title "Approved track" --source-url "urn:internal-rights-register:record-123" --rights-ref "contract-123" --valid-until "2027-12-31" --rights-confirmed < /secure/local/approved-lyrics.txt
+
+The input is streamed directly through stdin; no complete song text is
+written to the application's persistent storage. Operator confirmation
+does not automatically verify the legal contract. License withdrawal:
+
+    docker compose exec -T api python /app/style_intelligence.py revoke --db /var/lib/reimflow/reimflow.sqlite3 --source-id YOUR_32_HEX_SOURCE_ID
+
+The read-only endpoint /api/rhymes/context-status provides counts
+without exposing lyrics. Logged-in users can vote only on
+independently approved suggestions. Feedback is stored in their account
+export, is deleted with their account, and informs future requests once
+at least three votes exist for the query. This is retrieval-based
+learning from feedback, NOT continuous retraining of model weights.
+
 ## Enable AI
 
 Set the **Publisher** production GitHub Actions secret `OPENAI_API_KEY` (do not put the key in code, logs or chat), then rerun the Publisher **Deploy Reimflow on STRATO (isolated)** workflow.
