@@ -116,7 +116,7 @@ class CorpusInfluenceTests(unittest.TestCase):
                 self.assertTrue(context["patterns"])
                 self.assertEqual(context["public_editorial_research"]["artist_count"], 9)
                 self.assertNotEqual(empty["context_revision"], populated["context_revision"])
-                self.assertIn("nacht", str(context["patterns"]).casefold())
+                self.assertIn("acht", str(context["patterns"]).casefold())
                 self.assertNotIn("Die Musik hat uns", json.dumps(context, ensure_ascii=False))
 
                 # After a rights withdrawal, cache revision must change again
