@@ -22,6 +22,19 @@ DB_PATH=os.getenv("REIMFLOW_DB","/var/lib/reimflow/reimflow.sqlite3")
 _rhyme_jobs=rhyme_jobs.Manager(max_jobs=12,max_workers=3,ttl=900)
 CACHE_TTL=60*60*24*7; MAX_QUERY_LEN=120; RATE_LIMIT=24; RATE_WINDOW=60
 _lock=threading.Lock(); _rate=defaultdict(deque)
+_quota_lock=threading.Lock(); _quota_block_until=0.0
+
+class APIQuotaExhausted(RuntimeError):
+    pass
+
+def _quota_unavailable():
+    with _quota_lock:
+        return time.monotonic() < _quota_block_until
+
+def _remember_quota_exhausted():
+    global _quota_block_until
+    with _quota_lock:
+        _quota_block_until=time.monotonic()+300
 
 RHYME_SCHEMA={"type":"object","additionalProperties":False,"required":["analysis","rhymes"],"properties":{
 "analysis":{"type":"object","additionalProperties":False,"required":["input","interpreted_as","pronunciation","ipa","syllables","language","correction","note"],"properties":{
@@ -216,6 +229,20 @@ def call_openai(user_text,schema,schema_name,developer_prompt,models=None,effort
                         raw=json.loads(resp.read(2*1024*1024).decode("utf-8"))
                     break
                 except urllib.error.HTTPError as rate_error:
+                    if rate_error.code==429:
+                        try:
+                            payload=json.loads(rate_error.read(4096).decode("utf8"))
+                            err=payload.get("error",{}) if isinstance(payload,dict) else {}
+                            err=err if isinstance(err,dict) else {}
+                            code=str(err.get("code") or "")
+                            kind=str(err.get("type") or "")
+                        except (UnicodeError,ValueError,TypeError):
+                            code=kind=""
+                        if code in ("credit_balance_exhausted","organization_spend_limit_exceeded",
+                                    "project_spend_limit_exceeded","organization_usage_limit_exceeded") or kind=="insufficient_quota":
+                            _remember_quota_exhausted()
+                            print("rhyme upstream:",model,"credit or spending quota unavailable",flush=True)
+                            raise APIQuotaExhausted("OPENAI_CREDIT_UNAVAILABLE")
                     if rate_error.code!=429 or attempt:
                         raise
                     header=rate_error.headers.get("Retry-After","2") if rate_error.headers else "2"
@@ -260,6 +287,8 @@ def call_openai(user_text,schema,schema_name,developer_prompt,models=None,effort
             if (isinstance(e,TimeoutError) or "timed out" in str(e).lower() or "timeout" in str(e).lower()) and model != model_choices[-1]:
                 continue
             raise last
+        except APIQuotaExhausted:
+            raise
         except (ValueError,RuntimeError) as e:
             last=RuntimeError("OPENAI_BAD_RESPONSE")
             diagnostic=str(e)
@@ -375,6 +404,8 @@ class Handler(BaseHTTPRequestHandler):
                 cached=None
             # Old prompt versions must never bypass the contextual quality pipeline.
             if cached: self.send_json(200,cached); return
+            if _quota_unavailable():
+                self.send_json(503,{"error":"AI_UNAVAILABLE","message":"Die Reimsuche ist momentan nicht erreichbar. Bitte später erneut versuchen."}); return
             if not OPENAI_API_KEY:
                 self.send_json(503,{"error":"AI_CONFIG","message":"Die KI-Suche ist derzeit nicht eingerichtet."}); return
             intent=rhyme_intent.search_intent(query)
@@ -424,6 +455,7 @@ class Handler(BaseHTTPRequestHandler):
                 except Exception as exc:
                     reason=str(exc)
                     code=("AI_TIMEOUT" if "TIMEOUT" in reason else
+                          "AI_UNAVAILABLE" if "CREDIT_UNAVAILABLE" in reason else
                           "AI_BUSY" if "HTTP_429" in reason else
                           "AI_CONFIG" if "NOT_CONFIGURED" in reason else "AI_UPSTREAM")
                     print("rhyme request failed:",code,flush=True)
@@ -431,7 +463,7 @@ class Handler(BaseHTTPRequestHandler):
                              if code=="AI_TIMEOUT" else
                              "Die KI-Reimsuche ist vorübergehend nicht erreichbar. Bitte erneut versuchen.")
                     raise rhyme_jobs.JobError(code,message,
-                        504 if code=="AI_TIMEOUT" else 503 if code in ("AI_CONFIG","AI_BUSY") else 502) from None
+                        504 if code=="AI_TIMEOUT" else 503 if code in ("AI_CONFIG","AI_BUSY","AI_UNAVAILABLE") else 502) from None
 
             try:
                 job_id=_rhyme_jobs.submit(key,generate)
