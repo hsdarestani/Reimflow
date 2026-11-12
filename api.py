@@ -14,6 +14,9 @@ FALLBACK_MODELS=list(dict.fromkeys([PRIMARY_MODEL,"gpt-5.5","gpt-5.4"]))
 QUALITY_MODEL=os.getenv("RHYME_REVIEW_MODEL","gpt-5.6-terra").strip()
 # Low reasoning reduces sequential AI time; independent phonetic/language review stays mandatory.
 RHYME_REASONING_EFFORT=os.getenv("REIMFLOW_RHYME_EFFORT","low").strip()
+RHYME_SERVICE_TIER=os.getenv("REIMFLOW_RHYME_SERVICE_TIER","default").strip().lower()
+if RHYME_SERVICE_TIER not in ("default","fast"): RHYME_SERVICE_TIER="default"
+RHYME_PIPELINE_REVISION="2026-11-12-fast-near-v1"
 if RHYME_REASONING_EFFORT not in {"low","medium","high"}: RHYME_REASONING_EFFORT="low"
 DB_PATH=os.getenv("REIMFLOW_DB","/var/lib/reimflow/reimflow.sqlite3")
 _rhyme_jobs=rhyme_jobs.Manager(max_jobs=12,max_workers=3,ttl=900)
@@ -57,7 +60,7 @@ Behandle bei mehrteiligen Eingaben drei Reimtypen gleichzeitig:
 1) isolierte Endwort-Reime gegen die Originalaussprache des letzten Wortes;
 2) natürliche, mehrteilige DEUTSCHE Rap-Phrasen, die Klang und Rhythmus der ganzen Eingabe treffen;
 3) kreative, aber sprachlich sinnvolle DEUTSCHE Lyrik-Phrasen.
-Bei fremdsprachigen Eingaben darfst du das Eingabewort in seiner Originalsprache analysieren, aber NICHT englische Reimkandidaten oder englische Code-Switch-Phrasen ausgeben.
+Bei fremdsprachigen Eingaben darfst du das Eingabewort in seiner Originalsprache analysieren, aber NICHT englische Reimkandidaten oder englische Code-Switch-Phrasen ausgeben. Prüfe bei seltenen englischen Endlauten ausdrücklich natürliche deutsche Näherungsreime mit ähnlich klingendem Auslaut, auch wenn der Vokal leicht variiert. Etwa /eɪs/ gegenüber deutschem /aɪs/ ist KEIN perfekter Reim, kann aber ein schwacher Slant-Reim sein; gib nur hörbar plausible Varianten als Near/Slant und niemals als perfekten Reim aus.
 Endwort-Reime sind valide Treffer und kein schwacher Full-Phrase-Reim.
 Nutze mehrere semantische Kategorien, wenn das möglich ist.
 Vermeide die häufige Verwechslung von gleicher Silbenzahl/Rhythmus mit einem Reim. Bei "Blue Ferrari" sind Toyota, Karaoke, Marinade, Batterie keine starken Reime. Mögliche Ankerideen wie Safari/Calamari nur prüfen, nicht automatisch akzeptieren. Nicht behaupten, die gesamte Phrase reime sich, wenn nur das Schlusswort ähnlich klingt. Vermeide Duplikate und bloße Flexionsvarianten. Gib bis zu 10 Kandidaten nur wenn plausibel. Erklärungen kurz und konkret, mit konkret passendem betontem Reimkern. Sei phonetisch ehrlich."""
@@ -183,7 +186,7 @@ def extract_output_text(response):
             if part.get("type")=="output_text" and part.get("text"): return part["text"]
     return ""
 
-def call_openai(user_text,schema,schema_name,developer_prompt,models=None,effort="medium",timeout=60):
+def call_openai(user_text,schema,schema_name,developer_prompt,models=None,effort="medium",timeout=60,max_output_tokens=8500,service_tier=None):
     """One quality model per request; fallback only for unavailable models/errors."""
     if not OPENAI_API_KEY: raise RuntimeError("AI_NOT_CONFIGURED")
     last=None
@@ -195,8 +198,10 @@ def call_openai(user_text,schema,schema_name,developer_prompt,models=None,effort
                  {"role":"developer","content":[{"type":"input_text","text":developer_prompt}]},
                  {"role":"user","content":[{"type":"input_text","text":user_text}]}],
               # Reasoning tokens count against this budget; 4200 could yield no JSON.
-              "max_output_tokens":8500,
-              "text":{"format":{"type":"json_schema","name":schema_name,"strict":True,"schema":schema}}}
+              "max_output_tokens":max_output_tokens,
+              "text":{"verbosity":"low","format":{"type":"json_schema","name":schema_name,"strict":True,"schema":schema}}}
+        if service_tier=="fast" and model.startswith("gpt-5.6"):
+            body["service_tier"]="fast"
         if model.startswith(("gpt-5","gpt-6")):
             body["reasoning"]={"effort":effort}
         req=urllib.request.Request("https://api.openai.com/v1/responses",
@@ -338,7 +343,7 @@ class Handler(BaseHTTPRequestHandler):
             # Category and syllable filters are purely presentational. Reuse the
             # same verified AI result regardless of which filter the user taps.
             key=hashlib.sha256(("rhymes|de-only-query-v2|"+query.casefold()).encode()).hexdigest()
-            context_revision=style_intelligence.revision(DB_PATH,query)
+            context_revision=style_intelligence.revision(DB_PATH,query)+"|"+RHYME_PIPELINE_REVISION
             cached=cache_get(key)
             if cached and cached.get("context_revision")!=context_revision:
                 cached=None
@@ -353,7 +358,7 @@ class Handler(BaseHTTPRequestHandler):
                 "intent":intent,
                 "query":query,
                 "licensed_pattern_context":lyric_context,
-                "instructions":"Erstelle zuerst mehrere solide Wortreime speziell für intent.end_word, unabhängig davon ob sie die Gesamtphrase treffen. Dann zusätzlich echte mehrteilige, sinnhafte Rap-Lines mit ähnlichem Klang und Rhythmus zur ganzen Phrase; keine ausgedachten Wörter oder ungebräuchliche Scheinphrasen. Jede Kategorie soll beim Review getrennt geprüft werden. Klang der Originalsprache und Betonung beachten, aber ausschließlich deutsche Wörter und sinnvolle deutsche Phrasen als Reime ausgeben; niemals englische Wörter oder englische Code-Switch-Ausdrücke vorschlagen."
+                "instructions":"Erstelle bei Einzelwörtern bevorzugt 4-8 echte deutsche Wortreime; nur bei mehrteiligen Eingaben auch kurze natürliche Rap-Lines. Bei englischer Query mit seltenem Endklang prüfe zusätzlich deutsche Näherungsreime (Slant/Near), niemals als perfekte Reime. Kurze eindeutige IPA, knappe Erklärungen, keine erfundenen Wörter, keine englischen Kandidaten, keine Wortsalat-Phrasen. Im unabhängigen Review jede Kategorie getrennt prüfen."
             },ensure_ascii=False)
 
             def generate(job_id):
@@ -361,7 +366,8 @@ class Handler(BaseHTTPRequestHandler):
                     started=time.monotonic()
                     raw,model=call_openai(user_text,RHYME_SCHEMA,
                         "reimflow_quality_candidates",DEVELOPER_PROMPT+"\n"+STYLE_CONTEXT_RULES,
-                        effort=RHYME_REASONING_EFFORT,timeout=65)
+                        effort=RHYME_REASONING_EFFORT,timeout=65,max_output_tokens=4300,
+                        service_tier=RHYME_SERVICE_TIER)
                     generation_ms=round((time.monotonic()-started)*1000)
                     raw=sanitize(raw,query)
                     _rhyme_jobs.stage(job_id,"review")
@@ -369,7 +375,8 @@ class Handler(BaseHTTPRequestHandler):
                         rhyme_quality.review_input(query,raw),
                         rhyme_quality.QUALITY_SCHEMA,"reimflow_independent_review",
                         rhyme_quality.QUALITY_PROMPT,models=list(dict.fromkeys([QUALITY_MODEL,"gpt-5.5","gpt-5.4"])),
-                        effort=RHYME_REASONING_EFFORT,timeout=65)
+                        effort=RHYME_REASONING_EFFORT,timeout=65,max_output_tokens=2700,
+                        service_tier=RHYME_SERVICE_TIER)
                     review_ms=round((time.monotonic()-started)*1000)-generation_ms
                     data=rhyme_quality.review_and_filter(query,raw,reviewed)
                     # Never cache suggestions without independent phonetic review.
