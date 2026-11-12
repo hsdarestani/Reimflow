@@ -208,8 +208,21 @@ def call_openai(user_text,schema,schema_name,developer_prompt,models=None,effort
             data=json.dumps(body,ensure_ascii=False).encode("utf-8"),method="POST",
             headers={"Authorization":"Bearer "+OPENAI_API_KEY,"Content-Type":"application/json","User-Agent":"Reimflow/quality-v1"})
         try:
-            with urllib.request.urlopen(req,timeout=timeout if model==model_choices[0] else min(timeout,45)) as resp:
-                raw=json.loads(resp.read(2*1024*1024).decode("utf-8"))
+            # Retry a transient rate-limit burst once with bounded backoff.
+            # Do not retry billing or authentication failures.
+            for attempt in range(2):
+                try:
+                    with urllib.request.urlopen(req,timeout=timeout if model==model_choices[0] else min(timeout,45)) as resp:
+                        raw=json.loads(resp.read(2*1024*1024).decode("utf-8"))
+                    break
+                except urllib.error.HTTPError as rate_error:
+                    if rate_error.code!=429 or attempt:
+                        raise
+                    header=rate_error.headers.get("Retry-After","2") if rate_error.headers else "2"
+                    try: pause=max(1,min(5,float(header)))
+                    except (ValueError,TypeError): pause=2
+                    print("rhyme upstream:",model,"transient rate limit; single retry",flush=True)
+                    time.sleep(pause)
             if raw.get("status")=="incomplete":
                 reason=str((raw.get("incomplete_details") or {}).get("reason") or "unknown")
                 raise RuntimeError("INCOMPLETE_AI_RESPONSE_"+reason[:40])
@@ -376,7 +389,7 @@ class Handler(BaseHTTPRequestHandler):
                         rhyme_quality.QUALITY_SCHEMA,"reimflow_independent_review",
                         rhyme_quality.QUALITY_PROMPT,models=list(dict.fromkeys([QUALITY_MODEL,"gpt-5.5","gpt-5.4"])),
                         effort=RHYME_REASONING_EFFORT,timeout=65,max_output_tokens=2700,
-                        service_tier=RHYME_SERVICE_TIER)
+                        service_tier="default")
                     review_ms=round((time.monotonic()-started)*1000)-generation_ms
                     data=rhyme_quality.review_and_filter(query,raw,reviewed)
                     # Never cache suggestions without independent phonetic review.
@@ -398,13 +411,14 @@ class Handler(BaseHTTPRequestHandler):
                 except Exception as exc:
                     reason=str(exc)
                     code=("AI_TIMEOUT" if "TIMEOUT" in reason else
+                          "AI_BUSY" if "HTTP_429" in reason else
                           "AI_CONFIG" if "NOT_CONFIGURED" in reason else "AI_UPSTREAM")
                     print("rhyme request failed:",code,flush=True)
                     message=("Die KI benötigt gerade länger. Bitte versuche die Suche erneut."
                              if code=="AI_TIMEOUT" else
                              "Die KI-Reimsuche ist vorübergehend nicht erreichbar. Bitte erneut versuchen.")
                     raise rhyme_jobs.JobError(code,message,
-                        504 if code=="AI_TIMEOUT" else 503 if code=="AI_CONFIG" else 502) from None
+                        504 if code=="AI_TIMEOUT" else 503 if code in ("AI_CONFIG","AI_BUSY") else 502) from None
 
             try:
                 job_id=_rhyme_jobs.submit(key,generate)
