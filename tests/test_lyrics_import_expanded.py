@@ -125,6 +125,22 @@ class ExpandTests(unittest.TestCase):
         self.assertNotIn("Der Morgen zeigt",texts)
         self.assertGreater(si.status(self.db)["lines_analyzed"],4)
 
+    def test_prioritize_artists_with_fewest_existing_tracks(self):
+        si.import_licensed_bytes(TEXT.encode("utf8"),db_path=self.db,artist="Eko",
+            title="Existing Eko Track",source_url="urn:qa:eko",
+            rights_ref="test-permission",valid_until=self.date)
+        seen=[]
+        def discovery(artist,*,max_titles):
+            seen.append(artist)
+            return []
+        expanded.expand(self.db,rights_ref="test-permission",review_due=self.date,
+                        max_candidates_per_artist=2,target_total=100,
+                        time_budget_seconds=60,request_pause=0,
+                        discovery=discovery,get_track=lambda a,t:None,
+                        sleeper=lambda _:None)
+        self.assertEqual(len(seen),9)
+        self.assertEqual(seen[-1],"Eko")
+
     def test_invalid_rights_dates_fail(self):
         with self.assertRaises(ValueError):
             expanded.expand(self.db,rights_ref="",review_due=self.date)
