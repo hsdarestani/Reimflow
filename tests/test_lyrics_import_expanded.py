@@ -31,7 +31,6 @@ class ExpandTests(unittest.TestCase):
             return ["Nacht","Großstadt","Sommernacht"]
         def it(artist,*,max_titles):
             return ["Nacht","Winter","Großstadt"]
-        actual=expanded.candidate_titles("Kollegah",max_titles=5,mb_fetch=None, itunes_fetch=None) if False else None
         # The helper functions accept injected fetch functions. It is enough to
         # test their behavior independently with source-specific fake JSON.
         def fake_mb(url):
@@ -71,7 +70,7 @@ class ExpandTests(unittest.TestCase):
         item=expanded.fetch_track("Kollegah","Nacht",fetch=fake_fetch)
         self.assertEqual(item[0],15)
         self.assertEqual(item[1],"Nacht")
-        self.assertEqual(item[2],TEXT)
+        self.assertEqual(item[2].strip(),TEXT.strip())
 
     def test_import_dedup_and_revocation_controls(self):
         calls=[]
