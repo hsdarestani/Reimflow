@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify Python API syntax
         run: |
-          python3 -m py_compile api.py rhyme_jobs.py platform_api.py rap-flow-analysis.py rhyme-quality.py rhyme-intent.py
+          python3 -m py_compile api.py rhyme_jobs.py platform_api.py rap-flow-analysis.py rhyme-quality.py rhyme-intent.py style_intelligence.py
           python3 -m unittest discover -s tests -p "test_platform_api.py"
           python3 -m unittest discover -s tests -p "test_rap_flow.py"
           python3 -m unittest discover -s tests -p "test_rhyme_api.py"
@@ -25,6 +25,7 @@ jobs:
           python3 -m unittest discover -s tests -p "test_rhyme_quality.py"
           python3 -m unittest discover -s tests -p "test_german_only.py"
           python3 -m unittest discover -s tests -p "test_rhyme_intent.py"
+          python3 -m unittest discover -s tests -p "test_style_intelligence.py"
       - name: Verify JavaScript syntax
         run: |
           node --check app.js
@@ -62,7 +63,7 @@ jobs:
       - name: Verify complete existing prototype bundle
         run: |
           set -euo pipefail
-          for file in index.html app.js platform.js platform.css platform_api.py rhyme_jobs.py role_admin.py rhyme-fallback.js rhyme-previews.js api.py styles.css themes.css ux-simple.css ai-engine.css sonic-atelier.css comic-flow.css comic-variants.css theme-engine.js sonic-atelier.js flow-scoring.js flow-challenge.js flow-challenge.css rap-audio.js rap-flow.js rap-flow.css rap-flow-analysis.py rhyme-quality.py rhyme-intent.py; do
+          for file in index.html app.js platform.js platform.css platform_api.py rhyme_jobs.py role_admin.py rhyme-fallback.js rhyme-previews.js api.py styles.css themes.css ux-simple.css ai-engine.css sonic-atelier.css comic-flow.css comic-variants.css theme-engine.js sonic-atelier.js flow-scoring.js flow-challenge.js flow-challenge.css rap-audio.js rap-flow.js rap-flow.css rap-flow-analysis.py rhyme-quality.py rhyme-intent.py style_intelligence.py; do
             test -s "$file"
           done
           grep -q 'Reimflow' index.html
