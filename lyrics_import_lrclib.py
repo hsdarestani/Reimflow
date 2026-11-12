@@ -44,9 +44,9 @@ def belongs_to_artist(credited_name, canonical):
     credited = str(credited_name or "").strip()
     if not credited:
         return False
-    first = re.split(r"\s+(?:feat\.?|ft\.?|featuring|mit)\s+|[,&;/+×]", credited, maxsplit=1,
-                     flags=re.IGNORECASE)[0].strip()
-    return normalize(first) in {normalize(s) for s in SEARCHES[canonical]}
+    # User-attested licenses cover the selected rappers, not necessarily guests.
+    # Exclude collaborations until the other lyric writers are cleared as well.
+    return normalize(credited) in {normalize(s) for s in SEARCHES[canonical]}
 
 def lyrics_from_result(row):
     text = row.get("plainLyrics")
