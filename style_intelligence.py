@@ -16,6 +16,21 @@ import time
 from pathlib import Path
 
 ARTISTS = ("Eko", "Kollegah", "Ali As", "Sadiq", "Shindy", "Bushido", "Mo Trip", "SSIO", "Miami Yacine")
+# Public editorial metadata only. These are NOT lyrics, licensed tracks or artist imitations.
+# Every summary is a short original abstraction, with an attributable research source.
+PUBLIC_RESEARCH_VERSION = "2026-11-12-v1"
+PUBLIC_RESEARCH = (
+    ("Eko", "https://www.allmusic.com/artist/eko-fresh-mn0001925342", "humorous contrasts; narrative rap"),
+    ("Kollegah", "https://www.allmusic.com/artist/kollegah-mn0001547256", "multisyllabic rhyme density; figurative punchlines"),
+    ("Ali As", "https://laut.de/ali-as/", "punchline wordplay; storytelling"),
+    ("Sadiq", "https://laut.de/SadiQ", "doubletime delivery; dense rhythmic phrasing"),
+    ("Shindy", "https://www.allmusic.com/artist/shindy-mn0003144181", "measured delivery; vivid lifestyle imagery"),
+    ("Bushido", "https://www.allmusic.com/artist/bushido-mn0000363418", "direct street-rap narrative; concise phrasing"),
+    ("Mo Trip", "https://www.allmusic.com/artist/motrip-mn0002895581", "storytelling; musical phrasing"),
+    ("SSIO", "https://www.allmusic.com/artist/ssio-mn0002848756", "groove and swing; informal vocabulary"),
+    ("Miami Yacine", "https://www.allmusic.com/artist/miami-yacine-mn0003660177", "hook-oriented rap; street narratives"),
+)
+
 ARTIST_ALIASES = {"MoTrip": "Mo Trip", "Ssio": "SSIO"}
 WORD = re.compile(r"[^\W\d_]+(?:['’-][^\W\d_]+)*", re.UNICODE)
 VOWELS = re.compile(r"[aeiouyäöü]+", re.I)
@@ -42,6 +57,12 @@ def connect(path):
         vote INTEGER NOT NULL CHECK(vote IN (-1,1)), updated_at INTEGER NOT NULL,
         PRIMARY KEY(user_id,query_hash,word))""")
     c.execute("CREATE INDEX IF NOT EXISTS rf_feedback_query ON rf_rhyme_feedback(query_hash)")
+    c.execute("""CREATE TABLE IF NOT EXISTS rf_artist_research (
+        artist TEXT PRIMARY KEY, source_url TEXT NOT NULL,
+        editorial_techniques TEXT NOT NULL, reviewed_version TEXT NOT NULL)""")
+    c.executemany("""INSERT OR IGNORE INTO rf_artist_research
+        (artist,source_url,editorial_techniques,reviewed_version) VALUES (?,?,?,?)""",
+        ((artist,url,techniques,PUBLIC_RESEARCH_VERSION) for artist,url,techniques in PUBLIC_RESEARCH))
     c.commit()
     return c
 
@@ -129,10 +150,12 @@ def status(path):
             active = c.execute("""SELECT COUNT(*),COUNT(DISTINCT artist),COALESCE(SUM(lines_analyzed),0),
                 COALESCE(MAX(created_at),0) FROM rf_lyric_sources WHERE valid_until>=date('now')""").fetchone()
             count = c.execute("SELECT COUNT(*),COALESCE(MAX(updated_at),0) FROM rf_rhyme_feedback").fetchone()
+            profiles = c.execute("SELECT COUNT(*) FROM rf_artist_research").fetchone()[0]
         return {"licensed_tracks":active[0],"artists_covered":active[1],"lines_analyzed":active[2],
-                "feedback_count":count[0],"_latest":max(active[3] * 1_000_000_000, count[1])}
+                "feedback_count":count[0],"public_research_profiles":profiles,
+                "_latest":max(active[3] * 1_000_000_000, count[1])}
     except sqlite3.Error:
-        return {"licensed_tracks":0,"artists_covered":0,"lines_analyzed":0,"feedback_count":0,"_latest":0}
+        return {"licensed_tracks":0,"artists_covered":0,"lines_analyzed":0,"feedback_count":0,"public_research_profiles":0,"_latest":0}
 
 def revision(path, query):
     """Per-query feedback revision plus licensed-corpus fingerprint; no global vote cache bust."""
@@ -143,7 +166,7 @@ def revision(path, query):
                 ORDER BY source_id""").fetchall()
             votes=c.execute("""SELECT COUNT(*),COALESCE(MAX(updated_at),0)
                 FROM rf_rhyme_feedback WHERE query_hash=?""",(_query_hash(query),)).fetchone()
-        blob=json.dumps([sources, votes],ensure_ascii=False)
+        blob=json.dumps([PUBLIC_RESEARCH_VERSION, sources, votes],ensure_ascii=False)
         return hashlib.sha256(blob.encode("utf8")).hexdigest()[:24]
     except sqlite3.Error:
         return "no-database"
@@ -166,6 +189,8 @@ def context(path, query):
                 ORDER BY CASE WHEN f.ending=? THEN 0
                               WHEN substr(f.ending,-2)=substr(?,-2) THEN 1 ELSE 2 END,
                          SUM(f.occurrences) DESC LIMIT 6""", (tail,tail)).fetchall()
+            public_profiles = c.execute("""SELECT artist,source_url,editorial_techniques
+                FROM rf_artist_research ORDER BY artist""").fetchall()
             feedback = c.execute("""SELECT word,SUM(CASE WHEN vote=1 THEN 1 ELSE 0 END),
                        SUM(CASE WHEN vote=-1 THEN 1 ELSE 0 END)
                        FROM rf_rhyme_feedback WHERE query_hash=?
@@ -176,8 +201,14 @@ def context(path, query):
              "avg_words_per_line_est":x[3],"avg_syllables_per_line_est":x[4],
              "repeated_ending_rows":x[5]} for x in rows],
             "feedback":[{"word":w,"positive":p,"negative":n} for w,p,n in feedback],
+            "public_editorial_research":{
+                "source_type":"public editorial artist profiles; no song lyrics",
+                "artist_count":len(public_profiles),
+                "technique_families":sorted({t.strip() for _,_,description in public_profiles
+                                             for t in description.split(";")}),
+                "not_training_material":True},
             "limitations":"Schreibungsbasierte Muster und Silbenzahlschätzungen; kein phonetischer Beweis.",
-            "usage":"Nutze nur abstrakte Strukturhinweise. Erzeuge originelle Vorschläge, keine Songzeilen, keine enge Nachahmung bestimmter Künstler."}
+            "usage":"Redaktionelle Profile sind keine Songtexte und keine Trainingsdaten; verwende nur allgemeine Raptechniken. Nutze nur abstrakte Strukturhinweise. Erzeuge originelle Vorschläge, keine Songzeilen, keine enge Nachahmung bestimmter Künstler."}
     except sqlite3.Error:
         return {"available":False,"patterns":[],"feedback":[]}
 
