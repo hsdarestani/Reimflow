@@ -233,7 +233,20 @@ def call_openai(user_text,schema,schema_name,developer_prompt,models=None,effort
             return data,model
         except urllib.error.HTTPError as e:
             last=RuntimeError("OPENAI_HTTP_"+str(e.code))
-            print("rhyme upstream:",model,"http:",e.code,flush=True)
+            # Log only the upstream error category and retry hint, never the
+            # response message, prompt, token or lyrics.
+            try:
+                upstream=json.loads(e.read(4096).decode("utf8"))
+                error=upstream.get("error") if isinstance(upstream,dict) else {}
+                error=error if isinstance(error,dict) else {}
+                error_code=str(error.get("code") or "unknown")[:60]
+                error_type=str(error.get("type") or "unknown")[:60]
+            except Exception:
+                error_code=error_type="unknown"
+            retry_after=e.headers.get("Retry-After","") if e.headers else ""
+            print("rhyme upstream:",model,"http:",e.code,
+                  "type:",error_type,"code:",error_code,
+                  "retry_after:",str(retry_after)[:24],flush=True)
             # Only invalid/unavailable models should cause fallthrough. Do not
             # retry on rate limits, billing, or auth, and never downgrade quality.
             if e.code in (400,404,422):
