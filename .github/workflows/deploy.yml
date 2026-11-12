@@ -27,6 +27,7 @@ jobs:
           python3 -m unittest discover -s tests -p "test_rhyme_intent.py"
           python3 -m unittest discover -s tests -p "test_style_intelligence.py"
           python3 -m unittest discover -s tests -p "test_lyrics_import_lrclib.py"
+          python3 -m unittest discover -s tests -p "test_corpus_routes.py"
       - name: Verify JavaScript syntax
         run: |
           node --check app.js
