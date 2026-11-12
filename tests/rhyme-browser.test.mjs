@@ -28,6 +28,11 @@ try{
           ]
         })});
       }
+      if(query==="Pokerface?"){
+        await delay(100);
+        return route.fulfill({status:503,contentType:"application/json",
+          body:JSON.stringify({error:"AI_UNAVAILABLE",message:"Die Reimsuche ist momentan nicht erreichbar."})});
+      }
       if(query==="Pokerface"){
         await delay(400);
         return route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({
@@ -105,6 +110,13 @@ try{
     assert.equal(await page.locator(".rhyme-card").count(),0);
     assert.match(await page.locator("#resultsCount").innerText(),/^0\s+TREFFER$/i);
     assert.match(await page.locator(".rhyme-preview").innerText(),/Nicht als Reim bestätigt/);
+    assert.doesNotMatch(await page.locator("#rhymeResults").innerText(),/Wissensbasis|Kollegah|Bushido/);
+    await page.locator("#rhymeQuery").fill("Pokerface?");
+    await page.locator("#rhymeSearchForm button[type='submit']").click();
+    await page.locator(".search-empty.error").waitFor({state:"visible",timeout:6500});
+    assert.equal(await page.locator(".rhyme-card").count(),0);
+    assert.match(await page.locator(".rhyme-preview").innerText(),/Ungeprüfte Klangideen/);
+    assert.match(await page.locator(".rhyme-preview").innerText(),/Eis|Preis/);
     assert.doesNotMatch(await page.locator("#rhymeResults").innerText(),/Wissensbasis|Kollegah|Bushido/);
     assert.deepEqual(errors,[],JSON.stringify({viewport:viewport.width,errors}));
     console.log(viewport.width+"px German-only rhyme preview, reviewed rhymes and fallback protection: PASSED");
