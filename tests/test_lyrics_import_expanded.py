@@ -53,8 +53,33 @@ class ExpandTests(unittest.TestCase):
         self.assertEqual(expanded.itunes_titles("Kollegah",fetch=fake_itunes),["Nacht","Winter"])
         titles=expanded.candidate_titles("Kollegah",max_titles=4,
                                          mb_fetch=fake_mb,itunes_fetch=fake_itunes,
-                                         sleeper=lambda _:None)
+                                         deezer_fetch=lambda url:{"data":[]},sleeper=lambda _:None)
         self.assertEqual(titles,["Nacht","Dunkle Stadt","Winter"])
+
+    def test_deezer_discovery_reads_exact_artist_and_album_tracks(self):
+        calls=[]
+        def fetch(url):
+            calls.append(url)
+            if "/search/artist?" in url:
+                return {"data":[{"name":"Kollegah & Majoe","id":100},
+                                {"name":"Kollegah","id":472089}]}
+            if "/top?" in url:
+                return {"data":[
+                    {"title":"Hochhaus","artist":{"name":"Kollegah"}},
+                    {"title":"Fremde Arbeit","artist":{"name":"Other"}}]}
+            if "/albums?" in url:
+                return {"data":[{"id":616216172,"title":"Solo Album"}]}
+            if "/album/616216172/tracks?" in url:
+                return {"data":[
+                    {"title":"Goldene Nacht","artist":{"name":"Kollegah"}},
+                    {"title":"Goldene Nacht","artist":{"name":"Kollegah"}},
+                    {"title":"Guest feat. Other","artist":{"name":"Kollegah"}},
+                    {"title":"Collab","artist":{"name":"Other"}}]}
+            raise AssertionError(url)
+        self.assertEqual(
+            expanded.deezer_titles("Kollegah",fetch=fetch,sleeper=lambda _:None),
+            ["Hochhaus","Goldene Nacht"])
+        self.assertTrue(any("/artist/472089/" in x for x in calls))
 
     def test_lrclib_requires_exact_artist_and_title(self):
         def fake_fetch(url):
