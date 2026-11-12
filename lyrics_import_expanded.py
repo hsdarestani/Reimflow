@@ -217,7 +217,7 @@ def candidate_titles(artist, *, max_titles=140, mb_fetch=json_get,
     dz=deezer_titles(artist,max_titles=max_titles,fetch=deezer_fetch,sleeper=sleeper)
     seen=set();out=[]
     # Interleave three independent catalogs to avoid provider-specific gaps.
-    for i in range(max(len(mb),len(it),len(dz),default=0)):
+    for i in range(max(len(mb),len(it),len(dz))):
         for track in mb[i:i+1]+it[i:i+1]+dz[i:i+1]:
             key=baseline.normalize(track)
             if key not in seen:
