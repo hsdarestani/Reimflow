@@ -19,7 +19,45 @@ class Response:
         return json.dumps(payload).encode()
 
 
+class WireResponse(Response):
+    def __init__(self,data): self.data=data
+    def read(self,size=-1):
+        return json.dumps({"output":[{"type":"message","content":[{"type":"output_text","text":json.dumps(self.data)}]}]}).encode()
+
+
 class RhymeModelsTest(unittest.TestCase):
+    def test_compact_generation_and_review_preserve_public_fields(self):
+        wire={"a":{"p":"Nacht","i":"naxt","s":1,"l":"Deutsch","c":None,"n":""},
+              "r":[{"w":"Pracht","p":"Pracht","i":"praxt","s":1,"t":"Nomen","g":"Standard","k":"Perfekter Reim"}]}
+        requests=[]
+        def spy(req,timeout):
+            body=json.loads(req.data)
+            requests.append(body)
+            if len(requests)==1: return WireResponse(wire)
+            return WireResponse({"accepted":[{"i":0,"g":True,"s":"stark","p":"end_word","r":"Gleicher Reimkern /axt/."}]})
+        with patch.object(api,"OPENAI_API_KEY","mock"),patch.object(api.urllib.request,"urlopen",side_effect=spy):
+            raw,_=api.call_openai("Nacht",api.RHYME_SCHEMA,"reimflow_quality_candidates",api.DEVELOPER_PROMPT)
+            raw=api.sanitize(raw,"Nacht")
+            checked,_=api.call_openai(api.rhyme_quality.review_input("Nacht",raw),api.rhyme_quality.QUALITY_SCHEMA,
+                "reimflow_independent_review",api.rhyme_quality.QUALITY_PROMPT)
+        final=api.rhyme_quality.review_and_filter("Nacht",raw,checked)
+        self.assertEqual(final["analysis"]["input"],"Nacht")
+        self.assertEqual(final["rhymes"][0]["word"],"Pracht")
+        self.assertEqual(final["rhymes"][0]["pronunciation"],"Pracht")
+        self.assertTrue(final["rhymes"][0]["german_valid"])
+        self.assertTrue(final["quality_reviewed"])
+        self.assertEqual(set(requests[0]["text"]["format"]["schema"]["properties"]),{"a","r"})
+        self.assertEqual(set(requests[1]["text"]["format"]["schema"]["properties"]),{"accepted"})
+
+    def test_compact_review_fails_closed_on_rejected_missing_duplicate_or_invalid_indices(self):
+        initial={"rhymes":[{"word":x} for x in ("Pracht","Macht","Nacht","Licht","Sicht")]}
+        good={"g":True,"s":"stark","p":"end_word","r":"Passender Klang"}
+        verdicts={"accepted":[{"i":0,**good},{"i":1,**good},{"i":1,**good},
+            {"i":2,**good,"g":False},{"i":3,**good,"s":"schwach"},{"i":9,**good}]}
+        out=api.rhyme_quality.decode_compact_review(api.rhyme_quality.review_input("Nacht",initial),verdicts)
+        self.assertEqual([r["word"] for r in out["review"]],["Pracht"])
+        self.assertEqual(api.rhyme_quality.decode_compact_review(api.rhyme_quality.review_input("Nacht",initial),{"accepted":[]}),{"review":[]})
+
     def test_generation_omits_fields_overwritten_by_independent_review(self):
         schema=api.RHYME_SCHEMA["properties"]
         self.assertFalse({"input","interpreted_as"} & set(schema["analysis"]["properties"]))
@@ -90,7 +128,10 @@ class RhymeModelsTest(unittest.TestCase):
         requests=[]
         try:
             def spy(req,timeout):
-                requests.append(json.loads(req.data))
+                body=json.loads(req.data)
+                requests.append(body)
+                if body["text"]["format"]["name"]=="reimflow_quality_candidates":
+                    return WireResponse({"a":{"p":"Nacht","i":"naxt","s":1,"l":"Deutsch","c":None,"n":""},"r":[]})
                 return Response()
             with patch.object(api.urllib.request,"urlopen",side_effect=spy):
                 api.call_openai("Pokerface",api.RHYME_SCHEMA,
