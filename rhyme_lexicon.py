@@ -18,6 +18,21 @@ EN_ONLY = {"space", "case", "race", "face", "pace", "grace", "base", "place", "t
 PROPER_NAMES = {"klaus", "claus", "emma", "mays", "thais", "kalahari", "karibe", "rastafari", "ali", "marie", "melanie", "geesthacht"}
 EXCLUDE = EN_ONLY | PROPER_NAMES | {"jacht", "betracht", "emails"}
 STANDARD_IPA = {"uni":"ˈuːni", "jury":"ˈʒyːʁi", "tee":"teː"}
+# Original editorial transcriptions of independently attested German loanwords.
+# Calamari: https://www.duden.de/rechtschreibung/Calamari
+EDITORIAL_WORDS = {"Calamari":"kalaˈmaːʁi"}
+# Original, hand-written natural line fragments, not extracted from lyrics.
+# Each has an independently attested end word. Retrieve only after phonetic
+# checks and only when its syllable count is close to the full query.
+PHRASES = ("für mich kein Thema", "spreng das Schema", "mitten im Dilemma",
+    "nachts auf Safari", "roter Sari", "kein Larifari", "durch die Nacht",
+    "gegen die Macht", "hat mich zum Lachen gebracht", "gib gut acht",
+    "vor dem Haus", "ich will hier raus", "stürmischer Applaus", "mit viel Gefühl",
+    "kaltes Spiel", "bis ans Ziel", "über das Ziel", "nichts zu verlieren",
+    "in den Gedanken", "ganz ohne Schranken", "zwischen den Zeilen", "nicht zu begreifen",
+    "am Ende der Zeit", "jetzt bin ich bereit", "aus tiefstem Herzen", "in einer Welt",
+    "mitten im Leben", "unter den Sternen", "auf eigene Kosten", "ich will mehr",
+    "keine falsche Hoffnung", "unter Druck", "mit einem Blick", "kein Weg zurück")
 FOREIGN = {
     "benzema": "bɛnˈzeːma", "karim benzema": "kaʁim bɛnˈzeːma",
     "pokerface": "ˈpoːkɐˌfɛɪ̯s", "ferrari": "feˈraːri", "blue ferrari": "bluː feˈraːri",
@@ -137,6 +152,9 @@ def build(ipa_file, frequency_file, output, dictionary_file):
                     db.executemany("INSERT OR IGNORE INTO lex VALUES(?,?,?,?,?,?,?)", rows)
                     rows.clear()
         db.executemany("INSERT OR IGNORE INTO lex VALUES(?,?,?,?,?,?,?)", rows)
+        for word,ipa in EDITORIAL_WORDS.items():
+            k=tail(ipa)
+            db.execute("INSERT OR IGNORE INTO lex VALUES(?,?,?,?,?,?,?)",(word,word.casefold(),ipa,k,near_key(k),rhythm_key(k),40000))
         db.executescript("CREATE INDEX lex_folded ON lex(folded,rank); CREATE INDEX lex_tail ON lex(tail,rank); CREATE INDEX lex_near ON lex(near,rank); CREATE INDEX lex_rhythm ON lex(rhythm,rank);")
 
 
@@ -255,6 +273,22 @@ def validate_word(word, target):
 def phrase_lexical(word):
     parts = word.split()
     return len(parts)>1 and all(WORD.fullmatch(p) and lookup(p) for p in parts)
+
+
+def curated_phrases(query, ipa):
+    if not ipa or len(query.split())<2: return []
+    anchor=ipa.split()[-1]; count=syllables(ipa); seen=set(); out=[]
+    for phrase in PHRASES:
+        endpoint=phrase.split()[-1].casefold()
+        if endpoint in seen or endpoint==query.split()[-1].casefold():continue
+        p=pronunciation(phrase)
+        if not p or abs(syllables(p)-count)>1:continue
+        row=candidate(phrase,p.split()[-1],anchor,"Sonstiges")
+        if not row:continue
+        row.update(ipa=p,pronunciation=p,syllables=syllables(p),kind="Phrase",scope="phrase_variation",
+            explanation=row["explanation"]+" Natürliche redaktionelle Wortgruppe, kein behaupteter Vollphrasenreim.")
+        out.append(row);seen.add(endpoint)
+    return out[:6]
 
 
 def full_phrase_match(target, candidate_ipa):

@@ -62,9 +62,10 @@ class HybridTests(unittest.TestCase):
         manager=rhyme_jobs.Manager(max_workers=1); wait=threading.Event(); calls=[]
         def ai(prompt,schema,name,*args,**kwargs):
             calls.append(name)
-            if name=="reimflow_hybrid_candidates":
+            if name=="reimflow_phrase_candidates":
+                self.assertEqual(kwargs["effort"],"none")
                 wait.wait(2)
-                return {"ipa":"bɛnˈzeːma","words":["kein Thema","altes Schema","Space","Case","Race","Toyota","Karaoke"]},"mock"
+                return {"words":["kein Thema","altes Schema","Space","Case","Race","Toyota","Karaoke"]},"mock"
             candidates=json.loads(prompt)["candidate_list"]
             return {"review":[{"word":r["word"],"accept":True,"german_valid":True,"strength":"stark","scope":"full_phrase","reason":"Test"} for r in candidates]},"mock-review"
         try:
@@ -81,6 +82,7 @@ class HybridTests(unittest.TestCase):
                 self.assertEqual(status,200);self.assertEqual(data["analysis"]["input"],"Karim Benzema")
                 self.assertEqual(data["analysis"]["interpreted_as"],"Karim Benzema")
                 self.assertTrue(data["quality_reviewed"])
+                self.assertGreaterEqual(len(data["rhymes"]),8)
                 self.assertFalse({"space","case","race","toyota","karaoke"}&{x["word"].casefold() for x in data["rhymes"]})
                 self.assertLessEqual(len(calls),2)
         finally:manager.pool.shutdown(wait=True)
@@ -90,3 +92,5 @@ class HybridTests(unittest.TestCase):
         self.assertNotEqual(lex.analysis("Benzema",lex.pronunciation("Benzema"))["input"],"Karim Benzema")
         raw={"analysis":{"ipa":"feˈraːri"},"rhymes":[{"word":"Toyota"},{"word":"Karaoke"},{"word":"Space"}]}
         self.assertEqual(api.hybrid_candidates("Blue Ferrari",raw,"bluː feˈraːri"),([],[]))
+        self.assertIn("Calamari",[x["word"] for x in lex.retrieve("Blue Ferrari","feˈraːri")])
+        self.assertTrue(all(r["scope"]=="phrase_variation" for r in lex.curated_phrases("Blue Ferrari",lex.pronunciation("Blue Ferrari"))))
