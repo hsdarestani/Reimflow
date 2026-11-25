@@ -17,7 +17,7 @@ QUALITY_MODEL=os.getenv("RHYME_REVIEW_MODEL","gpt-5.6-terra").strip()
 RHYME_REASONING_EFFORT=os.getenv("REIMFLOW_RHYME_EFFORT","low").strip()
 RHYME_SERVICE_TIER=os.getenv("REIMFLOW_RHYME_SERVICE_TIER","default").strip().lower()
 if RHYME_SERVICE_TIER not in ("default","fast"): RHYME_SERVICE_TIER="default"
-RHYME_PIPELINE_REVISION="2026-11-25-hybrid-lexicon-v1"
+RHYME_PIPELINE_REVISION="2026-11-25-hybrid-lexicon-v2"
 if RHYME_REASONING_EFFORT not in {"low","medium","high"}: RHYME_REASONING_EFFORT="low"
 DB_PATH=os.getenv("REIMFLOW_DB","/var/lib/reimflow/reimflow.sqlite3")
 _rhyme_jobs=rhyme_jobs.Manager(max_jobs=12,max_workers=3,ttl=900)

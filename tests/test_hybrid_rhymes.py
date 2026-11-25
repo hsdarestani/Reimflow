@@ -1,5 +1,5 @@
 """Real pinned lexical data plus deterministic and mocked pipeline regressions."""
-import json, pathlib, tempfile, threading, time, unittest
+import json, resource, tempfile, threading, time, unittest
 from unittest.mock import patch
 import api
 import rhyme_lexicon as lex
@@ -36,6 +36,7 @@ class HybridTests(unittest.TestCase):
             counts[query]=len(results)
         print("LOCAL INDEX (50 queries, no AI):",json.dumps(counts,ensure_ascii=False))
         print("LOCAL INDEX latency ms median/P95",round(sorted(times)[len(times)//2],2),round(sorted(times)[int(.95*len(times))-1],2))
+        print("Local process peak RSS KiB",resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
         self.assertGreaterEqual(counts["Nacht"],20)
         self.assertGreaterEqual(counts["Haus"],18)
         self.assertGreaterEqual(counts["Pokerface"],15)
@@ -43,6 +44,7 @@ class HybridTests(unittest.TestCase):
         for word in ("Toyota","Karaoke","Batterie","Marinade"):
             self.assertIsNone(lex.validate_word(word,"feˈraːri"))
         self.assertIsNone(lex.match("ˈlaɪ̯dn̩ʃaft","ˈvɪsn̩ʃaft"))
+        self.assertIsNone(lex.match("ˈlaɪ̯dn̩ʃaft","ˈmaxn̩ʃaft"))
         self.assertEqual(lex.match("ˈlaɪ̯dn̩ʃaft","ˈaɪ̯ɡn̩ʃaft")[1],"brauchbar")
 
     def test_http_zero_ai_warm_and_filter(self):

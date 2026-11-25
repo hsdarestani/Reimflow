@@ -9,14 +9,15 @@ import re
 import sqlite3
 import sys
 import unicodedata
-from collections import defaultdict
+from contextlib import closing
 from pathlib import Path
 
 PATH = Path(os.getenv("REIMFLOW_LEXICON", str(Path(__file__).with_name("rhyme-lexicon.sqlite"))))
 VOWELS = set("aeiouyäöüɑɐɒæɛɜəɘɚɝɞɪʊɔœøɵɨʉɯʌ")
 EN_ONLY = {"space", "case", "race", "face", "pace", "grace", "base", "place", "trace", "chase", "lace", "embrace", "erase", "replace", "disgrace", "showcase", "interface", "nice", "mouse", "house", "cyberspace"}
-PROPER_NAMES = {"klaus", "claus", "emma", "mays", "thais", "kalahari", "karibe", "rastafari"}
-EXCLUDE = EN_ONLY | PROPER_NAMES
+PROPER_NAMES = {"klaus", "claus", "emma", "mays", "thais", "kalahari", "karibe", "rastafari", "ali", "marie", "melanie", "geesthacht"}
+EXCLUDE = EN_ONLY | PROPER_NAMES | {"jacht", "betracht", "emails"}
+STANDARD_IPA = {"uni":"ˈuːni", "jury":"ˈʒyːʁi", "tee":"teː"}
 FOREIGN = {
     "benzema": "bɛnˈzeːma", "karim benzema": "kaʁim bɛnˈzeːma",
     "pokerface": "ˈpoːkɐˌfɛɪ̯s", "ferrari": "feˈraːri", "blue ferrari": "bluː feˈraːri",
@@ -75,7 +76,10 @@ def near_key(t):
 
 def rhythm_key(t):
     if not t: return ""
-    p=t.split("|"); nuclei=[x for x in p if vowel(x) or "̩" in x]
+    p=t.split("|"); nuclei=[]
+    for x in p:
+        if vowel(x) or "̩" in x: nuclei.append(x)
+        elif "̯" in x and nuclei: nuclei[-1]+=x
     last=next((i for i in range(len(p)-1,-1,-1) if vowel(p[i])),len(p)-1)
     if len(nuclei)<2 or last==len(p)-1: return ""
     return "|".join(nuclei)+":"+"|".join(p[last+1:])
@@ -113,18 +117,18 @@ def build(ipa_file, frequency_file, output, dictionary_file):
     out = Path(output)
     if out.exists():
         raise FileExistsError(out)
-    with sqlite3.connect(out) as db:
+    with closing(sqlite3.connect(out)) as db, db:
         db.executescript("CREATE TABLE lex(word TEXT, folded TEXT, ipa TEXT, tail TEXT, near TEXT, rhythm TEXT, rank INTEGER, PRIMARY KEY(word,ipa));")
         rows = []
         with open(ipa_file, encoding="utf8") as f:
             for line in f:
                 word, sep, raw = line.rstrip("\n").partition("\t")
                 folded = word.casefold()
-                if not sep or folded in EXCLUDE or not WORD.fullmatch(word) or not attested(word):
+                if not sep or len(word)<2 or word.isupper() or folded in EXCLUDE or not WORD.fullmatch(word) or not attested(word):
                     continue
                 if folded not in freq and (word not in dictionary or len(word)>13):
                     continue
-                for ipa in raw.split(", "):
+                for ipa in ([STANDARD_IPA[folded]] if folded in STANDARD_IPA else raw.split(", ")[:1]):
                     ipa = ipa.strip(" /[]")
                     key = tail(ipa)
                     if key:
@@ -148,7 +152,7 @@ def connect():
 def lookup(word):
     if not available() or word.casefold() in EXCLUDE:
         return ()
-    with connect() as db:
+    with closing(connect()) as db:
         rows = db.execute("SELECT word,ipa FROM lex WHERE folded=? ORDER BY word=? DESC,rank LIMIT 12", (word.casefold(), word)).fetchall()
     # Avoid choosing a different pronunciation/meaning solely through case folding.
     exact = tuple((w, i) for w, i in rows if w == word)
@@ -214,7 +218,7 @@ def retrieve(query, ipa, limit=40):
     if not available() or not tail(ipa):
         return []
     key = tail(ipa)
-    with connect() as db:
+    with closing(connect()) as db:
         rows = db.execute("SELECT word,ipa,rank FROM lex WHERE tail=? ORDER BY rank LIMIT 600", (key,)).fetchall()
         nk = near_key(key)
         if nk:
