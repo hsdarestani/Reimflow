@@ -20,6 +20,18 @@ class Response:
 
 
 class RhymeModelsTest(unittest.TestCase):
+    def test_generation_omits_fields_overwritten_by_independent_review(self):
+        schema=api.RHYME_SCHEMA["properties"]
+        self.assertFalse({"input","interpreted_as"} & set(schema["analysis"]["properties"]))
+        fields=schema["rhymes"]["items"]
+        self.assertFalse({"score","confidence","explanation"} & set(fields["properties"]))
+        self.assertEqual(set(fields["required"]),set(fields["properties"]))
+        raw={"analysis":{"ipa":"naxt"},"rhymes":[{"word":"Pracht","ipa":"prax t","syllables":1}]}
+        clean=api.sanitize(raw,"Nacht")
+        self.assertEqual(clean["analysis"]["input"],"Nacht")
+        self.assertEqual(clean["analysis"]["interpreted_as"],"Nacht")
+        self.assertEqual(clean["rhymes"][0]["score"],0)
+
     def test_model_ids_and_time_budgets(self):
         self.assertIn("gpt-5.6-sol",api.FALLBACK_MODELS)
         self.assertNotIn("gpt-6-luna",api.FALLBACK_MODELS)
