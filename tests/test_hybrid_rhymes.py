@@ -49,7 +49,7 @@ class HybridTests(unittest.TestCase):
 
     def test_http_zero_ai_warm_and_filter(self):
         with tempfile.TemporaryDirectory() as tmp,patch.object(api,"DB_PATH",tmp+"/cache.sqlite"),patch.object(api,"OPENAI_API_KEY","mock"),patch.object(api,"call_openai") as ai:
-            for query in ("Nacht","Haus","Pokerface"):
+            for query in ("Nacht","Haus","Pokerface","Karim Benzema","Jude Bellingham"):
                 cold=Request(query);start=time.perf_counter();api.Handler.do_POST(cold)
                 cold_ms=(time.perf_counter()-start)*1000
                 self.assertEqual(cold.response[0],200);self.assertFalse(cold.response[1]["cached"])
@@ -69,7 +69,8 @@ class HybridTests(unittest.TestCase):
             candidates=json.loads(prompt)["candidate_list"]
             return {"review":[{"word":r["word"],"accept":True,"german_valid":True,"strength":"stark","scope":"full_phrase","reason":"Test"} for r in candidates]},"mock-review"
         try:
-            with tempfile.TemporaryDirectory() as tmp,patch.object(api,"DB_PATH",tmp+"/cache.sqlite"),patch.object(api,"OPENAI_API_KEY","mock"),patch.object(api,"_rhyme_jobs",manager),patch.object(api,"call_openai",side_effect=ai):
+            original=lex.curated_phrases
+            with tempfile.TemporaryDirectory() as tmp,patch.object(api,"DB_PATH",tmp+"/cache.sqlite"),patch.object(api,"OPENAI_API_KEY","mock"),patch.object(api,"_rhyme_jobs",manager),patch.object(api,"call_openai",side_effect=ai),patch.object(lex,"curated_phrases",side_effect=lambda *a:original(*a)[:2]):
                 r=Request("Karim Benzema");api.Handler.do_POST(r)
                 self.assertEqual(r.response[0],202);self.assertTrue(r.response[1]["partial"]["quality_reviewed"])
                 duplicate=Request("Karim Benzema","Nomen");api.Handler.do_POST(duplicate)

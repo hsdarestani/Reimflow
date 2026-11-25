@@ -24,24 +24,27 @@ def main():
                 with patch.object(api,"call_openai",wraps=api.call_openai) as calls:
                     start=time.perf_counter();req=Request(query);api.Handler.do_POST(req)
                     status,initial=req.response
-                    assert status==202 and initial["partial"]["quality_reviewed"],initial
                     first=time.perf_counter()-start
-                    while time.perf_counter()-start<20:
-                        status,result=manager.get(initial["job_id"])
-                        if status!=202:break
-                        time.sleep(.08)
+                    if status==200:result=initial
+                    else:
+                        assert status==202 and initial["partial"]["quality_reviewed"],initial
+                        while time.perf_counter()-start<20:
+                            status,result=manager.get(initial["job_id"])
+                            if status!=202:break
+                            time.sleep(.08)
                     elapsed=time.perf_counter()-start
                     assert status==200,result
                     rows=result["rhymes"]; words=[r["word"].casefold() for r in rows]
                     print("REAL PREDEPLOY BENCHMARK",json.dumps({"query":query,"first_seconds":round(first,3),"complete_seconds":round(elapsed,3),"calls":calls.call_count,"count":len(rows),"words":words,"timing_ms":result.get("timing_ms")},ensure_ascii=False),flush=True)
-                    assert result.get("model") and result.get("timing_ms"),"AI request did not complete; retaining prior release"
+                    if calls.call_count:assert result.get("model") and result.get("timing_ms"),"AI request did not complete; retaining prior release"
                     assert first<1 and elapsed<11,"Constrained generation must not materially regress v3 completion"
                     assert len(rows)>=min_count and len(words)==len(set(words)),"No count/duplicate regression"
                     assert sum(r.get("kind")=="Phrase" for r in rows)>=2,"Natural phrase variants missing"
                     assert all(r.get("german_valid") is True for r in rows)
                     assert all(not ({"space","case","race","toyota","karaoke"}&set(w.split())) for w in words)
                     assert result["analysis"]["input"]==query
-                    assert 1<=calls.call_count<=2
+                    assert 0<=calls.call_count<=2
+                    if query=="Karim Benzema":assert calls.call_count==0 and elapsed<1,"Sufficient local matches must avoid AI"
             with patch.object(api,"call_openai",side_effect=AssertionError("Local search must not use AI")):
                 req=Request("Jude Bellingham");started=time.perf_counter();api.Handler.do_POST(req)
                 status,data=req.response;assert status==200 and len(data["rhymes"])>=5

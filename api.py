@@ -18,7 +18,7 @@ QUALITY_MODEL=os.getenv("RHYME_REVIEW_MODEL","gpt-5.6-terra").strip()
 RHYME_REASONING_EFFORT=os.getenv("REIMFLOW_RHYME_EFFORT","low").strip()
 RHYME_SERVICE_TIER=os.getenv("REIMFLOW_RHYME_SERVICE_TIER","default").strip().lower()
 if RHYME_SERVICE_TIER not in ("default","fast"): RHYME_SERVICE_TIER="default"
-RHYME_PIPELINE_REVISION="2026-11-25-generalized-phonetics-v4"
+RHYME_PIPELINE_REVISION="2026-11-25-generalized-phonetics-v4.1"
 if RHYME_REASONING_EFFORT not in {"low","medium","high"}: RHYME_REASONING_EFFORT="low"
 DB_PATH=os.getenv("REIMFLOW_DB","/var/lib/reimflow/reimflow.sqlite3")
 _rhyme_jobs=rhyme_jobs.Manager(max_jobs=12,max_workers=3,ttl=900)
@@ -494,6 +494,10 @@ class Handler(BaseHTTPRequestHandler):
                 preview["analysis"]["note"]="Vorläufig nur Aussprache des Endworts; Gesamtausdruck noch nicht geklärt."
             strong=sum(r["strength"]=="stark" for r in local_rows)
             targeted=bool(hybrid and known_ipa and local_rows and " " in query)
+            # Complete a sufficiently diverse, already verified phrase search locally.
+            # An optional reviewer must not delay a useful result set merely to add variants.
+            if preview and targeted and len(local_rows)>=10 and len({r['word'].split()[-1].casefold() for r in local_phrases})>=3:
+                cache_put(key,preview);self.send_json(200,preview);return
             # Uncertain pronunciations are explicitly labelled. Do not spend two
             # upstream calls to repeat an already usable local phonetic hypothesis.
             if preview and pron_source in ("inferred","variant") and len(local_rows)>=5:

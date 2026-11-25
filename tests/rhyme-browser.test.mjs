@@ -91,7 +91,7 @@ try{
     assert.match(await preview.innerText(),/Safari|Kalamari/);
     assert.doesNotMatch(await preview.innerText(),/caper|scraper|vapor/);
     await page.locator(".rhyme-group-title").first().waitFor({state:"visible",timeout:6500});
-    assert.deepEqual(await page.locator(".rhyme-group-title").allTextContents(),["Kreative mehrteilige Reime","Reime auf das letzte Wort"]);
+    assert.deepEqual(await page.locator(".rhyme-group-title").allTextContents(),["Reime auf das letzte Wort","Kreative mehrteilige Reime"]);
     assert.equal(await page.locator(".rhyme-card").count(),2,"English result must not render even with a forged API payload");
     assert.equal(await preview.count(),0);
     await page.locator("#rhymeQuery").fill("Föhn");

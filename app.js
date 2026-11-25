@@ -297,6 +297,7 @@ function renderRhymes(errorMessage=""){
     ...rows.filter(r=>r.scope==="phrase_variation"),
     ...rows.filter(r=>!r.scope||r.scope==="end_word")
   ]:rows;
+  grouped.sort((a,b)=>Number(b.strength==="stark")-Number(a.strength==="stark"));
    const caveat=offline?'<div class="rhyme-offline-note"><strong>Noch ungeprüfte Vorschläge</strong><p>Diese Wörter haben ähnliche Endungen. Aussprache, Betonung und Reimqualität sind nicht geprüft. Bitte selbst anhören oder die Suche später erneut versuchen.</p><button class="secondary-btn compact" id="retryOnlineSearch">Suche erneut versuchen</button></div>':"";
   let lastScope="";
   const prior=new Map([...list.querySelectorAll("article.rhyme-card")].map(card=>[card.querySelector("[data-fav]")?.dataset.fav,card]));
