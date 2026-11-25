@@ -1,0 +1,1 @@
+espeakng-loader==0.2.4 --hash=sha256:08721baf27d13d461f6be6eed9a65277e70d68234ff484fd8b9897b222cdcb6d

@@ -36,8 +36,10 @@ try{
   await page.goto("/",{waitUntil:"domcontentloaded"});
   await page.locator(width<600?".mobile-nav [data-go='rhymes']":".desktop-nav [data-go='rhymes']").click();
   await page.locator("#rhymeQuery").fill("Jude Bellingham");
+  const firstStarted=performance.now();
   await page.locator("#rhymeSearchForm button[type=submit]").click();
   await page.locator(".rhyme-card .rhyme-word").getByText("Programm").waitFor({timeout:2000});
+  console.log("Browser first verified partial (mock API)",width,Math.round(performance.now()-firstStarted),"ms");
   await page.locator(".rhyme-card details summary").first().click();
   await page.locator(".rhyme-card .rhyme-word").getByText("Telegramm").waitFor({timeout:12000});
   assert.match(await page.locator("#resultsCount").innerText(),/2\s+Treffer/i);

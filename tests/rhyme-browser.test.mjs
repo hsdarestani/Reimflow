@@ -16,6 +16,7 @@ try{
     await page.route("**/api/rhymes",async route=>{
       tries++;
       const {query}=route.request().postDataJSON();
+      if(query==="Föhn")return route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({ok:true,quality_reviewed:true,analysis:{input:query,interpreted_as:query,syllables:1},rhymes:[{word:"schön",category:"Adjektiv",categories:["Adjektiv","Verb"],syllables:1,ipa:"ʃøːn",strength:"stark",scope:"end_word",register:"Standard",german_valid:true,kind:"Perfekter Reim"}]})});
       if(query==="Blue Ferrari"){
         await delay(1100);
         return route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({
@@ -93,6 +94,17 @@ try{
     assert.deepEqual(await page.locator(".rhyme-group-title").allTextContents(),["Kreative mehrteilige Reime","Reime auf das letzte Wort"]);
     assert.equal(await page.locator(".rhyme-card").count(),2,"English result must not render even with a forged API payload");
     assert.equal(await preview.count(),0);
+    await page.locator("#rhymeQuery").fill("Föhn");
+    await page.locator("#rhymeSearchForm button[type='submit']").click();
+    await page.locator(".rhyme-card").getByText("schön").waitFor();
+    const requestsBeforeFilter=tries;
+    await page.locator(".advanced-filters summary").click();
+    await page.locator('[data-category="Verb"]').click();
+    assert.equal(await page.locator(".rhyme-card").count(),1);
+    await page.locator('[data-category="Sonstiges"]').click();
+    assert.equal(await page.locator(".rhyme-card").count(),0);
+    await page.locator('[data-category="Alle"]').click();
+    assert.equal(tries,requestsBeforeFilter);
 
     // Legacy responses without verified German language labels must fail closed.
     await page.locator("#rhymeQuery").fill("Blue paper");

@@ -1,5 +1,14 @@
 # Phonetic lexical index
 
+## Phase 2: local generalization
+
+- **eSpeak NG 1.52**, GPL-3.0-or-later ([upstream source and license](https://github.com/espeak-ng/espeak-ng)), via [espeakng-loader 0.2.4](https://github.com/thewh1teagle/espeakng-loader). The x86-64 Linux wheel SHA-256 is pinned in `scripts/rhyme-g2p-requirements.txt`. Only the library and language rules are installed server-side during packaging, not browser/mobile distribution. The dependency is a compact rule-based G2P implementation, not an ML model. A lock isolates its process-global voice state; pronunciation hypotheses are cached in bounded memory. No runtime download, remote speech request, or audio synthesis occurs. Build and source are available from the linked projects. The production API uses the glibc-compatible Debian Python slim image.
+- **UniMorph German**, revision `d226d2112d3490d8f04ece10d4538123d4297a39`, [CC BY-SA 3.0](https://github.com/unimorph/deu/tree/d226d2112d3490d8f04ece10d4538123d4297a39), source English Wiktionary. Only inflection forms, lemma and POS are used.
+- **German nouns**, revision `da71a2bc519b952b28c9b0b80971cff6efb508f6`, [CC BY-SA 4.0](https://github.com/gambolputty/german-nouns/tree/da71a2bc519b952b28c9b0b80971cff6efb508f6), compiled from German Wiktionary by gambolputty and contributors. Its grammatical and proper-name metadata distinguishes common nouns from name-only entries and supports independently attested inflections.
+- **English US IPA**, from the same pinned ipa-dict release, derived from [cmudict-ipa](https://github.com/lingz/cmudict-ipa) (MIT). The English source is query-only; independent German lexical metadata is necessary to enter candidate results.
+
+The query-pronunciation table is separate from the candidate table. It includes additional dictionary pronunciations and variants without licensing foreign names as German rhyme candidates. Unknown pronunciations use limited, explicitly labelled language hypotheses and G2P output; inferred matches are never presented as exact. Compound-end matches are labelled as near alternatives. POS categories are based on lexical metadata rather than capitalization and can be multiple. A small editorial colloquial-register vocabulary supplements grammatical tags. Weighted phonetic substitution and cross-word alignment are additional gates, not a claim of perfect human rhyme judgment. Original candidate phrases require either a vetted grammatical frame or independent AI review. The 90-query holdout is independent of source data and never used to create pronunciation entries.
+
 The generated, read-only SQLite index is deliberately not included in source control. The pinned build script verifies three source hashes and builds the index before packaging; there is no production network download or new Python dependency.
 
 Data attribution and licenses:

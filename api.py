@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import hashlib, json, os, sqlite3, threading, time, urllib.error, urllib.request, urllib.parse, importlib.util, email.parser, email.policy
 from collections import defaultdict, deque
+from contextlib import closing
 import platform_api
 import rhyme_jobs
 import style_intelligence
@@ -17,7 +18,7 @@ QUALITY_MODEL=os.getenv("RHYME_REVIEW_MODEL","gpt-5.6-terra").strip()
 RHYME_REASONING_EFFORT=os.getenv("REIMFLOW_RHYME_EFFORT","low").strip()
 RHYME_SERVICE_TIER=os.getenv("REIMFLOW_RHYME_SERVICE_TIER","default").strip().lower()
 if RHYME_SERVICE_TIER not in ("default","fast"): RHYME_SERVICE_TIER="default"
-RHYME_PIPELINE_REVISION="2026-11-25-hybrid-lexicon-v3"
+RHYME_PIPELINE_REVISION="2026-11-25-generalized-phonetics-v4"
 if RHYME_REASONING_EFFORT not in {"low","medium","high"}: RHYME_REASONING_EFFORT="low"
 DB_PATH=os.getenv("REIMFLOW_DB","/var/lib/reimflow/reimflow.sqlite3")
 _rhyme_jobs=rhyme_jobs.Manager(max_jobs=12,max_workers=3,ttl=900)
@@ -108,11 +109,12 @@ def db():
     os.makedirs(os.path.dirname(DB_PATH),exist_ok=True)
     c=sqlite3.connect(DB_PATH,timeout=10)
     c.execute("CREATE TABLE IF NOT EXISTS cache (cache_key TEXT PRIMARY KEY,payload TEXT NOT NULL,created_at INTEGER NOT NULL)")
+    c.execute("CREATE INDEX IF NOT EXISTS cache_created_at ON cache(created_at)")
     c.commit(); return c
 
 def cache_get(key):
     try:
-        with db() as c: row=c.execute("SELECT payload,created_at FROM cache WHERE cache_key=?",(key,)).fetchone()
+        with closing(db()) as c: row=c.execute("SELECT payload,created_at FROM cache WHERE cache_key=?",(key,)).fetchone()
         if not row or int(time.time())-row[1]>CACHE_TTL: return None
         data=json.loads(row[0]); data["cached"]=True; return data
     except Exception: return None
@@ -120,8 +122,10 @@ def cache_get(key):
 def cache_put(key,payload):
     try:
         clean=dict(payload); clean.pop("cached",None)
-        with db() as c:
+        with closing(db()) as c, c:
             c.execute("INSERT OR REPLACE INTO cache(cache_key,payload,created_at) VALUES(?,?,?)",(key,json.dumps(clean,ensure_ascii=False),int(time.time())))
+            c.execute("DELETE FROM cache WHERE created_at<?",(int(time.time())-CACHE_TTL,))
+            c.execute("DELETE FROM cache WHERE cache_key IN (SELECT cache_key FROM cache ORDER BY created_at DESC LIMIT -1 OFFSET 12000)")
             c.commit()
     except Exception: pass
 
@@ -372,9 +376,12 @@ def hybrid_candidates(query, raw, known_ipa):
             else: uncertain.append(row)
             continue
         if not rhyme_lexicon.phrase_lexical(word): continue
-        lexical_ipa=rhyme_lexicon.pronunciation(word)
+        lexical_ipa=rhyme_lexicon.lexical_phrase_ipa(word)
         if not lexical_ipa: continue
         row=rhyme_lexicon.candidate(word,lexical_ipa.split()[-1],anchor,"Sonstiges")
+        if not row and rhyme_lexicon.full_phrase_match(target,lexical_ipa):
+            row=rhyme_lexicon.candidate(word,lexical_ipa.split()[-1],lexical_ipa.split()[-1],"Sonstiges")
+            if row:row.update(strength="brauchbar",scope="full_phrase",explanation="Lautfolge über Wortgrenzen ähnlich; kein exakter Endwortreim.")
         if not row: continue
         row.update(ipa=lexical_ipa,pronunciation=lexical_ipa,syllables=rhyme_lexicon.syllables(lexical_ipa),kind="Phrase")
         uncertain.append(row)
@@ -411,7 +418,7 @@ class Handler(BaseHTTPRequestHandler):
         # parameters when opened from mobile in-app browsers.
         route=urllib.parse.urlsplit(self.path).path.rstrip("/") or "/"
         if route=="/api/health":
-            self.send_json(200,{"ok":True,"ai":bool(OPENAI_API_KEY),"service":"reimflow","lexicon":rhyme_lexicon.available(),"rhyme_revision":RHYME_PIPELINE_REVISION}); return
+            self.send_json(200,{"ok":True,"ai":bool(OPENAI_API_KEY),"service":"reimflow","lexicon":rhyme_lexicon.available(),"g2p":rhyme_lexicon.g2p.available(),"rhyme_revision":RHYME_PIPELINE_REVISION}); return
         # Corpus diagnostics are operator-only via the on-server CLI.
         # Never expose artist, track-count or feature-method metadata publicly.
         if route in ("/api/rhymes/context-status","/api/corpus/status"):
@@ -472,16 +479,25 @@ class Handler(BaseHTTPRequestHandler):
                 cached=None
             # Old prompt versions must never bypass the contextual quality pipeline.
             if cached: self.send_json(200,cached); return
-            known_ipa=rhyme_lexicon.pronunciation(query) if hybrid else ""
+            variants,pron_source=rhyme_lexicon.pronunciation_info(query) if hybrid else ((),"unsupported")
+            known_ipa=variants[0] if variants else ""
             anchor_ipa=known_ipa.split()[-1] if known_ipa else rhyme_lexicon.pronunciation(query.split()[-1]) if hybrid else ""
-            local_rows=rhyme_lexicon.retrieve(query,anchor_ipa) if anchor_ipa else []
+            local_rows=rhyme_lexicon.retrieve_variants(query,variants,pron_source) if variants else rhyme_lexicon.retrieve(query,anchor_ipa) if anchor_ipa else []
             local_phrases=rhyme_lexicon.curated_phrases(query,known_ipa) if hybrid else []
+            if pron_source=="inferred":
+                for row in local_phrases:row["strength"]="brauchbar"
+            if hybrid and known_ipa and pron_source not in ("inferred","variant"):
+                local_phrases+=rhyme_lexicon.constructed_phrases(query,known_ipa,local_rows)
             if local_phrases:local_rows=merge_candidates(local_rows,local_phrases)
             preview=local_result(query,known_ipa or anchor_ipa,local_rows,context_revision) if local_rows else None
             if preview and not known_ipa:
                 preview["analysis"]["note"]="Vorläufig nur Aussprache des Endworts; Gesamtausdruck noch nicht geklärt."
             strong=sum(r["strength"]=="stark" for r in local_rows)
             targeted=bool(hybrid and known_ipa and local_rows and " " in query)
+            # Uncertain pronunciations are explicitly labelled. Do not spend two
+            # upstream calls to repeat an already usable local phonetic hypothesis.
+            if preview and pron_source in ("inferred","variant") and len(local_rows)>=5:
+                cache_put(key,preview);self.send_json(200,preview);return
             if preview and (' ' not in query and (strong>=6 or len(local_rows)>=12) and (query.casefold() not in rhyme_lexicon.FOREIGN or query.casefold()=="pokerface")):
                 cache_put(key,preview); self.send_json(200,preview); return
             if preview and (_quota_unavailable() or not OPENAI_API_KEY):
@@ -504,8 +520,10 @@ class Handler(BaseHTTPRequestHandler):
                     "patterns":lyric_context.get("patterns",[]),"feedback":lyric_context.get("feedback",[])},ensure_ascii=False)
             if targeted:
                 user_text=json.dumps({"query":query,"ipa":known_ipa,"syllables":rhyme_lexicon.syllables(known_ipa),
-                    "end_words":[r["word"] for r in local_rows if r.get("kind")!="Phrase"][:12],
-                    "existing_phrases":[r["word"] for r in local_phrases],"patterns":lyric_context.get("patterns",[]),"feedback":lyric_context.get("feedback",[])},ensure_ascii=False)
+                    "end_words":[r["word"] for r in local_rows if r.get("kind")!="Phrase"][:8],
+                    "existing_phrases":[r["word"] for r in local_phrases],
+                    "patterns":[[p.get("orthographic_ending"),p.get("avg_syllables_per_line_est"),p.get("avg_words_per_line_est")] for p in lyric_context.get("patterns",[])[:3]],
+                    "feedback":[[p.get("word"),p.get("positive"),p.get("negative")] for p in lyric_context.get("feedback",[])[:3]]},ensure_ascii=False)
 
             def generate(job_id):
                 try:
@@ -513,14 +531,14 @@ class Handler(BaseHTTPRequestHandler):
                     raw,model=call_openai(user_text,PHRASE_SCHEMA if targeted else HYBRID_SCHEMA if hybrid else RHYME_SCHEMA,
                         "reimflow_phrase_candidates" if targeted else "reimflow_hybrid_candidates" if hybrid else "reimflow_quality_candidates",PHRASE_PROMPT if targeted else HYBRID_PROMPT if hybrid else DEVELOPER_PROMPT+"\n"+STYLE_CONTEXT_RULES,
                         models=[PRIMARY_MODEL] if hybrid else None,
-                        effort="none" if targeted else RHYME_REASONING_EFFORT,timeout=12 if targeted else 25 if hybrid else 65,max_output_tokens=550 if targeted else 1500 if hybrid else 4300,
+                        effort="none" if hybrid else RHYME_REASONING_EFFORT,timeout=12 if hybrid else 65,max_output_tokens=550 if targeted else 900 if hybrid else 4300,
                         service_tier="default" if hybrid else RHYME_SERVICE_TIER)
                     generation_ms=round((time.monotonic()-started)*1000)
                     if hybrid:
-                        ipa=known_ipa or str(raw.get("ipa", ""))[:120]
+                        ipa=(known_ipa if targeted or pron_source not in ("inferred","unsupported") else "") or str(raw.get("ipa", ""))[:120] or known_ipa
                         raw={"analysis":rhyme_lexicon.analysis(query,ipa),"rhymes":[{"word":w} for w in raw.get("words",[]) if isinstance(w,str)]}
                     raw=sanitize(raw,query)
-                    direct,uncertain=hybrid_candidates(query,raw,known_ipa) if hybrid else ([],raw["rhymes"])
+                    direct,uncertain=hybrid_candidates(query,raw,known_ipa if pron_source not in ("inferred","unsupported") or targeted else "") if hybrid else ([],raw["rhymes"])
                     if targeted:
                         existing={r["word"].casefold() for r in local_rows}
                         target_count=rhyme_lexicon.syllables(known_ipa)
@@ -556,7 +574,11 @@ class Handler(BaseHTTPRequestHandler):
                                 r["scope"]="phrase_variation"
                             elif r.get("scope")=="end_word":r["scope"]="phrase_variation"
                         data["rhymes"]=merge_candidates(local_rows,direct,data["rhymes"])
-                        if known_ipa: data["analysis"]=rhyme_lexicon.analysis(query,known_ipa)
+                        if pron_source=="inferred":
+                            for r in data["rhymes"]:
+                                r["strength"]="brauchbar"
+                                if r.get("kind")!="Phrase":r["kind"]="Slant Rhyme"
+                        if known_ipa and (targeted or pron_source not in ("inferred","unsupported")): data["analysis"]=rhyme_lexicon.analysis(query,known_ipa)
                         else: data["analysis"]["note"]="KI-geschätzte Aussprache; bei unbekannten Namen sind Varianten möglich."
                     review_ms=round((time.monotonic()-started)*1000)-generation_ms
                     # Never cache suggestions without independent phonetic review.
