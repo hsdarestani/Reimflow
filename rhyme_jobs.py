@@ -101,4 +101,4 @@ class Manager:
             if job["status"]=="failed":
                 return (job["http_status"],job["error"])
             return (202,{"ok":True,"pending":True,"stage":job["stage"],
-                         "job_id":job_id,"poll_after_ms":2000})
+                         "job_id":job_id,"poll_after_ms":800})

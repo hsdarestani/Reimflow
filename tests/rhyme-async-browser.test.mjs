@@ -12,11 +12,13 @@ try{
   const errors=[];page.on("pageerror",e=>errors.push(e.message));
   let poll=0,failNext=false;
   const jobId="jude-bellingham-test-abcdefghijklmnop";
+  const partialRow={word:"Programm",pronunciation:"",ipa:"",syllables:2,category:"Nomen",strength:"brauchbar",register:"Standard",german_valid:true,kind:"Near Rhyme",score:0,confidence:0,scope:"end_word",explanation:"Test verified local response"};
+  const partialAnalysis={input:"Jude Bellingham",interpreted_as:"Jude Bellingham",syllables:5,language:"Englisch"};
   await page.route("**/api/rhymes",async route=>{
    const req=route.request().postDataJSON();
    assert.equal(req.query,failNext?"Bad Retry QA":"Jude Bellingham");
    await route.fulfill({status:202,contentType:"application/json",
-    body:JSON.stringify({ok:true,pending:true,stage:"queued",job_id:jobId,poll_after_ms:80})});
+    body:JSON.stringify({ok:true,pending:true,stage:"queued",job_id:jobId,poll_after_ms:80,...(!failNext?{partial:{quality_reviewed:true,analysis:partialAnalysis,rhymes:[partialRow]}}:{})})});
   });
   await page.route("**/api/rhymes/jobs/**",async route=>{
    poll++;
@@ -27,7 +29,7 @@ try{
    return route.fulfill({status:200,contentType:"application/json",
      body:JSON.stringify({ok:true,quality_reviewed:true,engine:"ai_phonetic",
        analysis:{input:"Jude Bellingham",interpreted_as:"Jude Bellingham",syllables:5,language:"Englisch"},
-       rhymes:[{word:"Telegramm",pronunciation:"",ipa:"",syllables:3,
+       rhymes:[partialRow,{word:"Telegramm",pronunciation:"",ipa:"",syllables:3,
         category:"Nomen",strength:"brauchbar",register:"Standard",german_valid:true,kind:"Near Rhyme",
         score:0,confidence:0,scope:"end_word",explanation:"Test reviewed response"}]})});
   });
@@ -35,8 +37,11 @@ try{
   await page.locator(width<600?".mobile-nav [data-go='rhymes']":".desktop-nav [data-go='rhymes']").click();
   await page.locator("#rhymeQuery").fill("Jude Bellingham");
   await page.locator("#rhymeSearchForm button[type=submit]").click();
+  await page.locator(".rhyme-card .rhyme-word").getByText("Programm").waitFor({timeout:2000});
+  await page.locator(".rhyme-card details summary").first().click();
   await page.locator(".rhyme-card .rhyme-word").getByText("Telegramm").waitFor({timeout:12000});
-  assert.match(await page.locator("#resultsCount").innerText(),/1\s+Treffer/i);
+  assert.match(await page.locator("#resultsCount").innerText(),/2\s+Treffer/i);
+  assert.equal(await page.locator(".rhyme-card details").first().getAttribute("open"),"");
   assert(poll>=3);
   assert.deepEqual(errors,[]);
   failNext=true;poll=0;

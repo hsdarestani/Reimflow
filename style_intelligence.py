@@ -226,8 +226,9 @@ def record_feedback(db_connection, *, user_id, query, word, vote):
     if not isinstance(word,str) or not 1<=len(word)<=90 or "\n" in word:
         raise ValueError("Invalid candidate")
     # Only already independently reviewed and cached suggestions are eligible.
-    key = hashlib.sha256(("rhymes|de-only-query-v2|"+query.strip().casefold()).encode()).hexdigest()
-    row = db_connection.execute("SELECT payload FROM cache WHERE cache_key=?", (key,)).fetchone()
+    key = hashlib.sha256(("rhymes|hybrid-v1|"+query.strip()).encode()).hexdigest()
+    legacy = hashlib.sha256(("rhymes|de-only-query-v2|"+query.strip().casefold()).encode()).hexdigest()
+    row = db_connection.execute("SELECT payload FROM cache WHERE cache_key IN (?,?) ORDER BY cache_key=? DESC LIMIT 1", (key,legacy,key)).fetchone()
     if not row:
         raise ValueError("Only verified search results can be rated")
     result = json.loads(row[0])

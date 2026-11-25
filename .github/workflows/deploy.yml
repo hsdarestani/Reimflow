@@ -29,6 +29,8 @@ jobs:
           python3 -m unittest discover -s tests -p "test_lyrics_import_lrclib.py"
           python3 -m unittest discover -s tests -p "test_lyrics_import_expanded.py"
           python3 -m unittest discover -s tests -p "test_corpus_routes.py"
+          bash scripts/build-rhyme-lexicon.sh
+          python3 -m unittest discover -s tests -p "test_hybrid_rhymes.py"
       - name: Verify JavaScript syntax
         run: |
           node --check app.js
@@ -73,7 +75,7 @@ jobs:
           grep -q 'platform.js?v=20261015-real1' index.html
           grep -q 'platform.css?v=20261015-real1' index.html
           grep -q 'sonic-atelier.css?v=20261014-de1' index.html
-          grep -q 'app.js?v=20261112-fast2' index.html
+          grep -q 'app.js?v=20261125-hybrid1' index.html
           grep -q 'ux-simple.css?v=20261020-3' index.html
           grep -q 'data-page="more"' index.html
           grep -q 'rhyme-fallback.js?v=20261019-de1' index.html

@@ -38,7 +38,7 @@ German-language rap rhyme and producer-community prototype. Live testing URL: **
 
 ## Current functionality
 
-- Phonetic AI rhyme search (requires server-side `OPENAI_API_KEY`)
+- Hybrid phonetic rhyme search: indexed German IPA lookup for reliable word rhymes, compact AI assistance for sparse and unfamiliar queries, and independent review for creative or uncertain candidates. Verified results can appear progressively. AI assistance requires server-side `OPENAI_API_KEY`. See [source attribution and reproducible lexicon build](docs/RHYME_LEXICON.md).
 - Rhyme validation / tester AI check (same API key)
 - Syllable and part-of-speech filters, pronunciation hints and browser speech synthesis
 - Persistent community submissions, human tester approval and verified point badges (server-backed)
@@ -78,8 +78,9 @@ Only independently licensed text may be imported.
 The pipeline stores aggregate orthographic endings, approximate syllable
 counts and line lengths, **not raw lyrics or lines**. These are weak
 statistical hints, NOT phonetic rhyme judgments. Reimflow uses these hints
-and query-specific feedback within its existing AI rhyme prompts, followed
-by a mandatory independent phonetic and German-language quality check.
+and query-specific feedback in its AI-assisted rhyme prompts, followed by a
+phonetic and German-language quality gate. Reliable word matches use deterministic
+lexical validation; creative or uncertain candidates require independent review.
 Generating copied lyrics or close imitation of any specific artist is
 not part of the feature.
 
